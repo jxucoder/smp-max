@@ -1,0 +1,232 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{array}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\stab}{\mathrm{SM}}
+
+\title{A certified computation of the maximum number of stable matchings of order five}
+\author{Jiarui Xu\thanks{\texttt{jxucoder@gmail.com}. Computations and drafting were carried out with the
+assistance of Claude (Anthropic); all numerical claims come from the executed runs recorded in the
+accompanying repository.}}
+\date{August 29, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $f(n)$ denote the maximum number of stable matchings of a stable-marriage instance with $n$ men
+and $n$ women. Determining $f(n)$ is a problem of Knuth (1976), restated as Open Problem~\#1 by
+Gusfield and Irving (1989). Eilers reported $f(5)=16$ in 2022 (OEIS A357269) via a constraint-programming
+search; the computation produced no proof object and the accompanying paper has not appeared. We give an
+independent confirmation of $f(5)=16$ by a different method (a compact SAT encoding), and, to our
+knowledge, the first machine-checkable certificate for the upper bound: an UNSAT proof of the statement
+``some $5\times 5$ instance has at least $17$ stable matchings,'' emitted by \textsf{kissat} in DRAT
+format (1.09\,GB) and verified by the independent checker \textsf{drat-trim}, which replayed
+$10{,}398{,}816$ lemmas using $462{,}936{,}491$ resolution steps and emitted an LRAT certificate. Total
+solver time was under ten minutes on a laptop. We outline the remaining steps toward a fully verified
+proof in Lean~4, and discuss the first open case, the conjecture $f(6)=48$.
+\end{abstract}
+
+\section{Introduction}
+
+A stable-marriage instance of order $n$ consists of $n$ men and $n$ women, each equipped with a strict
+total preference order over the opposite side. A perfect matching $\mu$ is \emph{stable} if there is no
+\emph{blocking pair}: a man $m$ and woman $w$, not matched to each other, who each prefer the other to
+their partner in $\mu$. Gale and Shapley proved every instance has at least one stable matching. Let
+$f(n)$ be the maximum, over all instances of order $n$, of the number of stable matchings. Determining
+the behaviour of $f$ is Research Problem~\#5 in Knuth's 1976 monograph~\cite{knuth} and Open
+Problem~\#1 of Gusfield and Irving~\cite{gi89}.
+
+Asymptotically, the best bounds are $f(n) \ge 2.28^n$ (Thurber~\cite{thurber}) and $f(n) \le 3.55^n$
+(Palmer and P\'alv\"olgyi~\cite{pp}, sharpening the first simply-exponential bound of Karlin, Oveis
+Gharan and Weber~\cite{kow}). Exact values are recorded in OEIS~A357269~\cite{oeisA357269}:
+\[
+f(1),\dots,f(5) \;=\; 1,\; 2,\; 3,\; 10,\; 16.
+\]
+The values through $f(4)=10$ go back to Knuth's example and an exhaustive search of Eilers, which also
+showed the extremal reduced instance of order~$4$ to be unique. The value $f(5)=16$ was announced by
+Eilers in September 2022, obtained with a MiniZinc constraint-programming model; the OEIS entry cites a
+paper ``in preparation'' which, as far as we can determine, has not appeared, and the computation
+produced no independently checkable artifact---constraint solvers, unlike modern SAT solvers, emit no
+proof of exhaustiveness.
+
+This note does two things.
+
+\begin{enumerate}
+\item \textbf{Independent confirmation.} We re-derive $f(5)=16$ by a different route: a direct SAT
+encoding of ``there exists an instance of order $n$ with at least $k$ stable matchings.'' A solver
+finds a witness with $16$ stable matchings in $0.1$ seconds and refutes $k=17$ in minutes. Two solvers
+with unrelated codebases (\textsf{CaDiCaL} via PySAT, and \textsf{kissat}) agree on the refutation.
+\item \textbf{A certificate.} The \textsf{kissat} refutation was run with proof logging, producing a
+$1.09$\,GB DRAT proof, verified end-to-end by \textsf{drat-trim}~\cite{drattrim} in $530$ seconds. The
+resulting LRAT certificate ($4.3$\,GB) is the format consumed by verified checkers, including those
+available in Lean~4~\cite{lratcatcher}. To our knowledge this is the first proof object of any kind for
+the upper bound $f(5)\le 16$.
+\end{enumerate}
+
+Comparable certified computations include the formal proof of the Ramsey number
+$R(4,5)=25$~\cite{r45} and the Lean-certified evaluation of $K_8(4,2)=23$~\cite{k8}. We regard the
+present note as the computational core of such a development for $f(5)$; the remaining formalization
+steps are outlined in Section~\ref{sec:lean}.
+
+\section{The encoding}\label{sec:encoding}
+
+Fix $n$ and $k$. We construct a CNF formula $F_{n,k}$ that is satisfiable if and only if some instance
+of order $n$ has at least $k$ stable matchings.
+
+\paragraph{Preference variables.} For each man $m$ and each unordered pair $\{a,b\}$ of women, a
+variable $p^m_{ab}$ meaning ``$m$ prefers $a$ to $b$''; symmetrically for each woman. A strict total
+order is exactly a transitive tournament, and a tournament is transitive if and only if it contains no
+directed $3$-cycle. So for every person and every unordered triple $\{a,b,c\}$ we add the two clauses
+forbidding the two cyclic orientations. For $n=5$ this is $10$ variables and $20$ clauses per person.
+
+\paragraph{Stability indicators.} For each of the $n!$ perfect matchings $\mu$, a variable $S_\mu$
+with, for every non-matched pair $(m,w)$, the clause
+\[
+S_\mu \;\rightarrow\; \neg\bigl(p^m_{w\,\mu(m)} \wedge p^w_{m\,\mu(w)}\bigr),
+\]
+i.e., $S_\mu$ forces $(m,w)$ not to block $\mu$. Only this direction is needed:
+
+\begin{proposition}\label{prop:enc}
+$F_{n,k}$ is satisfiable iff some instance of order $n$ has $\ge k$ stable matchings.
+\end{proposition}
+
+\begin{proof}
+($\Leftarrow$) Given such an instance, set the preference variables accordingly and set $S_\mu$ true
+exactly for $k$ of its stable matchings; every clause is satisfied. ($\Rightarrow$) A model's
+preference variables define strict total orders (transitive tournaments), i.e., an instance; the
+cardinality constraint (below) forces at least $k$ indicators true, and the implication clauses ensure
+each such $\mu$ has no blocking pair, i.e., is genuinely stable.
+\end{proof}
+
+\paragraph{Cardinality.} $\sum_\mu S_\mu \ge k$, encoded with a sequential counter.
+
+\paragraph{Symmetry.} For the refutation run we add unit clauses fixing man~$1$'s preference list to
+the identity order.
+
+\begin{lemma}\label{lem:sym}
+If some instance of order $n$ has $\ge k$ stable matchings, then some instance in which man~$1$'s list
+is the identity order has $\ge k$ stable matchings.
+\end{lemma}
+
+\begin{proof}
+Relabel the women by the inverse of man~$1$'s preference permutation. Relabeling is a bijection on
+instances that maps stable matchings to stable matchings bijectively.
+\end{proof}
+
+For $(n,k)=(5,17)$ with the symmetry clauses, $F_{5,17}$ has $1{,}971$ variables and $6{,}026$ clauses.
+
+\section{Results}\label{sec:results}
+
+All runs on a single Apple M4~Max core (48\,GB RAM, macOS~26.3).
+
+\paragraph{Sanity check at $n=4$.} The encoder reproves $f(4)=10$: $k=10$ is satisfiable (witness
+recounted by an independent brute-force counter) and $k=11$ is refuted, both in $\le 0.1$ seconds. The
+brute-force counter itself was validated against the extremal Latin instances of orders $3,4,5,6$
+recorded in OEIS~A351413 (values $3, 10, 9, 48$, all reproduced).
+
+\paragraph{Lower bound $f(5)\ge 16$.} \textsf{CaDiCaL}~1.9.5 finds a model of $F_{5,16}$ in $0.1$
+seconds. Decoding yields the instance below (row $i$ = preference list of man/woman $i$, most
+preferred first, participants numbered $1$--$5$); the independent counter confirms it has exactly $16$
+stable matchings.
+\[
+\text{men:}\;
+\begin{array}{l}
+2\,3\,1\,5\,4\\
+5\,1\,4\,2\,3\\
+4\,5\,1\,3\,2\\
+3\,2\,4\,5\,1\\
+1\,5\,2\,3\,4
+\end{array}
+\qquad
+\text{women:}\;
+\begin{array}{l}
+4\,1\,3\,2\,5\\
+3\,2\,5\,4\,1\\
+2\,3\,1\,5\,4\\
+5\,1\,2\,3\,4\\
+1\,4\,5\,3\,2
+\end{array}
+\]
+
+\paragraph{Upper bound $f(5)\le 16$.} $F_{5,17}$ (with Lemma~\ref{lem:sym} clauses) is unsatisfiable.
+Two independent refutations:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+solver & time & proof \\
+\midrule
+\textsf{CaDiCaL} 1.9.5 (PySAT) & $389.6$\,s & none (plain run) \\
+\textsf{kissat} 4.0.4 & $\sim 8$\,min & binary DRAT, $1{,}093{,}088{,}497$ bytes \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textsf{drat-trim} verified the DRAT proof by backward checking in $530.0$ seconds:
+$10{,}398{,}816$ proof lemmas, of which $6{,}686{,}848$ in the trimmed core, checked with
+$462{,}936{,}491$ resolution steps; $5{,}281$ of the $6{,}026$ input clauses are in the core; the core
+contains $2{,}490$ RAT lemmas. The verdict was \texttt{s VERIFIED}, and an LRAT certificate of
+$4{,}327{,}129{,}882$ bytes was emitted.
+
+\begin{theorem}
+$f(5)=16$.
+\end{theorem}
+
+\begin{proof}
+The instance displayed above has $16$ stable matchings (checkable by enumerating the $120$ perfect
+matchings). For the upper bound, by Proposition~\ref{prop:enc} and Lemma~\ref{lem:sym} it suffices that
+$F_{5,17}$ (with symmetry clauses) is unsatisfiable, which is witnessed by the verified DRAT/LRAT
+certificate.
+\end{proof}
+
+\section{Toward a Lean-verified proof, and $f(6)$}\label{sec:lean}
+
+Three components remain for a formalization in the style of~\cite{r45,k8}: (i) a Lean statement of
+Proposition~\ref{prop:enc} connecting $F_{5,17}$, as a concrete CNF object, to a Lean definition of
+stable matchings; (ii) Lemma~\ref{lem:sym}; (iii) importing the LRAT certificate. For (iii) we note
+that the trimmed core contains $2{,}490$ RAT lemmas, while Mathlib's \texttt{lrat\_proof} implements
+RUP-only checking; options include re-solving with RAT-introducing inprocessing disabled, converting
+the proof, or using a RAT-capable verified checker~\cite{lratcatcher}.
+
+The first open case is now $n=6$. The best known lower bound is $f(6)\ge 48$, attained by a Latin
+instance built from the dihedral group (OEIS~A351413), and OEIS~A357271 records the conjecture that
+$48$ is exact. The search space of reduced instances grows from ${\sim}10^{17}$ at $n=5$ to
+${\sim}10^{28}$ at $n=6$, so a direct extension of the present method will require substantially
+stronger symmetry breaking (only the $n!$ woman-relabeling symmetry is broken here; the men-relabeling
+and side-swap symmetries remain), or a structural route through rotation posets, whose downset counts
+equal the numbers of stable matchings.
+
+\paragraph{Data availability.} The encoder, counter, logs, DRAT and LRAT files, and instructions to
+reproduce every number in this note are available in the accompanying repository.
+
+\paragraph{Acknowledgments.} The priority for $f(5)=16$ belongs to Dan Eilers; this note confirms his
+announcement and supplies a certificate. We thank the OEIS, whose entries A357269, A357271 and A351413
+document the state of this problem.
+
+\begin{thebibliography}{9}
+\bibitem{knuth} D. E. Knuth, \emph{Mariages stables}, Presses de l'Universit\'e de Montr\'eal, 1976.
+\bibitem{gi89} D. Gusfield and R. W. Irving, \emph{The Stable Marriage Problem: Structure and
+Algorithms}, MIT Press, 1989.
+\bibitem{thurber} E. G. Thurber, Concerning the maximum number of stable matchings in the stable
+marriage problem, \emph{Discrete Math.} 248 (2002), 195--219.
+\bibitem{kow} A. R. Karlin, S. Oveis Gharan and R. Weber, A simply exponential upper bound on the
+maximum number of stable matchings, \emph{STOC 2018}.
+\bibitem{pp} C. Palmer and D. P\'alv\"olgyi, At most $3.55^n$ stable matchings, \emph{FOCS 2021};
+arXiv:2011.00915.
+\bibitem{oeisA357269} OEIS Foundation, Sequence A357269 (also A357271, A351413),
+\url{https://oeis.org/A357269}.
+\bibitem{drattrim} N. Wetzler, M. J. H. Heule and W. A. Hunt, DRAT-trim: efficient checking and
+trimming using expressive clausal proofs, \emph{SAT 2014}.
+\bibitem{lratcatcher} LRAT-Catcher: importing SAT solver certificates into Lean 4 by reflection,
+arXiv:2607.00815, 2026.
+\bibitem{r45} T. Gauthier and C. Brown, A formal proof of $R(4,5)=25$, arXiv:2404.01761, 2024.
+\bibitem{k8} A Lean-certified proof of $K_8(4,2)=23$, arXiv:2606.16688, 2026.
+\end{thebibliography}
+
+\end{document}

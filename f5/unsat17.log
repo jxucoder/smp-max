@@ -1,0 +1,2 @@
+n=5 k>=17: 1971 vars, 6026 clauses
+UNSAT: no 5x5 instance with >= 17 stable matchings (389.6s)

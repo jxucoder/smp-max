@@ -1,0 +1,9 @@
+*.drat
+*.lrat
+*.zst
+dt-src/
+__pycache__/
+*.aux
+*.out
+*.synctex.gz
+f5/paper/f5.log
