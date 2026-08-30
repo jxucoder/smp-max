@@ -82,3 +82,11 @@ cubeL083: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
 cubeL084: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
 cubeL080: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
 cubeL081: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL082: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL085: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL086: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL088: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL087: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL089: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL091: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT
+cubeL092: kissat=UNSAT drat-trim=1 cake_lpr=s VERIFIED UNSAT

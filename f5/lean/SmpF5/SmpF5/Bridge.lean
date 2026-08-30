@@ -1,5 +1,6 @@
 import SmpF5.Symmetry
 import SmpF5.Encoding
+import SmpF5.Faithfulness
 
 /-!
 # Assembly: from 120 UNSAT cubes to f(5) ≤ 16
@@ -16,15 +17,16 @@ the kernel: the formulas are printed verbatim from these definitions by
 formally verified checker cake_lpr (see `f5/cubesL/`).
 -/
 
-/-- **Faithfulness** (in progress): a well-formed instance with man 0
-ranking identically, man 1's rank row equal to `row`, and at least 17
-stable matchings yields a satisfying assignment of `cubeCNF row`. -/
+/-- **Faithfulness** (proved in `Faithfulness.lean`): a well-formed
+instance with man 0 ranking identically, man 1's rank row equal to `row`,
+and at least 17 stable matchings yields a satisfying assignment of
+`cubeCNF row`. -/
 theorem cube_faithful {I : Inst} (h : WF I = true)
     (h0 : I.mrank.getD 0 [] = idRow) {row : List Nat}
     (h1 : I.mrank.getD 1 [] = row)
     (hcnt : 17 ≤ stableCount I) :
-    Satisfiable (cubeCNF row) := by
-  sorry
+    Satisfiable (cubeCNF row) :=
+  cube_faithful' h h0 h1 hcnt
 
 /-- **Main conditional theorem**: if all 120 cube formulas are
 unsatisfiable, then no well-formed 5×5 instance has more than 16 stable
