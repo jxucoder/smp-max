@@ -37,12 +37,12 @@ def prefVar (side i a b : Nat) : Nat := 1 + side * 50 + i * 10 + pidx a b
 
 /-- Literal for "person i on side prefers a over b" (any a ≠ b). -/
 def prefLit (side i a b : Nat) : Int :=
-  if a < b then Int.ofNat (prefVar side i a b)
-  else -(Int.ofNat (prefVar side i b a))
+  if a < b then (prefVar side i a b : Int)
+  else -((prefVar side i b a : Int))
 
 def yVar (t μi : Nat) : Nat := 101 + t * 120 + μi
 
-def yLit (t μi : Nat) : Int := Int.ofNat (yVar t μi)
+def yLit (t μi : Nat) : Int := (yVar t μi : Int)
 
 def transClauses : List (List Int) :=
   (List.range 2).flatMap fun side =>
