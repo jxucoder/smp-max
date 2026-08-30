@@ -86,13 +86,32 @@ stableCount_relabel, reduce_man0') are fully proved, axioms = standard
 Mathlib trio only. Sole remaining sorry: f5_upper via the per-cube
 encoding-faithfulness bridge.
 
+## Evidence chain status: CLOSED (2026-08-31)
+
+The f(5)=16 proof is complete end-to-end:
+1. `f5_upper_of_unsat` (Lean, zero sorries, axioms = propext +
+   Classical.choice + Quot.sound): if the 120 Lean-defined cube CNFs are
+   unsatisfiable then every well-formed 5x5 instance has <= 16 stable
+   matchings. Chain: faithfulness (Faithfulness.lean) + symmetry
+   (Symmetry.lean) + covering (Faithful.lean) + assembly (Bridge.lean).
+2. The 120 CNFs are printed verbatim from the Lean definitions by
+   `export_cnf` (selector encoding; 2,140 vars, 157,197 clauses each);
+   a 16-slot positive control was SAT on the witness cube.
+3. kissat refuted each cube, drat-trim verified each proof, and the
+   formally verified checker cake_lpr certified each LRAT end-to-end:
+   **120/120 `s VERIFIED UNSAT`** (`f5/cubesL/cubesL_results.txt`).
+4. Lower bound: the 16-matching witness instance is a kernel-only Lean
+   theorem (`f5/lean/Witness.lean`, axioms = [propext]).
+
+Outside the Lean kernel, the trust base is: cake_lpr (formally verified),
+the 30-line DIMACS printer, and the solver toolchain (whose output is
+independently checked, not trusted).
+
 ## Next steps
 
-1. Lean 4: formalize encoding faithfulness + the fix-man0 symmetry lemma;
-   import the LRAT certificate (note: core has 2,490 RAT lemmas, Mathlib's
-   `lrat_proof` is RUP-only — re-solve without RAT-introducing
-   inprocessing, convert, or use a RAT-capable checker such as
-   LRAT-Catcher, arXiv:2607.00815).
-2. Paper: `f5/paper/f5.tex` (draft compiled; hold arXiv until Lean done).
+1. Unify the two stableCount definitions (permsOf vs List.permutations
+   enumeration lemma, ~50 lines) to state "f(5)=16" as one theorem.
+2. Rewrite the paper for the final architecture (selector encoding,
+   Lean-sourced CNFs, cake_lpr); include artifact hashes.
 3. Courtesy email to Dan Eilers before anything goes public.
 4. Phase 2: see `f6/README.md`.
