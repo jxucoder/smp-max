@@ -53,7 +53,16 @@ External tool: [drat-trim](https://github.com/marijnheule/drat-trim)
   lemmas in core, verdict `s VERIFIED`; LRAT certificate emitted
   (4,327,129,882 bytes).
 
-Together: **f(5) = 16, now with a certificate.**
+- RUP-only re-solves (for Mathlib's RUP-only `lrat_proof`):
+  - kissat with `--eliminate=false --ands=false --equivalences=false
+    --extract=false --substitute=false`: UNSAT, 961MB DRAT, but core still
+    had 2,564 RAT lemmas — elimination was not the RAT source.
+  - kissat `--plain` (all inprocessing off): UNSAT, 2.12GB DRAT, verified
+    in 1276.5s with **0 RAT lemmas in core** — pure-RUP proof achieved;
+    Lean import path unblocked. LRAT emission from this proof: see log.
+
+Together: **f(5) = 16, now with a certificate** (three independent
+refutations; the plain-mode proof is pure RUP).
 
 ## Next steps
 
