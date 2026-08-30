@@ -75,11 +75,13 @@ total, mean solve 10.5s (`f5/cube_run.py` -> `f5/cubes/`, regenerable,
 gitignored). This is a fourth, structurally different refutation of
 ">=17" (covering split over man 1's preference order).
 
-Import architecture decision pending: (A) split one level deeper
-(~14,400 cubes) to bring per-cube LRAT into Mathlib `lrat_proof` range,
-or (B) check the 120 mid-size certificates with the formally verified
-external checker cake_lpr and keep Lean for encoding faithfulness + the
-cube-covering lemma (the R(4,5)/Schur-5 architecture).
+Architecture B chosen (verified external checker): cake_lpr built
+natively for ARM64 from tanyongkiam/cake_lpr (`cake_lpr-src/`, gitignored
+build), self-test and n=4 pilot passed, then ALL 120 cube certificates
+verified: 120/120 `s VERIFIED UNSAT` (10-way parallel; results in
+`f5/cakelpr_results.txt`). Machine side of the f(5)<=16 evidence chain is
+complete; what remains is the Lean math side: encoding faithfulness, the
+fix-man0 symmetry lemma, and the 120-cube covering lemma.
 
 ## Next steps
 
