@@ -55,10 +55,6 @@ def stableCount (I : Inst) : Nat :=
 /-- The identity rank row: man ranks woman `w` at position `w`. -/
 def idRow : List Nat := [0, 1, 2, 3, 4]
 
-/-- **Main target**: no well-formed 5×5 instance has 17 stable matchings. -/
-theorem f5_upper (I : Inst) (h : WF I = true) : stableCount I ≤ 16 := by
-  sorry
-
 /-- A well-formed rank row is a permutation of `idRow`. -/
 theorem rankRow_perm {r : List Nat} (h : isRankRow r = true) :
     r.Perm idRow := by

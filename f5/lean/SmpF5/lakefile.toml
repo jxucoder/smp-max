@@ -16,3 +16,7 @@ rev = "v4.33.1"
 
 [[lean_lib]]
 name = "SmpF5"
+
+[[lean_exe]]
+name = "export_cnf"
+root = "ExportCnf"
