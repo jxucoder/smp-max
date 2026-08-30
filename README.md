@@ -69,8 +69,11 @@ refutations; the plain-mode proof is pure RUP).
 
 Cubing on man 1's full preference order (120 cubes, orthogonal to the
 fix-man0 symmetry): probe of 4 samples showed all UNSAT, pure RUP,
-solve 2.9-19.1s each, LRAT 72-428MB per cube. Full 120-cube production:
-`f5/cube_run.py` -> `f5/cubes/` (regenerable, gitignored).
+solve 2.9-19.1s each, LRAT 72-428MB per cube. Full 120-cube production
+COMPLETE: all 120 cubes UNSAT, pure RUP, each drat-trim-verified; 34GB
+total, mean solve 10.5s (`f5/cube_run.py` -> `f5/cubes/`, regenerable,
+gitignored). This is a fourth, structurally different refutation of
+">=17" (covering split over man 1's preference order).
 
 Import architecture decision pending: (A) split one level deeper
 (~14,400 cubes) to bring per-cube LRAT into Mathlib `lrat_proof` range,
