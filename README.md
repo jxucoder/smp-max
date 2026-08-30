@@ -80,8 +80,11 @@ natively for ARM64 from tanyongkiam/cake_lpr (`cake_lpr-src/`, gitignored
 build), self-test and n=4 pilot passed, then ALL 120 cube certificates
 verified: 120/120 `s VERIFIED UNSAT` (10-way parallel; results in
 `f5/cakelpr_results.txt`). Machine side of the f(5)<=16 evidence chain is
-complete; what remains is the Lean math side: encoding faithfulness, the
-fix-man0 symmetry lemma, and the 120-cube covering lemma.
+complete. Lean math side progress: the covering lemma (cube_covering)
+and the ENTIRE symmetry reduction (relabel machinery, isStable_relabel,
+stableCount_relabel, reduce_man0') are fully proved, axioms = standard
+Mathlib trio only. Sole remaining sorry: f5_upper via the per-cube
+encoding-faithfulness bridge.
 
 ## Next steps
 

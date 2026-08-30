@@ -236,9 +236,174 @@ theorem relabel_WF {I : Inst} (h : WF I = true) : WF (relabel I) = true := by
 
 /-! ## Stability and counting are preserved (the core bijection) -/
 
+theorem getD_map_range' {α : Type} {d : α} {f : Nat → α} {w : Nat} (hw : w < 5) :
+    ((List.range 5).map f).getD w d = f w := by
+  have hlt : w < ((List.range 5).map f).length := by simpa using hw
+  rw [List.getD_eq_getElem _ _ hlt]
+  simp
+
+theorem getD_map_nat {f : Nat → Nat} {l : List Nat} {i : Nat} (h : i < l.length) :
+    (l.map f).getD i 0 = f (l.getD i 0) := by
+  rw [List.getD_eq_getElem _ _ (by simpa using h), List.getElem_map,
+      List.getD_eq_getElem _ _ h]
+
+theorem invList_isRankRow {σ : List Nat} (hp : σ.Perm idRow) :
+    isRankRow (invList σ) = true := by
+  simp only [isRankRow, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
+  refine ⟨by simp [invList], ?_⟩
+  intro v hv
+  have hv5 : v < 5 := by simpa using hv
+  have hpos : app σ v < 5 := sigma_app_lt hp hv5
+  have hlt : app σ v < (invList σ).length := by
+    simp only [invList, List.length_map, List.length_range]
+    exact hpos
+  have hval : (invList σ).getD (app σ v) 0 = v := inv_app_app hp hv5
+  have hmem : v ∈ invList σ := by
+    rw [← hval, List.getD_eq_getElem _ _ hlt]
+    exact List.getElem_mem hlt
+  simpa [List.contains_iff_mem] using hmem
+
+theorem invList_perm {σ : List Nat} (hp : σ.Perm idRow) :
+    (invList σ).Perm idRow := rankRow_perm (invList_isRankRow hp)
+
+theorem entry_lt {l : List Nat} (hmu : l.Perm idRow)
+    {y : Nat} (hy : y ∈ l) : y < 5 := by
+  have : y ∈ idRow := hmu.mem_iff.1 hy
+  rw [idRow_eq_range] at this
+  simpa using this
+
+theorem map_app_left_inv {σ mu : List Nat} (hp : σ.Perm idRow)
+    (hmu : mu.Perm idRow) :
+    (mu.map (app σ)).map (app (invList σ)) = mu := by
+  rw [List.map_map]
+  have hc : ∀ x ∈ mu, (app (invList σ) ∘ app σ) x = id x := by
+    intro x hx
+    simpa using inv_app_app hp (entry_lt hmu hx)
+  rw [List.map_congr_left hc, List.map_id]
+
+theorem map_app_right_inv {σ mu' : List Nat} (hp : σ.Perm idRow)
+    (hmu : mu'.Perm idRow) :
+    (mu'.map (app (invList σ))).map (app σ) = mu' := by
+  rw [List.map_map]
+  have hc : ∀ x ∈ mu', (app σ ∘ app (invList σ)) x = id x := by
+    intro x hx
+    simpa using app_inv_app hp (entry_lt hmu hx)
+  rw [List.map_congr_left hc, List.map_id]
+
+theorem mapMu_mem {σ mu : List Nat} (hp : σ.Perm idRow)
+    (hmu : mu ∈ ([0, 1, 2, 3, 4] : List Nat).permutations) :
+    mu.map (app σ) ∈ ([0, 1, 2, 3, 4] : List Nat).permutations := by
+  have hmup : mu.Perm idRow := List.mem_permutations.1 hmu
+  apply List.mem_permutations.2
+  have h1 : (mu.map (app σ)).Perm (idRow.map (app σ)) := hmup.map _
+  have h2 : idRow.map (app σ) = σ := by
+    rw [idRow_eq_range]
+    exact map_getD_range (sigma_length hp)
+  rw [h2] at h1
+  exact h1.trans hp
+
+theorem perms_map_perm {σ : List Nat} (hp : σ.Perm idRow) :
+    (([0, 1, 2, 3, 4] : List Nat).permutations.map
+      (fun mu => mu.map (app σ))).Perm
+    ([0, 1, 2, 3, 4] : List Nat).permutations := by
+  have hnd : ([0, 1, 2, 3, 4] : List Nat).permutations.Nodup :=
+    List.nodup_permutations _ (by decide)
+  have hndm : (([0, 1, 2, 3, 4] : List Nat).permutations.map
+      (fun mu => mu.map (app σ))).Nodup := by
+    refine List.Nodup.map_on ?_ hnd
+    intro mu1 h1 mu2 h2 heq
+    have hc := congrArg (List.map (app (invList σ))) heq
+    rwa [map_app_left_inv hp (List.mem_permutations.1 h1),
+        map_app_left_inv hp (List.mem_permutations.1 h2)] at hc
+  rw [List.perm_ext_iff_of_nodup hndm hnd]
+  intro mu'
+  constructor
+  · intro hmem
+    obtain ⟨mu, hmu, rfl⟩ := List.mem_map.1 hmem
+    exact mapMu_mem hp hmu
+  · intro hmem
+    refine List.mem_map.2 ⟨mu'.map (app (invList σ)), ?_, ?_⟩
+    · exact mapMu_mem (invList_perm hp) hmem
+    · exact map_app_right_inv hp (List.mem_permutations.1 hmem)
+
+theorem get2_relabel_m {I : Inst} (h : WF I = true) {m x : Nat}
+    (hm : m < 5) (hx : x < 5) :
+    get2 (relabel I).mrank m x = get2 I.mrank m (app (invList (sigma I)) x) := by
+  obtain ⟨hml, _, _, _⟩ := WF_unfold h
+  simp only [get2, relabel]
+  rw [getD_map_lt (show m < I.mrank.length by omega), getD_map_range' hx]
+
+theorem get2_relabel_w {I : Inst} (h : WF I = true) {x : Nat} (hx : x < 5)
+    (m : Nat) :
+    get2 (relabel I).wrank x m = get2 I.wrank (app (invList (sigma I)) x) m := by
+  simp only [get2, relabel]
+  rw [getD_map_range' (d := ([] : List Nat)) hx]
+
+theorem body_shift {I : Inst} (h : WF I = true) {mu : List Nat}
+    (hmu : mu.Perm idRow) {m w : Nat} (hm : m < 5) (hw : w < 5) :
+    ((app (sigma I) w = (mu.map (app (sigma I))).getD m 0) ∨
+      ¬get2 (relabel I).mrank m (app (sigma I) w) <
+          get2 (relabel I).mrank m ((mu.map (app (sigma I))).getD m 0) ∨
+      ¬get2 (relabel I).wrank (app (sigma I) w) m <
+          get2 (relabel I).wrank (app (sigma I) w)
+            (idxOf (app (sigma I) w) (mu.map (app (sigma I))))) ↔
+    ((w = mu.getD m 0) ∨
+      ¬get2 I.mrank m w < get2 I.mrank m (mu.getD m 0) ∨
+      ¬get2 I.wrank w m < get2 I.wrank w (idxOf w mu)) := by
+  have hp := sigma_perm h
+  have hmlen : m < mu.length := by rw [sigma_length hmu]; exact hm
+  have hwm5 : mu.getD m 0 < 5 := sigma_app_lt hmu hm
+  have hidx : idxOf (app (sigma I) w) (mu.map (app (sigma I))) = idxOf w mu := by
+    refine idxOf_map ?_
+    intro y hy hxy
+    have hc := congrArg (app (invList (sigma I))) hxy
+    rwa [inv_app_app hp (entry_lt hmu hy), inv_app_app hp hw] at hc
+  have heq : (app (sigma I) w = app (sigma I) (mu.getD m 0)) ↔
+      (w = mu.getD m 0) := by
+    constructor
+    · intro he
+      have hc := congrArg (app (invList (sigma I))) he
+      rwa [inv_app_app hp hw, inv_app_app hp hwm5] at hc
+    · intro he; rw [he]
+  rw [getD_map_nat hmlen, hidx,
+      get2_relabel_m h hm (sigma_app_lt hp hw),
+      get2_relabel_m h hm (sigma_app_lt hp hwm5),
+      get2_relabel_w h (sigma_app_lt hp hw) m,
+      get2_relabel_w h (sigma_app_lt hp hw) (idxOf w mu),
+      inv_app_app hp hw, inv_app_app hp hwm5, heq]
+
+theorem isStable_relabel {I : Inst} (h : WF I = true) {mu : List Nat}
+    (hmu : mu.Perm idRow) :
+    isStable (relabel I) (mu.map (app (sigma I))) = isStable I mu := by
+  have hp := sigma_perm h
+  rw [Bool.eq_iff_iff]
+  simp only [isStable, List.all_eq_true, List.mem_range, Bool.or_eq_true,
+    Bool.and_eq_true, Bool.not_eq_true', Bool.and_eq_false_iff,
+    decide_eq_true_eq, decide_eq_false_iff_not]
+  constructor
+  · intro H m hm w hw
+    have hkey := H m hm (app (sigma I) w) (sigma_app_lt hp hw)
+    exact (body_shift h hmu hm hw).1 hkey
+  · intro H m hm w'' hw''
+    have hw : app (invList (sigma I)) w'' < 5 := inv_app_lt hp hw''
+    have hkey := (body_shift h hmu hm hw).2 (H m hm _ hw)
+    rwa [app_inv_app hp hw''] at hkey
+
 theorem stableCount_relabel {I : Inst} (h : WF I = true) :
     stableCount (relabel I) = stableCount I := by
-  sorry
+  have hp := sigma_perm h
+  unfold stableCount
+  have h1 : (([0, 1, 2, 3, 4] : List Nat).permutations.filter
+        (isStable (relabel I))).length
+      = ((([0, 1, 2, 3, 4] : List Nat).permutations.map
+          (fun mu => mu.map (app (sigma I)))).filter
+            (isStable (relabel I))).length :=
+    (((perms_map_perm hp).filter _).length_eq).symm
+  rw [h1, List.filter_map, List.length_map]
+  congr 1
+  apply List.filter_congr
+  intro mu hmu
+  exact isStable_relabel h (List.mem_permutations.1 hmu)
 
 /-- **Symmetry step (target)**: it suffices to bound instances whose man 0
 has the identity ranking. -/
