@@ -64,6 +64,20 @@ External tool: [drat-trim](https://github.com/marijnheule/drat-trim)
 Together: **f(5) = 16, now with a certificate** (three independent
 refutations; the plain-mode proof is pure RUP).
 
+
+## Cube-and-conquer (n=5 Lean import, in progress)
+
+Cubing on man 1's full preference order (120 cubes, orthogonal to the
+fix-man0 symmetry): probe of 4 samples showed all UNSAT, pure RUP,
+solve 2.9-19.1s each, LRAT 72-428MB per cube. Full 120-cube production:
+`f5/cube_run.py` -> `f5/cubes/` (regenerable, gitignored).
+
+Import architecture decision pending: (A) split one level deeper
+(~14,400 cubes) to bring per-cube LRAT into Mathlib `lrat_proof` range,
+or (B) check the 120 mid-size certificates with the formally verified
+external checker cake_lpr and keep Lean for encoding faithfulness + the
+cube-covering lemma (the R(4,5)/Schur-5 architecture).
+
 ## Next steps
 
 1. Lean 4: formalize encoding faithfulness + the fix-man0 symmetry lemma;
