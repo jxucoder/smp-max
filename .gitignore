@@ -7,3 +7,4 @@ __pycache__/
 *.out
 *.synctex.gz
 f5/paper/f5.log
+f5/lean/SmpF5/.lake/
