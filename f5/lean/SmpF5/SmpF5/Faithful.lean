@@ -36,14 +36,6 @@ def WF (I : Inst) : Bool :=
 
 def get2 (t : List (List Nat)) (i j : Nat) : Nat := (t.getD i []).getD j 0
 
-def insertAll (x : Nat) : List Nat → List (List Nat)
-  | [] => [[x]]
-  | y :: ys => (x :: y :: ys) :: (insertAll x ys).map (y :: ·)
-
-def permsOf : List Nat → List (List Nat)
-  | [] => [[]]
-  | x :: xs => (permsOf xs).flatMap (insertAll x)
-
 def idxOf (x : Nat) : List Nat → Nat
   | [] => 0
   | y :: ys => if y = x then 0 else idxOf x ys + 1
@@ -58,22 +50,13 @@ def isStable (I : Inst) (mu : List Nat) : Bool :=
         get2 I.wrank w m < get2 I.wrank w mw)
 
 def stableCount (I : Inst) : Nat :=
-  ((permsOf [0, 1, 2, 3, 4]).filter (isStable I)).length
+  (([0, 1, 2, 3, 4] : List Nat).permutations.filter (isStable I)).length
 
 /-- The identity rank row: man ranks woman `w` at position `w`. -/
 def idRow : List Nat := [0, 1, 2, 3, 4]
 
 /-- **Main target**: no well-formed 5×5 instance has 17 stable matchings. -/
 theorem f5_upper (I : Inst) (h : WF I = true) : stableCount I ≤ 16 := by
-  sorry
-
-/-- **Symmetry step**: it suffices to bound instances whose man 0 has the
-identity ranking. Proof: relabel women by man 0's ranking permutation;
-relabeling is a bijection on matchings preserving stability. -/
-theorem reduce_man0
-    (h : ∀ I : Inst, WF I = true → I.mrank.getD 0 [] = idRow →
-         stableCount I ≤ 16) :
-    ∀ I : Inst, WF I = true → stableCount I ≤ 16 := by
   sorry
 
 /-- A well-formed rank row is a permutation of `idRow`. -/
