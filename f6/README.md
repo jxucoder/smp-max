@@ -57,6 +57,29 @@ UNSAT run broke only the n! woman-relabeling symmetry (fix man 0's list).
   lemma is a full proof skeleton for f(6)=48 — no 1e28 SAT campaign
   needed.
 
+## Proof skeleton status (2026-08-31 evening)
+
+The structural route has nearly closed f(6)=48:
+1. **Bridge lemma** (instance count <= its schedule's read-off count):
+   proof sketch (non-trajectory pairs bottom-ranked never block; original
+   stable matchings survive) + 1500/1500 random instances, 0 violations.
+2. **Monotonicity** (extending a schedule never decreases the read-off
+   count): 768,472 parent-child pairs, 0 violations.
+   => only MAXIMAL schedules need evaluation.
+3. **Size-2 regime CLOSED**: exhaustive enumeration of all maximal
+   swap-schedules (534 full-budget + 262,241 stuck, bottom-completed)
+   in 98s: **maximum = 48**. (`enum_schedules.py`)
+4. **Size>=3 reduction, one leak**: every 3-cycle has three 2-swap
+   decompositions with identical net effect; on 1122 random valid
+   3-cycle schedules, refinement NEVER loses count, but in 1 case all
+   three refinements were invalid (revisit conflicts). Closing options:
+   commute-then-refine, a direct no-large-rotations-at-extremum lemma,
+   or bounded enumeration of large-rotation schedules. (`gen_enum.py`)
+
+Once (1), (2) are proven rigorously and (4) is closed, f(6)=48 follows
+from a 98-second enumeration — no 1e28 SAT campaign. All empirical
+pillars are cheap to re-verify and Lean-certifiable in principle.
+
 ## Attack plan
 
 1. Stronger symmetry breaking: men-relabeling (up to 5! more) and

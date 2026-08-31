@@ -6,3 +6,11 @@
 [seed 103] dihedral-seq score = 48 (expect 48)
 [seed 106] dihedral-seq score = 48 (expect 48)
 [seed 107] dihedral-seq score = 48 (expect 48)
+[seed 102] done: best=48, evals=151867732, valid=9037484, restarts=24539
+[seed 100] done: best=48, evals=151058137, valid=9016051, restarts=24382
+[seed 105] done: best=48, evals=150948546, valid=9067460, restarts=24330
+[seed 101] done: best=48, evals=149291987, valid=9081226, restarts=24157
+[seed 104] done: best=48, evals=148941495, valid=9066183, restarts=24082
+[seed 103] done: best=48, evals=150156776, valid=9058535, restarts=24289
+[seed 106] done: best=48, evals=151838294, valid=9079135, restarts=24490
+[seed 107] done: best=48, evals=151767218, valid=9035172, restarts=24496

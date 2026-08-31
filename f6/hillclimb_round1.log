@@ -40,3 +40,11 @@
 [seed 0] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
 [seed 5] new best 48 after 64394 evals (restart 9)
 [seed 5] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 1] done: best=48, evals=12111209, restarts=1781
+[seed 4] done: best=48, evals=12163539, restarts=1754
+[seed 0] done: best=48, evals=12124825, restarts=1761
+[seed 3] done: best=48, evals=12138379, restarts=1753
+[seed 6] done: best=48, evals=12107359, restarts=1764
+[seed 5] done: best=48, evals=12090114, restarts=1758
+[seed 2] done: best=48, evals=12132312, restarts=1774
+[seed 7] done: best=48, evals=12143595, restarts=1789
