@@ -107,6 +107,16 @@ Outside the Lean kernel, the trust base is: cake_lpr (formally verified),
 the 30-line DIMACS printer, and the solver toolchain (whose output is
 independently checked, not trusted).
 
+## Independent verification of A344669 (2026-08-31)
+
+Eilers' counts of maximal profiles, previously unreplicated, all confirmed
+with our toolchain: a(3)=1092 (full brute force over 46,656 profiles),
+a(4)=144 (SAT enumeration: 6 canonical solutions x 4!), and
+**a(5)=507,254,400** (incremental-SAT enumeration of all 4,227,120
+canonical man0=id solutions across 120 cubes, ~5 min on 8 cores;
+`f5/cube_enum.py`, `f5/enum_results.txt`). The quotient 4,227,120/24 =
+176,130 also confirms his reduced-instance count in OEIS A357269.
+
 ## Next steps
 
 1. Unify the two stableCount definitions (permsOf vs List.permutations
