@@ -112,8 +112,11 @@ known value of f — including our own certified theorem:
 - n=5 (budget 20): 498,599 nodes, max **16** = f(5) — the very value
   machine-certified in this repository (Lean + cake_lpr). The f(5)
   theorem now serves as a certified test oracle for the f(6) method.
-Pruning soundness: with canonicalization disabled, n=4 (1,859 nodes)
-and n=5 (7,011,835 nodes, 14x more) reach the identical maxima.
+Pruning soundness: with canonicalization disabled, identical maxima at
+every scale tested — n=4: 1,859 vs 409 nodes, both 10; n=5: 7,011,835
+vs 498,599, both 16; n=6 budget-16: 2,657,773,436 vs 55,406,792 (48x),
+both 24. Cross-implementation: the independent Python enumerator agrees
+on maxima at budgets 10/12 (14/18).
 All-node evaluation (removing the monotonicity pillar): n=6 overnight
 campaign in progress; canonical evalall at budget 16 matches the
 maximal-only pass exactly (55,406,792 nodes, best 24).
