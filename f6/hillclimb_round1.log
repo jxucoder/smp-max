@@ -1,0 +1,42 @@
+[seed 1] new best 38 after 5 evals (restart 0)
+[seed 0] new best 15 after 2 evals (restart 0)
+[seed 0] new best 18 after 4 evals (restart 0)
+[seed 0] new best 19 after 7 evals (restart 0)
+[seed 3] new best 34 after 10 evals (restart 0)
+[seed 5] new best 34 after 12 evals (restart 0)
+[seed 3] new best 35 after 28 evals (restart 0)
+[seed 7] new best 33 after 18 evals (restart 0)
+[seed 4] new best 33 after 66 evals (restart 0)
+[seed 5] new best 36 after 66 evals (restart 0)
+[seed 3] new best 40 after 97 evals (restart 0)
+[seed 1] new best 48 after 112 evals (restart 0)
+[seed 1] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 6] new best 48 after 145 evals (restart 0)
+[seed 6] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 0] new best 21 after 236 evals (restart 0)
+[seed 0] new best 28 after 258 evals (restart 0)
+[seed 0] new best 29 after 263 evals (restart 0)
+[seed 5] new best 43 after 249 evals (restart 0)
+[seed 7] new best 35 after 347 evals (restart 0)
+[seed 4] new best 43 after 953 evals (restart 0)
+[seed 0] new best 32 after 1362 evals (restart 0)
+[seed 0] new best 34 after 1876 evals (restart 0)
+[seed 0] new best 35 after 2012 evals (restart 0)
+[seed 7] new best 40 after 2513 evals (restart 0)
+[seed 0] new best 37 after 2465 evals (restart 0)
+[seed 7] new best 43 after 3057 evals (restart 0)
+[seed 2] new best 43 after 4063 evals (restart 1)
+[seed 0] new best 42 after 5118 evals (restart 0)
+[seed 7] new best 48 after 8275 evals (restart 1)
+[seed 7] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 3] new best 48 after 18707 evals (restart 3)
+[seed 3] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 2] new best 48 after 20713 evals (restart 3)
+[seed 2] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 4] new best 48 after 28417 evals (restart 4)
+[seed 4] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 0] new best 43 after 46411 evals (restart 6)
+[seed 0] new best 48 after 51764 evals (restart 7)
+[seed 0] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
+[seed 5] new best 48 after 64394 evals (restart 9)
+[seed 5] mrank=[[0, 1, 2, 3, 4, 5], [1, 0, 3, 2, 5, 4], [2, 5, 4, 1, 0, 3], [3, 4, 5, 0, 1, 2], [4, 3, 0, 5, 2, 1], [5, 2, 1, 4, 3, 0]] wrank=[[5, 4, 3, 2, 1, 0], [4, 5, 0, 1, 2, 3], [3, 2, 1, 0, 5, 4], [2, 3, 4, 5, 0, 1], [1, 0, 5, 4, 3, 2], [0, 1, 2, 3, 4, 5]]
