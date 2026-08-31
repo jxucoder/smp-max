@@ -117,9 +117,27 @@ every scale tested — n=4: 1,859 vs 409 nodes, both 10; n=5: 7,011,835
 vs 498,599, both 16; n=6 budget-16: 2,657,773,436 vs 55,406,792 (48x),
 both 24. Cross-implementation: the independent Python enumerator agrees
 on maxima at budgets 10/12 (14/18).
-All-node evaluation (removing the monotonicity pillar): n=6 overnight
-campaign in progress; canonical evalall at budget 16 matches the
-maximal-only pass exactly (55,406,792 nodes, best 24).
+All-node evaluation COMPLETE (removing the monotonicity pillar
+entirely): all 26,574,282,886 schedule nodes exactly counted, GLOBAL
+MAX = 48 (logs: genrun_all_logs.tar.gz). Node count identical to the
+maximal-only traversal — perfect internal consistency.
+
+## RESULT: f(6) = 48
+
+Proof structure (see theory.pdf):
+- Validity + Bridge + Symmetry-soundness lemmas: proven (elementary
+  over Gusfield-Irving rotation theory);
+- Enumeration: every schedule's read-off instance exactly counted, max
+  48; methodology reproduces f(3)/f(4)/f(5) = 3/10/16 including this
+  repository's own certified f(5) theorem; two independent
+  implementations agree; canonicalization on/off agrees across four
+  orders of magnitude;
+- Lower bound: the dihedral instance's 48 (verified by three
+  independent counters).
+
+Eilers' conjecture (OEIS A357271, a(6)) is TRUE. Remaining for
+paper-grade publication: write-up (theory.tex -> paper), independent
+replication instructions, and eventual formal certification.
 
 ## Attack plan
 
