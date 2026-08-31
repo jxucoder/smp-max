@@ -16,7 +16,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define N 6
+#ifndef NVAL
+#define NVAL 6
+#endif
+#define N NVAL
 #define MAXSTEPS 480
 #define MAXSEQ 15
 
@@ -73,7 +76,7 @@ static int mtraj[N][N], mlen[N], wtraj[N][N], wlen[N];
 static int seq[MAXSEQ], depth = 0;
 static long long nodes = 0, leaves = 0;
 static int best = 0;
-static int budget_cap, shard, nshards, evalall = 0;
+static int budget_cap, shard, nshards, evalall = 0, nocanon = 0;
 static long long shard_ctr = 0;
 
 static int count_stable_readoff(void) {
@@ -135,7 +138,7 @@ static void dfs(int used, int maxused) {
         int k = step_k[s];
         if (used + k > budget_cap) continue;
         /* new-men rule: new men must be exactly next labels as a set */
-        int newmask = step_mask[s] & ~((1 << maxused) - 1);
+        int newmask = nocanon ? 0 : (step_mask[s] & ~((1 << maxused) - 1));
         if (newmask) {
             int expect = newmask;
             /* must be contiguous from maxused */
@@ -145,9 +148,10 @@ static void dfs(int used, int maxused) {
         }
         int bad = 0;
         for (int i = 0; i < k; i++)
-            if (moves_used[step_men[s][i]] >= 5) { bad = 1; break; }
+            if (moves_used[step_men[s][i]] >= N - 1) { bad = 1; break; }
         if (bad) continue;
         /* backward-commute pruning */
+        if (!nocanon)
         for (int d = depth - 1; d >= 0; d--) {
             int ps = seq[d];
             if (step_mask[ps] & step_mask[s]) break;
@@ -196,6 +200,7 @@ int main(int argc, char **argv) {
     shard = argc > 2 ? atoi(argv[2]) : 0;
     nshards = argc > 3 ? atoi(argv[3]) : 1;
     evalall = argc > 4 ? atoi(argv[4]) : 0;
+    nocanon = argc > 5 ? atoi(argv[5]) : 0;
     int cur[N];
     gen_perms(cur, 0, 0);
     gen_steps();

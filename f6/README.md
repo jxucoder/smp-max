@@ -103,6 +103,21 @@ conjecture in OEIS A357271 is TRUE):
 Remaining to a paper-grade theorem: prove (1) and (2), certify or
 independently reimplement the enumeration, and (eventually) Lean-ify.
 
+## Methodology validation (2026-08-31 late)
+
+The schedule-reduction machine, run at smaller orders, reproduces every
+known value of f — including our own certified theorem:
+- n=3 (budget 6): 8 nodes, max **3** = f(3)
+- n=4 (budget 12): 409 nodes, max **10** = f(4)
+- n=5 (budget 20): 498,599 nodes, max **16** = f(5) — the very value
+  machine-certified in this repository (Lean + cake_lpr). The f(5)
+  theorem now serves as a certified test oracle for the f(6) method.
+Pruning soundness: with canonicalization disabled, n=4 (1,859 nodes)
+and n=5 (7,011,835 nodes, 14x more) reach the identical maxima.
+All-node evaluation (removing the monotonicity pillar): n=6 overnight
+campaign in progress; canonical evalall at budget 16 matches the
+maximal-only pass exactly (55,406,792 nodes, best 24).
+
 ## Attack plan
 
 1. Stronger symmetry breaking: men-relabeling (up to 5! more) and
