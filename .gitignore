@@ -11,3 +11,5 @@ f5/lean/SmpF5/.lake/
 f5/cubes/
 cake_lpr-src/
 *.model
+f5/cubesL/*.cnf
+f5/cubesL/perms120.txt
