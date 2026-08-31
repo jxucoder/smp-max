@@ -1,0 +1,252 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{fact}{Fact}
+\newtheorem{remark}{Remark}
+
+\title{The maximum number of stable matchings\\ of order six is forty-eight}
+\author{Jiarui Xu\thanks{\texttt{jxucoder@gmail.com}. The theory, code and drafting were developed with
+the assistance of Claude (Anthropic); every numerical claim comes from executed, logged runs in the
+accompanying repository.}}
+\date{September 1, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $f(n)$ denote the maximum number of stable matchings of a stable-marriage instance with $n$ men
+and $n$ women (Knuth 1976; Gusfield--Irving Open Problem \#1). The known values were
+$f(1),\dots,f(5)=1,2,3,10,16$; the value of $f(6)$ was open, with the lower bound $48$ (a dihedral
+Latin instance) conjectured exact (OEIS A357271). We prove $f(6)=48$. The proof is a reduction of
+the $\sim\!10^{28}$-instance search space to a finite space of \emph{rotation schedules}: sequences
+of cyclic partner exchanges applied from the identity matching. Three elementary lemmas over the
+standard rotation theory show that every instance is dominated, in stable-matching count, by the
+\emph{read-off instance} of its own schedule, and that a first-appearance labeling and a
+commutation normal form lose no schedules. An exhaustive enumeration then evaluates the exact
+stable-matching count of all $26{,}574{,}282{,}886$ schedule nodes --- roughly ten hours on a
+laptop --- attaining maximum $48$. The methodology is validated against ground truth: run at orders
+$3,4,5$ it reproduces $3, 10, 16$, the last being the value the author's companion development
+certifies formally (Lean + verified SAT certificates); an independent implementation and
+canonicalization on/off comparisons (up to a $2.66\times 10^9$-node check) agree throughout.
+\end{abstract}
+
+\section{Introduction}
+
+A stable-marriage instance of order $n$ equips $n$ men and $n$ women each with a strict preference
+order over the opposite side; a perfect matching is \emph{stable} if no man and woman prefer each
+other to their assigned partners. Knuth~\cite{knuth} asked for the behaviour of $f(n)$, the maximum
+number of stable matchings over instances of order $n$; Gusfield and Irving made it Open
+Problem~\#1 of their monograph~\cite{gi89}. Asymptotically $2.28^n\le f(n)\le 3.55^n$
+\cite{thurber,kow,pp}. Exact values have been scarce: $f(4)=10$ and $f(5)=16$ are due to
+Eilers~\cite{oeis} (the latter obtained in 2022 by constraint programming and certified formally in
+the author's companion work~\cite{f5paper}), and
+\[
+f(1),\dots,f(5) \;=\; 1,\;2,\;3,\;10,\;16.
+\]
+For $n=6$ the best lower bound has long been $48$, attained by a Latin instance built from the
+dihedral group; OEIS A357271 records the conjecture that $48$ is exact. The instance space of
+order six ($\sim\!10^{28}$ after obvious symmetries) is far beyond direct search, and the best
+human-provable upper bound, $3.55^6\approx 2005$, is forty times too large.
+
+\paragraph{Result and method.} We prove $f(6)=48$. The key is a change of universe: instead of
+instances, we enumerate \emph{schedules} --- sequences of cyclic partner exchanges ("rotations")
+applied from the identity matching, subject to the budget constraints that rotation theory imposes
+(at most $30$ moved-man slots, at most $5$ moves per man, no partner revisited). Each schedule
+\emph{reads off} an instance whose preference lists are the participants' partner trajectories,
+completed at the bottom. Three lemmas (Section~\ref{sec:reduction}) show:
+(i) every instance's rotations, in elimination order, form a valid schedule;
+(ii) the read-off instance of that schedule has at least as many stable matchings
+(the \emph{bridge lemma}); and
+(iii) a first-appearance labeling rule and a commutation normal form preserve at least one
+representative of every schedule, without affecting read-off counts.
+The schedule space is small enough to exhaust: our enumerator visits $26{,}574{,}282{,}886$ nodes
+and computes the exact stable-matching count of every node's read-off instance, attaining maximum
+$48$ (Section~\ref{sec:enum}). With the dihedral lower bound, $f(6)=48$ follows.
+
+\paragraph{Validation.} Because the result rests on an enumeration, Section~\ref{sec:valid}
+documents the checks: the same machine run at orders $3,4,5$ reproduces $f=3,10,16$ ---
+the last value being formally certified (machine-checked in Lean, with SAT refutations verified by
+the formally verified checker cake\_lpr) in the companion work~\cite{f5paper}, so a certified
+theorem serves as test oracle for the present method; an independently written enumerator agrees
+on maxima; disabling the symmetry reductions multiplies the tree by up to $48\times$ (a
+$2.66\times10^9$-node check at order six) and never changes a maximum; and $1.3\times10^9$
+local-search evaluations in two other search spaces also never exceeded $48$.
+
+\section{Preliminaries}
+
+We use the structure theory of the stable-matching lattice and its rotations
+(Gusfield--Irving~\cite{gi89}, Chapters 2--3) and record what we need.
+
+\begin{fact}\label{fact:pairs}
+Call $(m,w)$ a \emph{stable pair} of an instance $I$ if some stable matching contains it. For each
+man $m$, his stable partners ordered by his preference form his \emph{trajectory} $T_m$: the
+man-optimal matching $\mu_0$ gives each man the first entry of his trajectory, and the rotations of
+$I$, applied from $\mu_0$ in any linear extension of the rotation poset, move each man strictly
+down his trajectory, one entry per rotation containing him, ending at the woman-optimal matching.
+Symmetrically each woman moves strictly up her trajectory. A rotation is a cyclic sequence
+$(m_0,w_0),\dots,(m_{k-1},w_{k-1})$, $k\ge 2$, of pairs of the current matching, whose application
+gives $m_i$ the partner $w_{i+1}$ of $m_{i+1}$ (indices mod $k$). The number of stable matchings
+equals the number of downsets of the rotation poset.
+\end{fact}
+
+\begin{fact}\label{fact:budget}
+Each man is moved by exactly $|T_m|-1\le n-1$ rotations, so the total move count satisfies
+$\sum_\rho |\rho| = \sum_m (|T_m|-1)\le n(n-1)$; for $n=6$: at most $30$ slots, at most $5$ moves
+per man, and every rotation moves at least two men.
+\end{fact}
+
+\section{The schedule reduction}\label{sec:reduction}
+
+\begin{definition}[Schedule]\label{def:sched}
+Fix $n=6$ and start from the identity matching. A \emph{schedule} is a sequence of \emph{steps},
+each a cyclic move on $k\ge 2$ men (man $m_i$ takes the current wife of $m_{i+1}$), subject to:
+total move count $\le 30$, at most $5$ moves per man, and no man ever moving to a wife he has
+already had, nor any woman receiving a husband she has already had.
+\end{definition}
+
+\begin{definition}[Read-off instance]\label{def:readoff}
+Given a schedule $S$, the read-off instance $R(S)$ ranks, for each man, his trajectory in order at
+the top of his list, followed by the remaining women in a fixed canonical order; for each woman,
+her trajectory \emph{reversed} at the top, followed by the remaining men canonically.
+\end{definition}
+
+\begin{lemma}[Validity]\label{lem:valid}
+For any instance $I$ of order $6$, relabel women so that the man-optimal matching is the identity.
+Then the rotations of $I$, in any linear extension of the rotation poset, form a schedule $S(I)$.
+\end{lemma}
+
+\begin{proof}
+Rotations are cyclic moves on $k\ge 2$ men exposed in the current matching, and applying them in a
+linear extension realizes the lattice traversal, in which men move strictly down and women strictly
+up their trajectories (hence no repeats). The caps are Fact~\ref{fact:budget}.
+\end{proof}
+
+\begin{lemma}[Bridge]\label{lem:bridge}
+For every instance $I$ of order $6$ (women relabelled as above),
+$\mathrm{sc}(I)\le\mathrm{sc}(R(S(I)))$.
+\end{lemma}
+
+\begin{proof}
+Write $J=R(S(I))$. The trajectories of $S(I)$ are the stable-partner sequences of $I$
+(Fact~\ref{fact:pairs}); thus for each man, $J$ ranks his $I$-stable partners in the same relative
+order as $I$ does, with all other women strictly below, and symmetrically for women. We claim
+every $I$-stable matching $\mu$ is $J$-stable, which proves the inequality. Every pair of $\mu$ is
+a stable pair, hence a trajectory pair on both sides. Let $(m,w)$, $w\ne\mu(m)$.
+If $w\notin T_m$: in $J$, $m$ ranks $w$ below all of $T_m$, in particular below $\mu(m)$; no block.
+If $w\in T_m$: then $(m,w)$ is a stable pair, so $m\in T_w$; also $\mu(m)\in T_m$ and
+$\mu^{-1}(w)\in T_w$. Since $J$ preserves relative $I$-order within trajectories on both sides,
+$(m,w)$ blocks $\mu$ in $J$ iff it blocks in $I$ --- and it does not.
+\end{proof}
+
+\begin{lemma}[Symmetry soundness]\label{lem:sym}
+(i) Exchanging two adjacent steps with disjoint man-sets leaves all trajectories, hence $R(S)$,
+unchanged. (ii) Relabelling men and women by a common permutation maps schedules to schedules and
+read-off instances to relabelled instances of equal count. Consequently an enumeration that
+(a) requires the new men of each step to be exactly the next unused labels as a set, and
+(b) rejects a step lex-smaller than an earlier step separated from it only by man-disjoint steps,
+still attains $\max_S \mathrm{sc}(R(S))$.
+\end{lemma}
+
+\begin{proof}
+(i) Steps with disjoint man-sets touch disjoint women (their women are their men's current wives).
+(ii) Immediate. For the consequence, relabel by first participation (any assignment within a
+step's new set satisfies the set rule), and note rule (b) discards a sequence only in favour of a
+commutation-equivalent one with the same read-off instance.
+\end{proof}
+
+\section{The enumeration}\label{sec:enum}
+
+The enumerator (\texttt{gen\_enum.c}, $\sim$200 lines of C) performs a depth-first search over
+schedules: steps are the $409$ cyclic moves on $2..6$ men in min-first form; state comprises the
+current matching, per-person trajectories and visit masks; the reductions of
+Lemma~\ref{lem:sym}(a,b) and the caps of Definition~\ref{def:sched} prune the tree. At
+\emph{every} node the read-off instance is built (trajectory prefix + bottom completion) and its
+stable-matching count computed exactly by scanning all $720$ perfect matchings. Sharding on the
+depth-1 step splits the work across cores.
+
+The full run ($512$ shards, $8$ cores of an Apple M4 Max, $\sim$10 hours) visits
+$26{,}574{,}282{,}886$ nodes, evaluates all of them, and attains
+\[
+\max_S\ \mathrm{sc}(R(S)) \;=\; 48 .
+\]
+Because every node is evaluated, no monotonicity assumption about schedule extension is needed:
+for any instance $I$, the node $S(I)$ itself is evaluated (Lemma~\ref{lem:sym}).
+
+\begin{theorem}
+$f(6)=48$.
+\end{theorem}
+
+\begin{proof}
+The dihedral Latin instance attains $48$ (direct computation, three independent counters; OEIS
+A351413). Conversely, for any instance $I$,
+$\mathrm{sc}(I)\le\mathrm{sc}(R(S(I)))\le 48$ by Lemmas~\ref{lem:valid}--\ref{lem:sym} and the
+enumeration.
+\end{proof}
+
+\section{Validation}\label{sec:valid}
+
+\paragraph{Ground truth.} The same enumerator, parametrized by order, reproduces every known
+value: order $3$ ($8$ nodes, max $3$), order $4$ ($409$ nodes, max $10$), order $5$
+($498{,}599$ nodes, max $16$). The last is decisive: $f(5)=16$ is certified in the companion
+development~\cite{f5paper} by a Lean~4 proof with SAT refutations checked end-to-end by the
+formally verified checker cake\_lpr --- a machine-checked theorem serving as test oracle for the
+present method.
+
+\paragraph{Symmetry on/off.} Disabling both reductions of Lemma~\ref{lem:sym} multiplies the tree
+($4.5\times$ at order 4; $14\times$ at order 5; $48\times$ in a budget-16 order-6 check of
+$2{,}657{,}773{,}436$ nodes) and never changes a maximum.
+
+\paragraph{Independent implementation.} A separately written Python enumerator (different pruning,
+different code path) agrees on the maxima at the budgets where it is feasible.
+
+\paragraph{Other search spaces.} Before the enumeration, $9.7\times10^7$ hill-climbing
+evaluations in raw instance space and $1.2\times10^9$ evaluations in swap-schedule space (72
+million valid schedules) never exceeded $48$; an earlier maximal-only pass of the full enumeration
+($1.40\times10^{10}$ exact counts) also attained $48$.
+
+\paragraph{Structural corroboration.} All $450$ sampled order-5 maximizers share a single
+rotation-poset skeleton; the dihedral order-6 instance uses the full budget of fifteen size-2
+rotations; and across the enumeration only the shard containing the dihedral family reaches $48$,
+with large-rotation shards peaking strictly lower --- consistent with extremal instances being
+full-budget, all-size-2 phenomena.
+
+\section{Related work and outlook}
+
+The computational lineage on $f(n)$ is Eilers' ($f(4)$, $f(5)$, and the extremal-profile counts,
+which we replicated independently in~\cite{f5paper}), building on Thurber~\cite{thurber} and
+Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}. Certified computational values of
+comparable flavour include $R(4,5)=25$, the empty hexagon number, Keller's conjecture and Schur
+number five; our companion paper~\cite{f5paper} follows that tradition for $f(5)$, and certifying
+the present enumeration (a verified replay of the DFS, and the bridge lemma in Lean --- an
+elementary argument over finite lists) is natural future work. The next open value, $f(7)$
+(best lower bound $71$, budget $42$), appears to need either a much faster certified evaluator or
+new structural cuts: the schedule tree grows by roughly three orders of magnitude.
+
+\paragraph{Artifact.} All code, logs and verification instructions accompany the repository;
+the enumeration is reproducible in $\sim$10 laptop-hours.
+
+\paragraph{Acknowledgments.} The conjecture and the dihedral instance are due to Dan Eilers, whose
+stewardship of this problem family (OEIS A357269, A357271, A351413 and relatives) made this work
+possible.
+
+\begin{thebibliography}{9}
+\bibitem{knuth} D. E. Knuth, \emph{Mariages stables}, Presses de l'Universit\'e de Montr\'eal, 1976.
+\bibitem{gi89} D. Gusfield and R. W. Irving, \emph{The Stable Marriage Problem: Structure and
+Algorithms}, MIT Press, 1989.
+\bibitem{thurber} E. G. Thurber, Concerning the maximum number of stable matchings in the stable
+marriage problem, \emph{Discrete Math.} 248 (2002), 195--219.
+\bibitem{kow} A. R. Karlin, S. Oveis Gharan and R. Weber, A simply exponential upper bound on the
+maximum number of stable matchings, \emph{STOC 2018}.
+\bibitem{pp} C. Palmer and D. P\'alv\"olgyi, At most $3.55^n$ stable matchings, \emph{FOCS 2021}.
+\bibitem{oeis} OEIS, sequences A357269, A357271, A351413, A344669, \url{https://oeis.org}.
+\bibitem{f5paper} J. Xu, A machine-checked proof that the maximum number of stable matchings of
+order five is sixteen, companion manuscript, 2026.
+\end{thebibliography}
+
+\end{document}
