@@ -123,5 +123,4 @@ canonical man0=id solutions across 120 cubes, ~5 min on 8 cores;
    enumeration lemma, ~50 lines) to state "f(5)=16" as one theorem.
 2. Rewrite the paper for the final architecture (selector encoding,
    Lean-sourced CNFs, cake_lpr); include artifact hashes.
-3. Courtesy email to Dan Eilers before anything goes public.
-4. Phase 2: see `f6/README.md`.
+3. Phase 2: see `f6/README.md`.
