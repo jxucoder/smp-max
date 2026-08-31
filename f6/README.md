@@ -80,6 +80,29 @@ Once (1), (2) are proven rigorously and (4) is closed, f(6)=48 follows
 from a 98-second enumeration — no 1e28 SAT campaign. All empirical
 pillars are cheap to re-verify and Lean-certifiable in principle.
 
+## GENERALIZED ENUMERATION COMPLETE (2026-08-31): max = 48
+
+The full budget-30 generalized schedule space — every rotation size
+2..6, every sub-budget, all maximal schedules with bottom-completion —
+was exhaustively enumerated by `gen_enum.c` (512 shards, 8 cores, ~5h):
+**26,574,282,886 nodes, 13,961,578,796 maximal schedules exactly
+counted, global maximum 48.** Zero counterexamples; only the shard
+containing the dihedral family reaches 48 (large-rotation shards peak
+lower). Per-shard logs: `genrun_logs.tar.gz`.
+
+**Consequence**: modulo three cleanly-stated lemmas, f(6) = 48 (the
+conjecture in OEIS A357271 is TRUE):
+1. Bridge lemma — count(I) <= count(readoff(S(I))) (proof sketch:
+   bottom-ranked non-trajectory pairs never block; 1500/1500 empirical);
+2. Monotonicity — extending a schedule never decreases the read-off
+   count (needed to restrict evaluation to maximal schedules;
+   768,472/768,472 empirical on an exhaustive budget-10 subtree);
+3. Soundness of the enumeration's symmetry reductions (set-based
+   first-appearance labeling + backward-commute pruning).
+
+Remaining to a paper-grade theorem: prove (1) and (2), certify or
+independently reimplement the enumeration, and (eventually) Lean-ify.
+
 ## Attack plan
 
 1. Stronger symmetry breaking: men-relabeling (up to 5! more) and
