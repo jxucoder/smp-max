@@ -42,8 +42,20 @@ UNSAT run broke only the n! woman-relabeling symmetry (fix man 0's list).
   to have size exactly 2 (weight budget n(n-1)=30), the fight is over
   poset SHAPE, not size. Candidate route: enumerate weight-feasible
   posets with >= 49 downsets, SAT-check realizability.
-- Counterexample hunt: 8 hill-climb workers (`hillclimb.py`) launched,
-  2h x 8 cores, seeded from dihedral + random restarts.
+- Counterexample hunt round 1 COMPLETE, both spaces capped at 48:
+  raw instance space (`hillclimb.py`): 97M evaluations, 14k restarts,
+  8/8 seeds best=48, zero counterexamples; structure space
+  (`struct_hunt.py`, swap-schedule search): 1.206B evaluations, 72.4M
+  valid schedules explored, 8/8 seeds best=48, zero counterexamples.
+  Strong empirical support for f(6)=48.
+- Next weapon identified: EXHAUSTIVE enumeration of the schedule space
+  (DFS over swap sequences with validity pruning + canonicalization by
+  commuting independent rotations and man-relabeling) — if the
+  full-budget regime enumerates to max 48, and the sub-budget regimes
+  (rotations of size >= 3, r < 15) are handled likewise, that plus a
+  "reading-off-trajectories does not decrease the count" completeness
+  lemma is a full proof skeleton for f(6)=48 — no 1e28 SAT campaign
+  needed.
 
 ## Attack plan
 
