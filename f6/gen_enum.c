@@ -73,7 +73,7 @@ static int mtraj[N][N], mlen[N], wtraj[N][N], wlen[N];
 static int seq[MAXSEQ], depth = 0;
 static long long nodes = 0, leaves = 0;
 static int best = 0;
-static int budget_cap, shard, nshards;
+static int budget_cap, shard, nshards, evalall = 0;
 static long long shard_ctr = 0;
 
 static int count_stable_readoff(void) {
@@ -110,8 +110,26 @@ static int count_stable_readoff(void) {
     return cnt;
 }
 
+static void evaluate_node(void) {
+    leaves++;
+    int c = count_stable_readoff();
+    if (c > best) {
+        best = c;
+        printf("new best %d at depth %d: steps", c, depth);
+        for (int d = 0; d < depth; d++) {
+            printf(" (");
+            for (int i = 0; i < step_k[seq[d]]; i++)
+                printf("%s%d", i ? "," : "", step_men[seq[d]][i]);
+            printf(")");
+        }
+        printf("\n");
+        fflush(stdout);
+    }
+}
+
 static void dfs(int used, int maxused) {
     nodes++;
+    if (evalall) evaluate_node();
     int extended = 0;
     for (int s = 0; s < nsteps; s++) {
         int k = step_k[s];
@@ -170,28 +188,14 @@ static void dfs(int used, int maxused) {
             moves_used[m]--; mu[m] = oldw[i];
         }
     }
-    if (!extended) {
-        leaves++;
-        int c = count_stable_readoff();
-        if (c > best) {
-            best = c;
-            printf("new best %d at depth %d: steps", c, depth);
-            for (int d = 0; d < depth; d++) {
-                printf(" (");
-                for (int i = 0; i < step_k[seq[d]]; i++)
-                    printf("%s%d", i ? "," : "", step_men[seq[d]][i]);
-                printf(")");
-            }
-            printf("\n");
-            fflush(stdout);
-        }
-    }
+    if (!extended && !evalall) evaluate_node();
 }
 
 int main(int argc, char **argv) {
     budget_cap = atoi(argv[1]);
     shard = argc > 2 ? atoi(argv[2]) : 0;
     nshards = argc > 3 ? atoi(argv[3]) : 1;
+    evalall = argc > 4 ? atoi(argv[4]) : 0;
     int cur[N];
     gen_perms(cur, 0, 0);
     gen_steps();

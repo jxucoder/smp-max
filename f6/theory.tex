@@ -1,0 +1,171 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{fact}{Fact}
+\newtheorem{remark}{Remark}
+
+\title{The schedule reduction for the maximum number of\\ stable matchings of order six}
+\author{Jiarui Xu}
+\date{August 31, 2026 --- working notes}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We reduce the determination of $f(6)$, the maximum number of stable matchings of a
+$6\times 6$ stable-marriage instance, to a finite enumeration of \emph{swap schedules}.
+The reduction rests on one combinatorial lemma (the bridge lemma) plus routine symmetry
+arguments; the enumeration itself (26.6 billion nodes) yields a maximum of $48$,
+matching the dihedral lower bound, whence $f(6)=48$.
+\end{abstract}
+
+\section{Preliminaries}
+
+An \emph{instance} $I$ of order $n$ consists of strict preference orders for $n$ men over
+$n$ women and vice versa. A perfect matching $\mu$ is \emph{stable} if no pair $(m,w)$
+with $w\ne\mu(m)$ has both $m$ preferring $w$ to $\mu(m)$ and $w$ preferring $m$ to
+$\mu^{-1}(w)$. Let $\mathrm{sc}(I)$ be the number of stable matchings and
+$f(n)=\max_I \mathrm{sc}(I)$.
+
+We use the standard structure theory of the stable-matching lattice and its rotations;
+see Gusfield--Irving~\cite{gi89}, Chapters 2--3. We record the facts we need.
+
+\begin{fact}\label{fact:pairs}
+Call $(m,w)$ a \emph{stable pair} of $I$ if some stable matching contains it. For each
+man $m$, order his stable partners by his preference; this sequence is his
+\emph{trajectory} $T_m$: the man-optimal matching $\mu_0$ gives each man the first entry
+of his trajectory, and the rotations of $I$, applied from $\mu_0$ in any linear
+extension of the rotation poset, move each man strictly down his trajectory, one entry
+per rotation containing him, ending at the woman-optimal matching. Symmetrically each
+woman moves strictly up her trajectory $T_w$ (her stable partners in reverse preference
+order). A rotation $\rho$ is a cyclic sequence $(m_0,w_0),\dots,(m_{k-1},w_{k-1})$,
+$k\ge 2$, of pairs of the current matching, whose application gives $m_i$ the current
+partner $w_{i+1}$ of $m_{i+1}$ (indices mod $k$).
+\end{fact}
+
+\begin{fact}\label{fact:budget}
+Every rotation moves $k\ge 2$ men. Each man is moved by exactly $|T_m|-1\le n-1$
+rotations, so the total move count $\sum_\rho |\rho| = \sum_m (|T_m|-1)\le n(n-1)$;
+for $n=6$: at most $30$, and at most $5$ moves per man.
+\end{fact}
+
+\section{Schedules and read-off instances}
+
+\begin{definition}[Schedule]\label{def:sched}
+Fix $n=6$ and start from the identity matching $\mu_0(m)=m$. A \emph{schedule} is a
+sequence of \emph{steps}, each a cyclic move on $k\ge 2$ men (man $m_i$ takes the
+current wife of $m_{i+1}$), subject to: total move count $\le 30$, at most $5$ moves
+per man, and no man ever moving to a wife he has already had, nor any woman receiving a
+husband she has already had. The steps applied so far give each person a
+\emph{trajectory} (the sequence of partners, starting with the identity partner).
+\end{definition}
+
+\begin{definition}[Read-off instance]\label{def:readoff}
+Given a schedule $S$, the read-off instance $R(S)$ has: for each man, his trajectory in
+order as the top of his preference list, followed by the remaining women in a fixed
+canonical order; for each woman, her trajectory \emph{reversed} as the top of her list,
+followed by the remaining men canonically.
+\end{definition}
+
+\begin{lemma}[Validity]\label{lem:valid}
+For any instance $I$ of order $6$, relabel women so that the man-optimal matching is the
+identity. Then the rotations of $I$, listed in any linear extension of the rotation
+poset, form a schedule $S(I)$ in the sense of Definition~\ref{def:sched}.
+\end{lemma}
+
+\begin{proof}
+Rotations are cyclic moves on $k\ge2$ men exposed in the current matching
+(Fact~\ref{fact:pairs}); applying them in a linear extension of the poset from $\mu_0$
+realizes exactly the lattice traversal, in which men move strictly down and women
+strictly up their trajectories (hence no repeats on either side). The budget and
+per-man caps are Fact~\ref{fact:budget}.
+\end{proof}
+
+\begin{lemma}[Bridge]\label{lem:bridge}
+For every instance $I$ of order $6$ (women relabelled as above),
+$\mathrm{sc}(I)\ \le\ \mathrm{sc}\bigl(R(S(I))\bigr)$.
+\end{lemma}
+
+\begin{proof}
+Write $J=R(S(I))$. The trajectories of $S(I)$ are exactly the stable-partner sequences
+of $I$ (Fact~\ref{fact:pairs}); thus for each man $m$, his $J$-list ranks his $I$-stable
+partners in the same relative order as his $I$-list (trajectory order is his
+$I$-preference order restricted to stable partners), with all other women strictly
+below; symmetrically for women.
+
+We claim every $I$-stable matching $\mu$ is $J$-stable; since distinct matchings remain
+distinct, this proves the inequality. Note every pair of $\mu$ is a stable pair, hence
+a trajectory pair on both sides. Consider any $(m,w)$ with $w\ne\mu(m)$.
+
+\emph{Case 1: $w\notin T_m$.} In $J$, $m$ ranks $w$ below all trajectory entries, in
+particular below $\mu(m)\in T_m$. So $m$ does not prefer $w$; the pair does not block.
+
+\emph{Case 2: $w\in T_m$.} Then $(m,w)$ is a stable pair of $I$, so also $m\in T_w$.
+Both $w$ and $\mu(m)$ lie in $T_m$, and both $m$ and $\mu^{-1}(w)$ lie in $T_w$
+(partners in stable matchings are stable pairs). Since $J$ preserves the relative
+$I$-order within trajectories on both sides, $(m,w)$ blocks $\mu$ in $J$ if and only
+if it blocks $\mu$ in $I$ --- and it does not, as $\mu$ is $I$-stable.
+
+Hence $\mu$ is $J$-stable.
+\end{proof}
+
+\begin{lemma}[Symmetry soundness]\label{lem:sym}
+(i) Exchanging two adjacent steps whose man-sets are disjoint yields a schedule with
+the same trajectories, hence the same read-off instance.
+(ii) Relabelling men and women by a common permutation $\sigma$ maps schedules to
+schedules and read-off instances to instances of equal stable count.
+Consequently, an enumeration that (a) requires the new men introduced by each step to
+be exactly the next unused labels (as a set), and (b) rejects a step that is
+lex-smaller than some earlier step from which it is separated only by steps man-disjoint
+from it, still attains the maximum of
+$\mathrm{sc}(R(S))$ over all schedules $S$.
+\end{lemma}
+
+\begin{proof}
+(i) Steps with disjoint man-sets touch disjoint women as well (their women are the
+current wives of their men), so each person's trajectory is unchanged by the exchange.
+(ii) Immediate. For the consequence: given any schedule, first apply (ii) with the
+greedy $\sigma$ that assigns labels in order of first participation (any assignment
+within a step's new set, which rule (a) permits); the result satisfies (a) at every
+step. Rule (b) only discards a sequence in favour of a commutation-equivalent
+lex-smaller one, available by finitely many exchanges of type (i), which preserve
+$R(S)$.
+\end{proof}
+
+\section{The theorem}
+
+\begin{theorem}\label{thm:f6}
+Assume the exhaustive enumeration of all schedules of Definition~\ref{def:sched}
+(with the reductions of Lemma~\ref{lem:sym}, evaluating
+$\mathrm{sc}(R(S))$ at every node) attains maximum $48$. Then $f(6)=48$.
+\end{theorem}
+
+\begin{proof}
+Lower bound: the dihedral Latin instance has $48$ stable matchings (direct
+computation; OEIS A351413). Upper bound: for any instance $I$,
+$\mathrm{sc}(I)\le\mathrm{sc}(R(S(I)))$ by Lemmas~\ref{lem:valid} and~\ref{lem:bridge};
+$S(I)$ is a node of the enumeration by Lemma~\ref{lem:sym}, so
+$\mathrm{sc}(R(S(I)))\le 48$.
+\end{proof}
+
+\begin{remark}
+The enumeration (\texttt{gen\_enum.c}) traverses $2.66\times 10^{10}$ schedule nodes.
+An earlier pass evaluating only extension-maximal schedules
+($1.40\times10^{10}$ exact stable-matching counts) also attained $48$; the every-node
+pass removes any reliance on monotonicity of the read-off count under extension.
+Certification of the enumeration (independent reimplementation, and ultimately a
+verified replay in a proof assistant) is the remaining engineering step; the lemmas
+above are elementary given the standard rotation theory of~\cite{gi89}.
+\end{remark}
+
+\begin{thebibliography}{9}
+\bibitem{gi89} D. Gusfield and R. W. Irving, \emph{The Stable Marriage Problem:
+Structure and Algorithms}, MIT Press, 1989.
+\end{thebibliography}
+
+\end{document}
