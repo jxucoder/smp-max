@@ -1,0 +1,8 @@
+[seed 100] dihedral-seq score = 48 (expect 48)
+[seed 105] dihedral-seq score = 48 (expect 48)
+[seed 102] dihedral-seq score = 48 (expect 48)
+[seed 101] dihedral-seq score = 48 (expect 48)
+[seed 104] dihedral-seq score = 48 (expect 48)
+[seed 103] dihedral-seq score = 48 (expect 48)
+[seed 106] dihedral-seq score = 48 (expect 48)
+[seed 107] dihedral-seq score = 48 (expect 48)

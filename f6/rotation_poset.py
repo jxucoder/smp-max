@@ -113,3 +113,40 @@ if __name__ == "__main__":
     m4 = [[int(c) - 1 for c in r] for r in r4]
     w4 = [[4 - int(r4[i][j]) for i in range(4)] for j in range(4)]
     describe("n=4 extremal (10)", m4, w4)
+
+
+def extract_rotations(mrank, wrank):
+    """Return (rotations, ple) where rotations[i] = (men_moved, women_moved)
+    for the i-th join-irreducible's rotation, ple = poset order on them."""
+    n = len(mrank)
+    S = stable_matchings(mrank, wrank)
+    k = len(S)
+    le = [[all(mrank[m][S[i][m]] <= mrank[m][S[j][m]] for m in range(n))
+           for j in range(k)] for i in range(k)]
+    covers = [[le[i][j] and i != j and not any(
+        le[i][t] and le[t][j] and t != i and t != j for t in range(k))
+        for j in range(k)] for i in range(k)]
+    irr = [j for j in range(k) if sum(covers[i][j] for i in range(k)) == 1]
+    ple = [[le[irr[a]][irr[b]] for b in range(len(irr))] for a in range(len(irr))]
+    rots = []
+    for j in irr:
+        i = next(i for i in range(k) if covers[i][j])
+        men = tuple(sorted(m for m in range(n) if S[i][m] != S[j][m]))
+        women = tuple(sorted(S[i][m] for m in men))
+        rots.append((men, women))
+    return rots, ple
+
+
+def chain_report(name, mrank, wrank):
+    n = len(mrank)
+    rots, ple = extract_rotations(mrank, wrank)
+    p = len(rots)
+    print(f"{name}: {p} rotations, sizes {sorted(len(r[0]) for r in rots)}")
+    for side, idx in (("man", 0), ("woman", 1)):
+        for x in range(n):
+            mine = [a for a in range(p) if x in rots[a][idx]]
+            # chain iff totally ordered
+            chain = all(ple[a][b] or ple[b][a] for i, a in enumerate(mine)
+                        for b in mine[i + 1:])
+            print(f"  {side} {x}: in {len(mine)} rotations, "
+                  f"chain={'YES' if chain else 'NO'}")
