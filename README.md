@@ -152,7 +152,8 @@ enumeration itself.
 
 1. (When owner says go) publication sequence: see `INSIGHTS.md`
    checklist — repo public, Zenodo DOI, arXiv both papers, OEIS.
-2. Verified replay / certified reimplementation of the f(6) enumeration.
+2. Verified replay / certified reimplementation of the f(6)
+   enumeration — architectures + pilot plan in `f6/REPLAY_DESIGN.md`.
 3. The general-n conjecture (all-size-2 schedules; full budget at even
    orders) — stated as Conjecture 1 in `f6/paper/f6.pdf`.
 4. f(7) feasibility (schedule tree ~1e14-1e15, budget 42, lower bound

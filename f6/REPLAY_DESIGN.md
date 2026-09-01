@@ -1,0 +1,140 @@
+# Design: certifying the f(6) enumeration (the last unformalized link)
+
+Status: DESIGN ONLY (2026-09-01). Nothing here is implemented.
+
+## What is missing, precisely
+
+The Lean development already proves (zero sorries, standard axioms):
+
+- `bridge` : sc(I) ≤ sc(readoff I) for every well-formed order-6 I;
+- the validity layer (`chain_complete`, `traj_*`, `wtraj_*`,
+  `prevOwner_*`): the read-off trajectory data of every instance is
+  realized by a legal schedule within all budgets.
+
+The unformalized residue is a single computational claim:
+
+    (*)  max over all legal schedules S of sc(R(S)) = 48
+
+currently established by `gen_enum.c` (215 lines of C, 26,574,282,886
+nodes, ~40–80 core-hours, ≈1–2×10⁵ nodes/core-second) plus the
+computational validation matrix. Certifying (*) closes the chain:
+f(6)=48 becomes machine-checked end-to-end.
+
+Note the asymmetry with f(5): there the *hypothesis* discharged outside
+the kernel was 120 UNSAT certificates checked by a verified checker.
+Here the outside-the-kernel object is an enumeration with no natural
+per-item certificate. Three architectures follow.
+
+## Architecture 1: trace checker (rejected)
+
+Emit a per-node trace from the C run; validate it with a verified
+checker. At 2.66×10¹⁰ nodes even 10 bytes/node is 266 GB, and a checker
+that *re-derives* the children of each node to confirm completeness is
+already a re-enumeration — the "trace" adds nothing. Degenerates into
+Architecture 2. Rejected.
+
+## Architecture 2: verified enumerator, trusted compilation
+
+Write a pure functional enumerator in Lean 4; prove it correct against
+the mathematical schedule space; compile it (`lake exe`) and run.
+
+- **Spec theorem** (the hard part, but well-scoped):
+  `enumMax = maxSchedule`, where `maxSchedule` is the max of
+  `stableCount6 ∘ readoffOfTraj` over an inductively defined schedule
+  type (steps = cyclic moves with the Def. 1 side conditions), and
+  `enumMax` is the DFS's result. Sub-obligations:
+  1. DFS visits exactly the legal schedules (induction on the step
+     relation; no symmetry pruning in the verified version — see cost);
+  2. the per-node evaluation equals `stableCount6 (readoff ...)`
+     (already kernel-computable; prove the array-based fast counter
+     equal to the list-based spec);
+  3. `readoffOfTraj` of the DFS's trajectory state equals the `readoff`
+     of Chain6's validity layer (definitional plumbing).
+- **Symmetry question.** The C run prunes by first-appearance labeling
+  and backward-commutation (48× tree reduction at order 6). A verified
+  replay has two options:
+  (a) *no pruning*: tree grows to ~10¹² nodes — likely 1000+ core-days
+      even compiled. Not viable.
+  (b) *formalize Lemma sym*: (i) adjacent man-disjoint steps commute
+      leaving trajectories unchanged (finite trace-monoid argument over
+      lists — elementary but fiddly); (ii) relabeling invariance
+      (the order-5 `relabel` machinery in `Symmetry.lean` ports
+      directly). Estimated at 500–1000 lines of Lean in the style of
+      Chain6. This is the real new proof content of Architecture 2.
+- **Compute estimate**: compiled Lean with arrays is typically 3–10×
+  slower than the C: 150–800 core-hours ≈ 1–4 days on 8 cores. Viable.
+- **Trust base**: Lean kernel + the Lean compiler/runtime (the spec is
+  kernel-checked; the *run* uses compiled code). Same trust shape as
+  every "verified algorithm, trusted extraction" artifact. Strictly
+  better than today (C code unverified); strictly weaker than f(5)'s
+  certificate story (cake_lpr is verified down to machine code).
+
+## Architecture 3: SAT reduction (reuse the f(5) machinery wholesale)
+
+Do not replay the enumeration at all. Encode
+
+    "some legal schedule S has sc(R(S)) ≥ 49"
+
+as CNF, refute it, check the refutation with cake_lpr, and prove the
+encoding faithful in Lean. This *replaces* (*) rather than certifying
+it, and lands in exactly the f(5) trust base (kernel + cake_lpr +
+printer) — the strongest possible outcome.
+
+- **Encoding sketch** (bounded, like bounded model checking):
+  - ≤15 frames (each step moves ≥2 of the 30-move budget);
+  - frame state: current matching (6×6 one-hot), per-man visited-woman
+    mask, per-woman visited-man mask (36+36+36 bits per frame);
+  - step choice per frame: one of the 409 cyclic shapes + a "stop"
+    marker; transition clauses implement the cyclic move and the
+    no-revisit/per-man-cap side conditions;
+  - trajectory-derived read-off comparisons: for man m, rank(w) <
+    rank(w') in R(S) is determined by first-visit order of w, w' (and
+    trajectory-vs-bottom, bottom canonical order) — encodable with
+    order variables over the ≤6 visits;
+  - stable-count target: 49 selector slots over the 720 order-6
+    matchings with the f(5) selector scheme (nonempty + strictly
+    increasing + non-blocking against the derived comparisons):
+    49×720 ≈ 35k selector variables.
+  - symmetry breaking: encode first-appearance labeling as *clauses*
+    (constraining the model, sound because Lean's relabel lemma shows a
+    witness can be normalized — the same shape as f(5)'s fix-man0).
+- **Faithfulness proof**: same genre as `Faithfulness.lean` but larger
+  (transition frames + derived comparisons instead of static tables).
+  Estimate 1500–3000 lines. The validity layer (Chain6) supplies the
+  witness normalization: any instance with sc ≥ 49 yields, via
+  bridge + validity, a legal schedule whose read-off has ≥ 49 stable
+  matchings — exactly a satisfying assignment.
+- **Solver risk (the unknown)**: the space has ~2.7×10¹⁰ canonical
+  schedules; refutation hardness is not predictable from node counts.
+  Mitigations: cube on the first 1–2 steps (the 512-shard split maps
+  onto cubes directly); fall back to per-cube time limits and hybrid
+  (solve easy cubes by SAT, replay hard cubes by Architecture 2).
+- **MANDATORY PILOT before committing**: run the same construction at
+  order 5 against ground truth — encode "some legal order-5 schedule
+  has sc(R(S)) ≥ 17" (≤10 frames, 84 shapes, 17×120 selectors), refute
+  it, and cross-check against the certified f(5)=16 and the 498,599-
+  node enumeration. If the order-5 formula is not comfortably refuted
+  (minutes, not days), Architecture 3 is dead at order 6 and the
+  decision defaults to Architecture 2.
+
+## Recommendation
+
+Two-track, pilot-first:
+
+1. **Order-5 SAT pilot** (Architecture 3, cheap to attempt): a Python
+   encoder (~300 lines) + kissat. Outcome measurable in a day of work.
+   - If refutation is easy at order 5 and scales to order-6 cubes:
+     pursue Architecture 3 — best trust base, reuses everything.
+2. **Fallback / parallel**: formalize Lemma sym (the 500–1000 line
+   commutation + relabeling layer) — needed by Architecture 2 anyway,
+   and it strengthens the paper's validation story regardless.
+3. Decision point after the pilot; do not start the big faithfulness
+   proof until the solver feasibility is known.
+
+## Non-goals
+
+- Certifying the *historical* run: worthless; only re-derivation counts.
+- CakeML end-to-end (verified compilation of the enumerator): the
+  right theory, wrong cost for this project.
+- Verifying monotonicity to restrict to maximal schedules: the all-node
+  campaign made it unnecessary; keep the lemma set minimal.
