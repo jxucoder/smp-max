@@ -303,3 +303,124 @@ theorem opposite_interests {I : Inst6} (hWF : WF6 I = true)
           (perm6_getD_lt hpν ha6) hc).symm)
       omega
     exact no_block hν ha6 hw (fun hc => hνa_ne hc.symm) hpref hstrict_w
+
+/-! ## Transpose duality and the join -/
+
+def transposeI (I : Inst6) : Inst6 := ⟨I.wrank, I.mrank⟩
+
+def invMatch (mu : List Nat) : List Nat :=
+  (List.range 6).map fun w => idxOf w mu
+
+theorem invMatch_getD {mu : List Nat} {w : Nat} (hw : w < 6) :
+    (invMatch mu).getD w 0 = idxOf w mu := by
+  unfold invMatch
+  exact getD_map_range6 hw
+
+theorem partner_eq_iff {mu : List Nat} (hp : mu.Perm idRow6) {m w : Nat}
+    (hm : m < 6) (hw : w < 6) :
+    mu.getD m 0 = w ↔ idxOf w mu = m := by
+  constructor
+  · exact partner_idxOf_of_eq hp hm
+  · intro h
+    rw [← h]
+    exact getD_idxOf (perm6_mem hp hw)
+
+theorem invMatch_perm {mu : List Nat} (hp : mu.Perm idRow6) :
+    (invMatch mu).Perm idRow6 := by
+  have hlen : (invMatch mu).length = 6 := by simp [invMatch]
+  have hnd : (invMatch mu).Nodup := by
+    unfold invMatch
+    refine List.Nodup.map_on ?_ List.nodup_range
+    intro a ha' b hb' heq'
+    have ha : a < 6 := by simpa using ha'
+    have hb : b < 6 := by simpa using hb'
+    have h1 : mu.getD (idxOf a mu) 0 = a := getD_idxOf (perm6_mem hp ha)
+    have h2 : mu.getD (idxOf b mu) 0 = b := getD_idxOf (perm6_mem hp hb)
+    rw [heq', h2] at h1
+    exact h1.symm
+  have hsub : invMatch mu ⊆ idRow6 := by
+    intro x hx
+    obtain ⟨w, hw', hxeq⟩ := List.mem_map.1 hx
+    have hw : w < 6 := by simpa using hw'
+    have : x < 6 := by rw [← hxeq]; exact idxOf_lt6 hp hw
+    simp only [idRow6, List.mem_cons]
+    omega
+  exact (hnd.subperm hsub).perm_of_length_le (by simp [hlen, idRow6])
+
+theorem idxOf_invMatch {mu : List Nat} (hp : mu.Perm idRow6) {m : Nat}
+    (hm : m < 6) : idxOf m (invMatch mu) = mu.getD m 0 := by
+  have hpi := invMatch_perm hp
+  have hw6 : mu.getD m 0 < 6 := perm6_getD_lt hp hm
+  refine partner_idxOf_of_eq hpi hw6 ?_
+  rw [invMatch_getD hw6]
+  exact partner_idxOf hp hm
+
+theorem invMatch_invMatch {mu : List Nat} (hp : mu.Perm idRow6) :
+    invMatch (invMatch mu) = mu := by
+  apply List.ext_getElem
+  · rw [perm6_length (invMatch_perm (invMatch_perm hp)), perm6_length hp]
+  · intro i h1 h2
+    have hi : i < 6 := by
+      rw [perm6_length hp] at h2
+      exact h2
+    rw [← List.getD_eq_getElem _ _ h1, ← List.getD_eq_getElem _ _ h2,
+        invMatch_getD hi, idxOf_invMatch hp hi]
+
+theorem WF6_transposeI {I : Inst6} (h : WF6 I = true) :
+    WF6 (transposeI I) = true := by
+  simp only [WF6, transposeI, Bool.and_eq_true] at h ⊢
+  exact ⟨⟨⟨h.1.1.2, h.1.1.1⟩, h.2⟩, h.1.2⟩
+
+/-- Stability is self-dual under transposition. -/
+theorem isStable6_transposeI {I : Inst6} {mu : List Nat}
+    (hp : mu.Perm idRow6) :
+    isStable6 (transposeI I) (invMatch mu) = isStable6 I mu := by
+  have hm1 : (transposeI I).mrank = I.wrank := rfl
+  have hm2 : (transposeI I).wrank = I.mrank := rfl
+  rw [Bool.eq_iff_iff]
+  simp only [isStable6, hm1, hm2, List.all_eq_true, List.mem_range,
+    Bool.or_eq_true, Bool.not_eq_true', Bool.and_eq_false_iff,
+    decide_eq_true_eq, decide_eq_false_iff_not]
+  constructor
+  · intro H m hm w hw
+    have := H w hw m hm
+    rw [invMatch_getD hw, idxOf_invMatch hp hm] at this
+    rcases this with h1 | h2 | h2
+    · left
+      exact ((partner_eq_iff hp hm hw).2 h1.symm).symm
+    · right; right; omega
+    · right; left; omega
+  · intro H w hw m hm
+    have := H m hm w hw
+    rw [invMatch_getD hw, idxOf_invMatch hp hm]
+    rcases this with h1 | h2 | h2
+    · left
+      exact ((partner_eq_iff hp hm hw).1 h1.symm).symm
+    · right; right; omega
+    · right; left; omega
+
+theorem mem_sms6_transposeI {I : Inst6} {mu : List Nat}
+    (hmu : mu ∈ sms6 I) : invMatch mu ∈ sms6 (transposeI I) := by
+  have hp := mem_sms6_perm hmu
+  refine List.mem_filter.2 ⟨List.mem_permutations.2 (invMatch_perm hp), ?_⟩
+  rw [isStable6_transposeI hp]
+  exact mem_sms6_stable hmu
+
+def joinS (I : Inst6) (μ ν : List Nat) : List Nat :=
+  invMatch (meetM (transposeI I) (invMatch μ) (invMatch ν))
+
+theorem join_mem {I : Inst6} (hWF : WF6 I = true) {μ ν : List Nat}
+    (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I) :
+    joinS I μ ν ∈ sms6 I := by
+  have hWFt := WF6_transposeI hWF
+  have hρ : meetM (transposeI I) (invMatch μ) (invMatch ν) ∈
+      sms6 (transposeI I) :=
+    meet_mem hWFt (mem_sms6_transposeI hμ) (mem_sms6_transposeI hν)
+  have hpρ := mem_sms6_perm hρ
+  refine List.mem_filter.2
+    ⟨List.mem_permutations.2 (invMatch_perm hpρ), ?_⟩
+  show isStable6 I (invMatch (meetM (transposeI I) (invMatch μ) (invMatch ν))) = true
+  have hdual := isStable6_transposeI (I := transposeI I) hpρ
+  rw [show transposeI (transposeI I) = I from rfl] at hdual
+  rw [hdual]
+  exact mem_sms6_stable hρ
