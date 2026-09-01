@@ -230,9 +230,15 @@ the current cube's file per worker.
    the critical path. Remaining: the schedule-level statement (relabel
    a schedule, first-participation σ makes it canonical, read-off
    commutes with relabel6) — lands with the Schedule object;
-2. the Schedule object — DONE (2026-09-01, `Sched6.lean`: applyStep /
-   schedMatchings / straj trajectories / Legal / readoffS, with
-   permutation preservation and WF6_readoffS; zero sorries).
+2. the Schedule object — DONE (`Sched6.lean`); cycle decomposition —
+   DONE (`Cycle6.lean`: orbit extraction, `stepDecomp_spec` realizes
+   any μ→ν difference as disjoint cyclic steps); chain concatenation —
+   IN PROGRESS (`ChainSched6.lean`: `chainSched`/`linkSteps`, endpoint
+   threading `linkSteps_foldl_last`, abstract destutter run-collapse,
+   block two-valued `scanl_orbits_two_valued` all done; remaining:
+   block-column monotonicity → block destutter = [μ(m),ν(m)] → assemble
+   across blocks → `strajM = traj`/`wtraj`, with `manOpt = idRow6`
+   normalized via Sym6).
    Design discovery: readoffS does NOT commute with relabeling (the
    canonical bottom completion is not equivariant), so the faithfulness
    route avoids count-transport on read-offs entirely. The
