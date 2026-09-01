@@ -35,12 +35,16 @@ below for the day that changes.
   bottom of each list: original stable matchings survive, count only
   grows. One page of proof; it turns "all instances" into "all
   schedules".
-- **Extremals are full-budget, all-size-2, round-robin-like.** At every
-  order tested (3..6), the maximizers use the maximum number of
-  rotations, all of size 2. The n=6 optimum is the dihedral/round-robin
-  schedule; large-rotation regions of the space peak strictly lower.
-  **Conjecture (general n): f(n) is attained by a full-budget size-2
-  schedule.** If proven, f(n) becomes a clean optimization over
+- **Extremals are all-size-2; full-budget exactly at even orders.**
+  Computed rotation profiles of the maximizers (2026-09-01): order 3 -
+  attained by two transpositions (4 of budget 6; a two-size-3-rotation
+  Latin instance also attains it); order 4 - six transpositions, full
+  budget 12; order 5 - eight transpositions, 16 of budget 20 (full
+  budget provably impossible since f(5)=16); order 6 - fifteen
+  transpositions, full budget 30. Matches Eilers conjecturing exactness
+  only at even orders. **Conjecture (in paper #2): for every n>=3, f(n)
+  is attained by an all-size-2 schedule; for even n, by a full-budget
+  one (n(n-1)/2 transpositions).** If proven, f(n) becomes a clean optimization over
   swap-schedules ("sorting-network-like" objects) and could sharpen
   the 2.28^n..3.55^n asymptotic band — this is the sharpest theoretical
   question the project produced.
