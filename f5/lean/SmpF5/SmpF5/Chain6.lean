@@ -593,3 +593,78 @@ theorem total_moves_le_30 {I : Inst6} (hWF : WF6 I = true)
     omega
   have := map_sum_le h5
   simpa using this
+
+/-! ## Trajectory endpoints: from man-optimal to woman-optimal -/
+
+theorem destutter'_head? {α : Type} {R : α → α → Prop} [DecidableRel R] :
+    ∀ (l : List α) (a : α), (l.destutter' R a).head? = some a := by
+  intro l
+  induction l with
+  | nil => intro a; rfl
+  | cons b t ih =>
+    intro a
+    rw [List.destutter'_cons]
+    by_cases hab : R a b
+    · rw [if_pos hab]; rfl
+    · rw [if_neg hab]; exact ih a
+
+theorem destutter'_ne_getLast? {α : Type} [DecidableEq α] :
+    ∀ (l : List α) (a : α),
+    (l.destutter' (· ≠ ·) a).getLast? = (a :: l).getLast? := by
+  intro l
+  induction l with
+  | nil => intro a; rfl
+  | cons b t ih =>
+    intro a
+    by_cases hab : a ≠ b
+    · rw [List.destutter'_cons_pos t hab, List.getLast?_cons_cons]
+      rcases hd : t.destutter' (· ≠ ·) b with _ | ⟨c, cs⟩
+      · exact absurd hd (t.destutter'_ne_nil _)
+      · rw [List.getLast?_cons_cons, ← hd, ih b]
+    · rw [List.destutter'_cons_neg t hab, ih a]
+      have haeqb : a = b := by push Not at hab; exact hab
+      rw [List.getLast?_cons_cons, haeqb]
+
+theorem getLast?_map' {α β : Type} (f : α → β) :
+    ∀ (l : List α), (l.map f).getLast? = l.getLast?.map f := by
+  intro l
+  induction l with
+  | nil => rfl
+  | cons a t ih =>
+    cases t with
+    | nil => rfl
+    | cons b t2 =>
+      rw [List.map_cons, List.map_cons, List.getLast?_cons_cons,
+          List.getLast?_cons_cons, ← List.map_cons, ih]
+
+/-- The trajectory starts at man `m`'s optimal stable partner. -/
+theorem traj_head {I : Inst6} {m : Nat} :
+    (traj I m).head? = some ((manOpt I).getD m 0) := by
+  have hh : (theChain I).head? = some (manOpt I) :=
+    chainFrom_head I 31 (manOpt I)
+  rcases hc : theChain I with _ | ⟨x, xs⟩
+  · rw [hc] at hh; simp at hh
+  · have hx : x = manOpt I := by rw [hc] at hh; simpa using hh
+    simp only [traj, hc, List.map_cons, List.destutter_cons']
+    rw [destutter'_head?, hx]
+
+/-- The trajectory ends at man `m`'s pessimal (woman-optimal) stable
+partner. -/
+theorem traj_getLast {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    {m : Nat} :
+    (traj I m).getLast? = some ((womanOpt I).getD m 0) := by
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  have hfuel : sumRank I (womanOpt I) ≤ sumRank I (manOpt I) + 31 := by
+    have := sumRank_le_30 hWF (womanOpt_spec hWF hne).1
+    omega
+  have hl : (theChain I).getLast? = some (womanOpt I) :=
+    chainFrom_last hWF hne 31 (manOpt I) hMmem hfuel
+  rcases hc : theChain I with _ | ⟨x, xs⟩
+  · rw [hc] at hl; simp at hl
+  · rw [hc] at hl
+    simp only [traj, hc, List.map_cons, List.destutter_cons']
+    rw [destutter'_ne_getLast?]
+    show (List.map (fun μ => μ.getD m 0) (x :: xs)).getLast? =
+      some ((womanOpt I).getD m 0)
+    rw [getLast?_map', hl]
+    rfl
