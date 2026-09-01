@@ -198,6 +198,30 @@ C enumeration, but every cube emits a DRAT checked by
 drat-trim + cake_lpr and then deleted (f5-style streaming, ~0.7 GB
 transient per hard cube).
 
+**Calibration (2026-09-01, `cube_calibrate.py`)**: 41 depth-2
+canonical cubes solved incrementally (CaDiCaL assumptions, 300k-conflict
+budget each; formula loads in 0.7s): 38/41 UNSAT with median 2.5s,
+mean 5.2s, max 24.5s; 3/41 exceed budget (~70-80s spent) — including
+the single canonical disjoint-transposition cube (0,1)+(2,3), the
+round-robin gateway (canonical labeling collapses the whole hard
+family to this one depth-2 cube plus its siblings under (0,1)).
+
+Refined campaign budget:
+- fast 93%: 25,339 x 0.93 x 5.2s = ~34 core-hours;
+- hard 7% (~1,850 cubes): either solve at ~1h each (6.8x trend from
+  the measured depth-3 522s) = ~1,000 core-hours, or split to depth 3
+  (~72 children each, mostly seconds, hard ones 522s -> 77s at
+  depth 4) = est. 200-500 core-hours.
+- Total: ~250-1,000 core-hours => 1.5-5 days on 8 cores, hours on a
+  64-core cloud burst. Certificates add ~1.5x (drat-trim + cake_lpr),
+  streamed per cube as in the f(5) loop.
+
+Production note: calibration used incremental assumptions (no proofs);
+the campaign proper solves per-cube CNFs (base + cube units) with
+kissat proof logging so every cube's refutation is independently
+checkable. The driver builds the base once in memory and writes only
+the current cube's file per worker.
+
 **Lean critical path** (unchanged in kind, now concrete):
 1. Lemma sym in Lean (canonical-cube coverage: any witness schedule
    relabels/commutes to a canonical one) — the 500–1000-line layer;
