@@ -256,3 +256,50 @@ theorem meet_mem {I : Inst6} (hWF : WF6 I = true) {μ ν : List Nat}
     meetM I μ ν ∈ sms6 I :=
   List.mem_filter.2 ⟨List.mem_permutations.2 (meet_perm hWF hμ hν),
     meet_stable hWF hμ hν⟩
+
+/-! ## Opposite interests -/
+
+theorem idxOf_lt6 {mu : List Nat} (hp : mu.Perm idRow6) {w : Nat}
+    (hw : w < 6) : idxOf w mu < 6 := by
+  have := idxOf_lt_length (perm6_mem hp hw)
+  rw [perm6_length hp] at this
+  exact this
+
+/-- If every man weakly prefers `μ` to `ν`, then every woman weakly
+prefers `ν` to `μ`. -/
+theorem opposite_interests {I : Inst6} (hWF : WF6 I = true)
+    {μ ν : List Nat} (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I)
+    (hdom : ∀ m, m < 6 →
+      get2 I.mrank m (μ.getD m 0) ≤ get2 I.mrank m (ν.getD m 0))
+    {w : Nat} (hw : w < 6) :
+    get2 I.wrank w (idxOf w ν) ≤ get2 I.wrank w (idxOf w μ) := by
+  simp only [WF6, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at hWF
+  obtain ⟨⟨⟨hml, hwl⟩, hmrows⟩, hwrows⟩ := hWF
+  have hpμ := mem_sms6_perm hμ
+  have hpν := mem_sms6_perm hν
+  have ha6 : idxOf w μ < 6 := idxOf_lt6 hpμ hw
+  have hb6 : idxOf w ν < 6 := idxOf_lt6 hpν hw
+  by_cases hab : idxOf w μ = idxOf w ν
+  · rw [hab]
+  · by_contra hcon
+    -- w strictly prefers her μ-husband a to her ν-husband b
+    have hstrict_w : get2 I.wrank w (idxOf w μ) < get2 I.wrank w (idxOf w ν) := by
+      have hne : get2 I.wrank w (idxOf w μ) ≠ get2 I.wrank w (idxOf w ν) :=
+        fun hc => hab (rank_inj6 hwl hwrows hw ha6 hb6 hc)
+      omega
+    have hμa : μ.getD (idxOf w μ) 0 = w := getD_idxOf (perm6_mem hpμ hw)
+    -- a's ν-partner is not w
+    have hνa_ne : ν.getD (idxOf w μ) 0 ≠ w := by
+      intro hc
+      exact hab (partner_idxOf_of_eq hpν ha6 hc).symm
+    -- a strictly prefers w to his ν-partner
+    have hpref : get2 I.mrank (idxOf w μ) w <
+        get2 I.mrank (idxOf w μ) (ν.getD (idxOf w μ) 0) := by
+      have hd := hdom (idxOf w μ) ha6
+      rw [hμa] at hd
+      have hne : get2 I.mrank (idxOf w μ) w ≠
+          get2 I.mrank (idxOf w μ) (ν.getD (idxOf w μ) 0) :=
+        fun hc => hνa_ne ((rank_inj6 hml hmrows ha6 hw
+          (perm6_getD_lt hpν ha6) hc).symm)
+      omega
+    exact no_block hν ha6 hw (fun hc => hνa_ne hc.symm) hpref hstrict_w
