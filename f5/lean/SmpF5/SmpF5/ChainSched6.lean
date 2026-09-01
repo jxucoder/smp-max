@@ -115,3 +115,42 @@ theorem scanl_append_f {a : List Nat} (L₁ L₂ : List (List Nat)) :
     | nil => simp
     | cons st rest => simp [List.scanl_cons]
   | cons st rest ih => simp [List.scanl_cons, ih]
+
+/-! ## Stutter-invariance of destutter (abstract) -/
+
+section Destutter
+variable {α : Type} [DecidableEq α]
+
+/-- Removing one adjacent duplicate preserves `destutter (≠)`. -/
+theorem destutter_ne_dup (a : α) (l : List α) :
+    (a :: a :: l).destutter (· ≠ ·) = (a :: l).destutter (· ≠ ·) := by
+  rw [List.destutter_cons_cons]
+  simp only [ne_eq, not_true_eq_false, if_false]
+  rw [List.destutter_cons']
+
+/-- A run of `a`'s collapses under `destutter (≠)`. -/
+theorem destutter_ne_replicate (a : α) (n : Nat) (l : List α) :
+    ((List.replicate (n + 1) a) ++ l).destutter (· ≠ ·)
+      = (a :: l).destutter (· ≠ ·) := by
+  induction n with
+  | zero => simp
+  | succ k ih =>
+    rw [List.replicate_succ, List.cons_append]
+    rw [show List.replicate (k + 1) a ++ l = a :: (List.replicate k a ++ l) by
+      rw [List.replicate_succ, List.cons_append]]
+    rw [destutter_ne_dup]
+    rw [← List.cons_append, ← List.replicate_succ]
+    exact ih
+
+/-- Prepending a run of `a` before a list already headed by `a`
+collapses. -/
+theorem destutter_ne_run_cons (a : α) (n : Nat) (l : List α) :
+    ((List.replicate n a) ++ a :: l).destutter (· ≠ ·)
+      = (a :: l).destutter (· ≠ ·) := by
+  have : (List.replicate n a) ++ a :: l
+      = (List.replicate (n + 1) a) ++ l := by
+    rw [List.replicate_succ']
+    simp
+  rw [this, destutter_ne_replicate]
+
+end Destutter
