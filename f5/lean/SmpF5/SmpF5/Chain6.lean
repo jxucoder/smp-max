@@ -765,3 +765,102 @@ theorem wtraj_length_le {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
     exact wtraj_all_lt6 hWF hne hw m hm
   have := (List.Nodup.subperm (wtraj_nodup hWF hne hw) hsub).length_le
   simpa using this
+
+/-! ## Step structure: moved men form disjoint cyclic swaps (k ≥ 2)
+
+For a step `μ → ν` between two matchings, `prevOwner μ ν m` is the man
+who held `m`'s new wife before the step. On the set of moved men this
+map is a fixed-point-free injective self-map — precisely the statement
+that the step decomposes into disjoint cyclic wife-swaps ("man m takes
+the current wife of prevOwner m"), each cycle moving `k ≥ 2` men. These
+are pure permutation facts; applied to consecutive elements of
+`theChain` (all stable, hence permutations) they give the last
+schedule-validity clause. -/
+
+def moved (μ ν : List Nat) (m : Nat) : Prop := μ.getD m 0 ≠ ν.getD m 0
+
+def prevOwner (μ ν : List Nat) (m : Nat) : Nat := idxOf (ν.getD m 0) μ
+
+theorem perm6_getD_inj {mu : List Nat} (hp : mu.Perm idRow6) {a b : Nat}
+    (ha : a < 6) (hb : b < 6) (heq : mu.getD a 0 = mu.getD b 0) : a = b := by
+  have h1 := partner_idxOf hp ha
+  have h2 := partner_idxOf hp hb
+  rw [heq] at h1
+  exact h1.symm.trans h2
+
+theorem prevOwner_lt6 {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) : prevOwner μ ν m < 6 :=
+  idxOf_lt6 hpμ (perm6_getD_lt hpν hm)
+
+/-- Wife-passing consistency: `m`'s new wife is `prevOwner m`'s old wife. -/
+theorem prevOwner_getD {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) :
+    μ.getD (prevOwner μ ν m) 0 = ν.getD m 0 :=
+  getD_idxOf (perm6_mem hpμ (perm6_getD_lt hpν hm))
+
+/-- The previous owner of a moved man's new wife also moves. -/
+theorem prevOwner_moved {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) (hmov : moved μ ν m) :
+    moved μ ν (prevOwner μ ν m) := by
+  intro heq
+  have h1 := prevOwner_getD hpμ hpν hm
+  have h2 : ν.getD (prevOwner μ ν m) 0 = ν.getD m 0 := by rw [← heq, h1]
+  have h3 : prevOwner μ ν m = m :=
+    perm6_getD_inj hpν (prevOwner_lt6 hpμ hpν hm) hm h2
+  rw [h3] at h1
+  exact hmov h1
+
+/-- No fixed points on the moved set: every cycle has size ≥ 2. -/
+theorem prevOwner_ne {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) (hmov : moved μ ν m) :
+    prevOwner μ ν m ≠ m := by
+  intro heq
+  have h1 := prevOwner_getD hpμ hpν hm
+  rw [heq] at h1
+  exact hmov h1
+
+/-- Injectivity: the cycles are disjoint. -/
+theorem prevOwner_inj {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {a b : Nat} (ha : a < 6) (hb : b < 6)
+    (heq : prevOwner μ ν a = prevOwner μ ν b) : a = b := by
+  have h1 := prevOwner_getD hpμ hpν ha
+  have h2 := prevOwner_getD hpμ hpν hb
+  rw [heq] at h1
+  have h3 : ν.getD a 0 = ν.getD b 0 := by rw [← h1, h2]
+  exact perm6_getD_inj hpν ha hb h3
+
+/-- Every chain element is a permutation (instantiates the `prevOwner`
+cycle lemmas on consecutive chain steps). -/
+theorem chain_mem_perm {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    {μ : List Nat} (hμ : μ ∈ theChain I) : μ.Perm idRow6 := by
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  exact mem_sms6_perm (chainFrom_mem 31 (manOpt I) hMmem μ hμ)
+
+/-! ## Summary: the Validity Lemma, formalized
+
+For every well-formed order-6 instance `I` with at least one stable
+matching, `theChain I` witnesses a legal schedule realizing the
+read-off trajectory data of `I`:
+
+* `chainFrom_head` / `chainFrom_last` — the chain runs from the
+  man-optimal to the woman-optimal stable matching;
+* `chainFrom_mem` / `chain_mem_perm` — every element is a stable
+  matching, in particular a permutation;
+* `chainFrom_cover` — consecutive elements are covers of the
+  dominance order;
+* `prevOwner_moved` / `prevOwner_ne` / `prevOwner_inj` /
+  `prevOwner_getD` — each step's moved set decomposes into disjoint
+  cyclic wife-swaps of size ≥ 2;
+* `traj_mem_iff` / `traj_rank_pairwise` / `traj_nodup` — each man
+  visits exactly his stable partners, strictly in preference order,
+  never revisiting;
+* `traj_head` / `traj_getLast` — from his optimal to his pessimal
+  stable partner;
+* `traj_length_le` / `total_moves_le_30` — at most 5 moves per man,
+  at most 30 in total;
+* `wtraj_rank_pairwise` / `wtraj_nodup` — each woman's partner
+  strictly improves whenever it changes; no woman repeats a husband;
+* `chain_complete` — every stable pair of `I` appears on the chain,
+  so the trajectory data determines the full read-off promotion
+  blocks.
+-/
