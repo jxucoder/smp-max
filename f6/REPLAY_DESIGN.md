@@ -1,6 +1,8 @@
 # Design: certifying the f(6) enumeration (the last unformalized link)
 
-Status: DESIGN ONLY (2026-09-01). Nothing here is implemented.
+Status (2026-09-01): design + Architecture 3 pilot DONE (`sched_sat.py`,
+order-5 refutation certified end-to-end — see "Pilot results" below).
+Order-6 attempt not yet started.
 
 ## What is missing, precisely
 
