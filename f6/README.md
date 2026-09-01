@@ -1,6 +1,13 @@
-# f(6): open. Conjecture f(6) = 48 (OEIS A357271).
+# f(6) = 48: RESOLVED (2026-08-31 .. 09-01)
 
-Nothing here yet — this directory is the staging ground for Phase 2.
+The conjecture of OEIS A357271 is true. Proof: schedule reduction
+(bridge + validity lemmas, now formalized in Lean —
+`../f5/lean/SmpF5/SmpF5/{SixBridge,Lattice6,Chain6}.lean`, zero
+sorries) + exhaustive evaluation of all 26,574,282,886 schedule
+read-off instances (global max 48) + the dihedral lower bound.
+Paper: `paper/f6.pdf`; lemma write-up: `theory.pdf`; verification
+notes: `../VERIFYING.md`. Below is the campaign log, kept as a
+historical record of how the route was found.
 
 ## What is known
 

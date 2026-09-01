@@ -117,7 +117,7 @@ Together with Step 1 this discharges the hypothesis of
 - `python3 smp.py` validates the independent brute-force counter against
   four known extremal instances from OEIS A351413 (3/10/9/48).
 - Independent earlier refutations of "≥17" with a different encoding and
-  solver configs live in `f5/README.md` (results log).
+  solver configs live in the results log of the root `README.md`.
 
 ## Verifying the f(6) reduction layer (Lean, ~5 min on top of Step 1)
 
