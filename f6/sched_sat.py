@@ -220,15 +220,28 @@ def build(n, k):
                 e.add(-p, *terms)
                 PW[(w, a, b)] = p
 
-    # selector block: k slots over the n! matchings
+    # selector block: k slots over the n! matchings.
+    # Strict slot ordering via ladder (sequential prefix) encoding:
+    # Pf[t][i] <-> "slot t selected some index <= i" (both directions,
+    # so 49 slots really force 49 distinct selections).
     P = list(itertools.permutations(range(n)))
+    NP = len(P)
     Y = [[e.new() for _ in P] for _ in range(k)]
+    Pf = [[e.new() for _ in P] for _ in range(k)]
     for t in range(k):
         e.add(*Y[t])
+        for i in range(NP):
+            e.add(-Y[t][i], Pf[t][i])
+            if i > 0:
+                e.add(-Pf[t][i - 1], Pf[t][i])
+                e.add(-Pf[t][i], Pf[t][i - 1], Y[t][i])
+            else:
+                e.add(-Pf[t][0], Y[t][0])
     for t in range(k - 1):
-        for i in range(len(P)):
-            for j in range(i + 1):
-                e.add(-Y[t][i], -Y[t + 1][j])
+        # slot t+1's index j requires slot t's index <= j-1
+        e.add(-Y[t + 1][0])
+        for j in range(1, NP):
+            e.add(-Y[t + 1][j], Pf[t][j - 1])
     for t in range(k):
         for i, mu in enumerate(P):
             inv = [0] * n
@@ -290,14 +303,46 @@ def readoff_counts(n, sched):
     return len(stable_matchings(mrank, wrank))
 
 
+def fix_first(e, hooks, shape):
+    """Cube: force the first step to a given cyclic shape (unit clauses)."""
+    M, V, S, Y, SH, F, P = hooks
+    j = SH.index(tuple(shape)) + 1
+    e.add(S[0][j])
+
+
+def fix_sched(e, hooks, shapes):
+    """Pin the entire schedule (encoding-validation mode): step t = shapes[t],
+    remaining frames = stop."""
+    M, V, S, Y, SH, F, P = hooks
+    for t in range(F):
+        if t < len(shapes):
+            e.add(S[t][SH.index(tuple(shapes[t])) + 1])
+        else:
+            e.add(S[t][0])
+
+
 if __name__ == "__main__":
     n, k, out = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
     e, hooks = build(n, k)
+    for a in sys.argv:
+        if a.startswith("--fix-first="):
+            fix_first(e, hooks, [int(x) for x in a.split("=")[1].split(",")])
+        if a.startswith("--fix-prefix="):
+            shs = [tuple(int(x) for x in g.split(","))
+                   for g in a.split("=")[1].split(";")]
+            M_, V_, S_, Y_, SH_, F_, P_ = hooks
+            for t, sh in enumerate(shs):
+                e.add(S_[t][SH_.index(sh) + 1])
+        if a.startswith("--fix-sched="):
+            shs = [tuple(int(x) for x in g.split(","))
+                   for g in a.split("=")[1].split(";")]
+            fix_sched(e, hooks, shs)
     e.write(out)
     print(f"n={n} k={k}: {e.n} vars, {len(e.clauses)} clauses -> {out}")
+    lim = ["--time=" + a.split("=")[1] for a in sys.argv if a.startswith("--time=")]
     if "--solve" in sys.argv:
         t0 = time.time()
-        r = subprocess.run(["kissat", "-q", out], capture_output=True, text=True)
+        r = subprocess.run(["kissat", "-q"] + lim + [out], capture_output=True, text=True)
         dt = time.time() - t0
         if "s SATISFIABLE" in r.stdout:
             model = []
@@ -312,4 +357,4 @@ if __name__ == "__main__":
         elif "s UNSATISFIABLE" in r.stdout:
             print(f"UNSAT in {dt:.1f}s")
         else:
-            print(f"solver exit {r.returncode} in {dt:.1f}s")
+            print(f"solver exit {r.returncode} in {dt:.1f}s (timeout/unknown)")
