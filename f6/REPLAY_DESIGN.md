@@ -235,11 +235,12 @@ the current cube's file per worker.
    permutation preservation and WF6_readoffS; zero sorries).
    Design discovery: readoffS does NOT commute with relabeling (the
    canonical bottom completion is not equivariant), so the faithfulness
-   route avoids count-transport on read-offs entirely — instead,
-   generalize the bridge lemma to a *bottom-agnostic* form ("any
-   instance ranking each person's stable partners on top in original
-   relative order preserves all stable matchings") and push the 49
-   witnesses through `mapMu6` directly;
+   route avoids count-transport on read-offs entirely. The
+   *bottom-agnostic bridge* is DONE (`AbsBridge6.lean`:
+   `stable_of_orderPreserving` + count corollary, cross-checked by
+   re-deriving the promoted-read-off case in 15 lines); the campaign
+   instantiates it at `readoffS` and pushes the 49 witnesses through
+   `mapMu6`;
 3. encoding faithfulness for the frame/selector CNF (1500–3000 lines,
    `Faithfulness.lean` genre), with Chain6's validity layer supplying
    the witness schedule from any 49-matching instance and the
