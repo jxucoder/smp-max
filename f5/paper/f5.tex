@@ -26,12 +26,12 @@ Irving (1989). The value $f(5)=16$ was announced by Eilers (2022, OEIS A357269) 
 of an unpublished constraint-programming search that produced no checkable artifact. We give the
 first machine-checkable proof. A Lean~4 development defines the problem in $\sim$40 lines,
 proves---with no \texttt{sorry} and only the three standard Mathlib axioms---the theorem
-\[
+\begin{align*}
 \texttt{f5\_eq\_16\_of\_unsat} :\;
 \Bigl(\forall\, \rho \in P_{120},\ \neg\mathrm{Sat}(\Phi_\rho)\Bigr) \;\longrightarrow\;
-\Bigl(\forall I,\ \mathrm{WF}(I) \to \mathrm{sc}(I) \le 16\Bigr) \wedge
-\Bigl(\exists I,\ \mathrm{WF}(I) \wedge \mathrm{sc}(I) = 16\Bigr),
-\]
+&\Bigl(\forall I,\ \mathrm{WF}(I) \to \mathrm{sc}(I) \le 16\Bigr)\\
+&{}\wedge \Bigl(\exists I,\ \mathrm{WF}(I) \wedge \mathrm{sc}(I) = 16\Bigr),
+\end{align*}
 where the $120$ propositional formulas $\Phi_\rho$ are themselves defined in Lean and printed
 verbatim to DIMACS by a 30-line exporter. Each $\Phi_\rho$ is refuted by \textsf{kissat}, each
 proof is validated by \textsf{drat-trim}, and each resulting LRAT certificate is checked
@@ -84,52 +84,142 @@ $n=5$ is $3.55^5 \approx 555$.
 
 \section{The Lean development}
 
-\paragraph{Definitions.} An instance is a pair of $5\times 5$ rank tables
-(\texttt{mrank}$[m][w]$ = position of woman $w$ in man $m$'s order, $0$ best; \texttt{wrank}
-symmetric); well-formedness $\mathrm{WF}$ requires both tables to have five rows, each a
-permutation of $\{0,\dots,4\}$. A matching is one of the $120$ permutations $\mu$; it is stable
-iff no pair $(m,w)$ with $w \ne \mu(m)$ has both
-$\mathrm{mrank}[m][w] < \mathrm{mrank}[m][\mu(m)]$ and
-$\mathrm{wrank}[w][m] < \mathrm{wrank}[w][\mu^{-1}(w)]$. The count $\mathrm{sc}(I)$ filters
-Mathlib's \texttt{List.permutations}. These definitions total about forty lines and are the
-entire human-review surface of the formal claim.
+\subsection{The review surface}
 
-\paragraph{Upper bound.} The kernel-checked chain has three stages.
-\emph{Symmetry} (\texttt{reduce\_man0'}): relabelling women by man~0's rank row fixes man~0's
-row to the identity, preserves well-formedness, and preserves $\mathrm{sc}$; the proof
-constructs the relabelling bijection on matchings and carries stability across it pointwise.
-\emph{Covering} (\texttt{cube\_covering}): for well-formed $I$, man~1's rank row lies in the
-$120$-element list $P_{120} = \texttt{permutations}\,[0,\dots,4]$.
-\emph{Faithfulness} (\texttt{cube\_faithful}): for each $\rho \in P_{120}$, any well-formed $I$
-with man~0 identity, man~1 row $\rho$, and $\mathrm{sc}(I) \ge 17$ yields an assignment
-satisfying the CNF $\Phi_\rho$ of Section~\ref{sec:cnf} --- the assignment reads the preference
-variables off $I$ and points seventeen selector slots at the first seventeen stable matchings of
-$I$ in enumeration order; each clause family is then discharged. Chaining the three: if every
-$\Phi_\rho$ is unsatisfiable then $\mathrm{sc}(I) \le 16$ for all well-formed $I$.
+The claim of a formal theorem is only as strong as the definitions in its statement, so we
+display them in full. An instance is a pair of $5\times 5$ rank tables; everything is built
+from \texttt{List Nat}:
 
-\paragraph{Lower bound.} An explicit witness instance (found by SAT in $0.1$s) is embedded, and
-$\mathrm{sc}(\texttt{witnessI}) = 16$ is proved by kernel computation. Mathlib's
-\texttt{permutations} uses well-founded recursion, which the kernel cannot evaluate, so the
-count is transported across \texttt{List.permutations\_perm\_permutations\('\)} to the
-structurally recursive \texttt{permutations\('\)} and evaluated there by \texttt{decide}. A
-standalone variant (\texttt{Witness.lean}) proves the same count from first principles using
-only \texttt{propext}.
+\begin{verbatim}
+structure Inst where
+  mrank : List (List Nat)   -- mrank[m][w] = position of w in m's order, 0 best
+  wrank : List (List Nat)   -- symmetric
 
-\paragraph{Main theorem.} \texttt{f5\_eq\_16\_of\_unsat} (statement in the abstract) combines
-both directions; \texttt{\#print axioms} reports exactly
-\texttt{[propext, Classical.choice, Quot.sound]}, re-checked by CI on every commit.
+def isRankRow (r : List Nat) : Bool :=
+  r.length = 5 && (List.range 5).all fun v => r.contains v
+
+def WF (I : Inst) : Bool :=
+  I.mrank.length = 5 && I.wrank.length = 5 &&
+  I.mrank.all isRankRow && I.wrank.all isRankRow
+
+def get2 (t : List (List Nat)) (i j : Nat) : Nat := (t.getD i []).getD j 0
+
+def isStable (I : Inst) (mu : List Nat) : Bool :=
+  (List.range 5).all fun m => (List.range 5).all fun w =>
+    let wm := mu.getD m 0        -- m's partner
+    let mw := idxOf w mu         -- w's partner
+    (w = wm) || !(get2 I.mrank m w < get2 I.mrank m wm &&
+                  get2 I.wrank w m < get2 I.wrank w mw)
+
+def stableCount (I : Inst) : Nat :=
+  (([0,1,2,3,4] : List Nat).permutations.filter (isStable I)).length
+\end{verbatim}
+
+\noindent (plus the seven-line first-order recursion \texttt{idxOf}). This, together with
+the statement below, is the entire human-review surface; nothing else needs to be read to
+trust the theorem:
+
+\begin{verbatim}
+theorem f5_eq_16_of_unsat
+    (H : forall row in perms120, not (Satisfiable (cubeCNF row))) :
+    (forall I : Inst, WF I = true -> stableCount I <= 16) /\
+    (exists I : Inst, WF I = true /\ stableCount I = 16)
+\end{verbatim}
+
+\noindent where \texttt{perms120} and \texttt{cubeCNF} are likewise concrete Lean
+definitions (Section~\ref{sec:cnf}), so the single hypothesis \texttt{H} is exactly what
+the verified certificate checker discharges.
+
+\subsection{Upper bound: symmetry, covering, faithfulness}
+
+The kernel-checked chain has three stages.
+
+\emph{Symmetry} (\texttt{reduce\_man0'}, \texttt{Symmetry.lean}, $416$ lines): relabelling
+women by man~0's rank row $\sigma$ fixes man~0's row to the identity while preserving
+well-formedness and $\mathrm{sc}$. The proof constructs the relabelling explicitly ---
+\texttt{relabel} composes every man's row with $\sigma^{-1}$ and permutes the women's rows
+--- together with the induced bijection $\mu \mapsto \sigma^{-1}\circ\mu$ on matchings, and
+carries stability across it pointwise. The workhorses are four small lemmas about the
+first-order \texttt{idxOf} recursion (\texttt{idxOf\_lt\_length}, \texttt{getD\_idxOf},
+\texttt{idxOf\_getD}, \texttt{idxOf\_map}) which together say that on lists that are
+permutations of $[0,\dots,4]$, indexing and inversion behave like the group theory one
+would do on paper. No \texttt{Equiv.Perm} or finite-group machinery is used; staying
+first-order over lists keeps the definitions kernel-computable and the faithfulness proofs
+syntactic.
+
+\emph{Covering} (\texttt{cube\_covering}): for well-formed $I$, man~1's rank row lies in
+the $120$-element list $P_{120} = \texttt{permutations}\,[0,\dots,4]$; this is
+\texttt{rankRow\_perm} plus membership transport, and it is what makes the $120$ cubes
+exhaustive by construction rather than by convention.
+
+\emph{Faithfulness} (\texttt{cube\_faithful'}, \texttt{Faithfulness.lean}, $429$ lines):
+for each $\rho \in P_{120}$, any well-formed $I$ with man~0 identity, man~1 row $\rho$, and
+$\mathrm{sc}(I) \ge 17$ yields an assignment satisfying the CNF $\Phi_\rho$ of
+Section~\ref{sec:cnf}. Chaining the three: if every $\Phi_\rho$ is unsatisfiable then
+$\mathrm{sc}(I) \le 16$ for all well-formed $I$.
+
+\subsection{Lower bound: a kernel-computed witness}
+
+An explicit witness instance (found by SAT in $0.1$s) is embedded as a literal:
+\begin{verbatim}
+def witnessI : Inst :=
+  ⟨[[2,0,1,4,3], [1,3,4,2,0], [2,4,3,0,1], [4,1,0,2,3], [0,2,3,4,1]],
+   [[1,3,2,0,4], [4,1,0,3,2], [2,0,1,4,3], [1,2,3,4,0], [0,4,3,1,2]]⟩
+\end{verbatim}
+and $\mathrm{sc}(\texttt{witnessI}) = 16$ is proved by kernel computation. One subtlety is
+worth recording for practitioners: Mathlib's \texttt{List.permutations} is defined by
+well-founded recursion, which the kernel cannot unfold, so \texttt{decide} fails on
+\texttt{stableCount} as stated. The count is transported across the Mathlib equivalence
+\texttt{List.permutations\_perm\_permutations\('\)} to the structurally recursive
+\texttt{permutations\('\)} and evaluated there --- a two-line fix once diagnosed, invisible
+in the final statement. A standalone variant (\texttt{Witness.lean}) proves the same count
+from first principles using only \texttt{propext}. We deliberately avoid
+\texttt{native\_decide} throughout: every computation in the trust base is kernel-reduced.
+
+\paragraph{Main theorem.} \texttt{f5\_eq\_16\_of\_unsat} combines both directions;
+\texttt{\#print axioms} reports exactly \texttt{[propext, Classical.choice, Quot.sound]},
+re-checked --- together with a no-\texttt{sorry} sweep and a rebuild from a clean cache ---
+by continuous integration on every commit.
 
 \section{The certificates}\label{sec:cnf}
 
-\paragraph{Encoding.} $\Phi_\rho$ uses pairwise preference variables with transitivity
-(forbidding both $3$-cycles on every triple), unit clauses pinning man~0 to the identity and
-man~1 to $\rho$, and a \emph{selector} block: variables $y_{t,\mu}$ ($t < 17$, $\mu$ indexing
-$P_{120}$) with (i) each slot nonempty, (ii) consecutive slots strictly increasing in
-$\mu$-index (killing slot symmetry and forcing seventeen distinct selections), and (iii)
-selected matchings admitting no blocking pair. Sizes: $2{,}140$ variables, $157{,}197$ clauses.
-The encoding was chosen to make faithfulness formalizable by hand; no cardinality-network
-semantics enter the proof. As a positive control, the $16$-slot variant of the cube containing
-the witness is satisfiable, and the decoded model recounts to a valid $16$-matching instance.
+\paragraph{Encoding.} The variables of $\Phi_\rho$ come in two blocks. \emph{Preference
+variables}: for each side $s\in\{\text{men},\text{women}\}$, person $i<5$ and pair
+$a<b<5$, a variable $p^s_{i,a,b}$ meaning ``person $i$ prefers $a$ to $b$''
+($2\cdot5\cdot10=100$ variables); a literal for ``prefers $a$ to $b$'' with $a>b$ is the
+negation. \emph{Selector variables}: $y_{t,\mu}$ for $t<17$ and $\mu$ ranging over the
+concrete list $P_{120}$ of matchings ($17\cdot120=2040$ variables; $2140$ in all). The
+clause families:
+\begin{itemize}
+\item \emph{transitivity}: for every person and ordered triple, forbid both preference
+  $3$-cycles ($2\cdot 5\cdot\binom{5}{3}\cdot 2$ clauses) --- with totality this makes each
+  person's preference relation a strict linear order;
+\item \emph{cube units}: unit clauses pinning man~0's row to the identity and man~1's row
+  to $\rho$;
+\item \emph{slot nonemptiness}: $\bigvee_\mu y_{t,\mu}$ for each $t<17$;
+\item \emph{slot ordering}: $\neg y_{t,\mu} \vee \neg y_{t+1,\mu'}$ for $\mu' \le \mu$ in
+  the fixed enumeration order of $P_{120}$ --- consecutive slots strictly increase, killing
+  the $17!$ slot symmetry and forcing seventeen \emph{distinct} selections;
+\item \emph{non-blocking}: $\neg y_{t,\mu} \vee \neg p^m_{m,w,\mu(m)} \vee
+  \neg p^w_{w,m,\mu^{-1}(w)}$ for every slot, matching and non-matched pair $(m,w)$ ---
+  a selected matching admits no blocking pair.
+\end{itemize}
+Together: $157{,}197$ clauses. The encoding is deliberately \emph{naive}: no cardinality
+networks, no auxiliary Tseitin variables, because every clause family must be discharged by
+hand in the faithfulness proof. Satisfiability of $\Phi_\rho$ says precisely ``some
+instance in cube $\rho$ has $17$ pairwise-distinct stable matchings''.
+
+\paragraph{Faithfulness, in detail.} Given well-formed $I$ in cube $\rho$ with
+$\mathrm{sc}(I)\ge 17$, the assignment $\tau$ sets $p^s_{i,a,b}$ by comparing the actual
+ranks in $I$, and sets $y_{t,\mu}$ true iff $\mu$ is the $t$-th stable matching of $I$ in
+the enumeration order of $P_{120}$ (the first seventeen indices exist because
+$\mathrm{sc}(I)\ge 17$). Six lemmas then discharge the six families
+(\texttt{trans\_sat}, \texttt{man0\_sat}, \texttt{man1\_sat}, \texttt{nonempty\_sat},
+\texttt{ordering\_sat}, \texttt{block\_sat}); the last is the delicate one, unfolding the
+Boolean \texttt{isStable} of the selected matching at the offending pair. The composition
+is \texttt{cube\_faithful'}. As a positive control against vacuity, the $16$-slot variant
+of the cube containing the witness is satisfiable, and the decoded model recounts to a
+valid $16$-matching instance.
 
 \paragraph{Pipeline.} The formulas are printed from the Lean definitions by a $30$-line
 exporter. Each cube is refuted by \textsf{kissat}~4.0.4 (hardest cube $115$s --- the one
@@ -161,6 +251,58 @@ times (different encodings and solver configurations, including a pure-RUP
 \texttt{lrat\_proof} kernel import of the analogous $n{=}4$ certificate, which reproves
 $f(4)=10$ inside Lean in ten seconds).
 
+
+\section{Development statistics and lessons}\label{sec:lessons}
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+file & lines & theorems & role\\
+\midrule
+\texttt{Faithful.lean}      & 94   & 3  & problem definitions, covering\\
+\texttt{Symmetry.lean}      & 416  & 35 & woman-relabelling reduction\\
+\texttt{Encoding.lean}      & 109  & 1  & CNF as a Lean value; DIMACS printer\\
+\texttt{Faithfulness.lean}  & 429  & 26 & assignment $\tau$; six family lemmas\\
+\texttt{Bridge.lean}, \texttt{Lower.lean} & 82 & 6 & composition; witness\\
+\midrule
+total ($f(5)$)              & 1{,}130 & 71 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The development builds in about twenty minutes (Mathlib cached); the kernel
+evaluation of the witness count takes seconds. Some transferable lessons:
+
+\begin{itemize}
+\item \emph{Single source of truth for the encoding.} The classic gap in certified-SAT
+  papers is between the CNF the paper describes and the CNF the solver saw. Here the CNF
+  is a Lean value and the DIMACS files are printed from it by a $30$-line exporter, so the
+  faithfulness theorem is about the very formulas that were refuted. The exporter is in
+  the trust base; it is small enough to read in one sitting.
+\item \emph{Stay first-order, stay computable.} All objects are lists of naturals;
+  stability is a \texttt{Bool}-valued program. This makes every quantity in the
+  development kernel-computable (\texttt{decide} works), keeps proofs syntactic, and
+  avoids simultaneously fighting the mathlib abstraction stack and the SAT bridge.
+\item \emph{Certified results as test oracles.} Before formalization, the counting
+  function was validated against OEIS ground truth and by differential testing; after
+  formalization, the certified theorem became the oracle for the (unverified) $f(6)$
+  search machinery of the companion paper --- certification pays forward.
+\item \emph{Positive controls.} Every UNSAT campaign ran alongside a SAT control (the
+  $16$-slot cube of the witness) to guard against vacuous refutations of over-constrained
+  encodings --- the SAT analogue of testing that your test suite can fail.
+\end{itemize}
+
+\paragraph{On AI assistance.} The development --- problem selection, Lean proofs,
+encodings, search code, and this paper --- was produced by the author working with
+Claude (Anthropic) in an agentic coding setup, over roughly three days. The formal
+artifact is unaffected in kind by this provenance: the theorem statement is forty lines of
+displayed Lean, the axioms are printed by the kernel, and the certificates are checked by
+a verified checker. We note it because the workflow --- an AI system iterating against a
+proof assistant, with the human directing scope, priorities and publication decisions ---
+was essential to the three-day cost, and because problem-selection due diligence (checking
+OEIS entries, problem pages and prior announcements) consumed a substantial fraction of
+the effort, which we suspect generalizes.
+
 \section{Related work}
 
 Our architecture --- verified encoding in Lean, certificates checked by \textsf{cake\_lpr},
@@ -177,12 +319,14 @@ Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}.
 \section{Conclusion}
 
 $f(5)=16$ now has a proof whose every step is checked either by the Lean kernel or by a
-formally verified certificate checker, with a forty-line human-review surface. The first open
-case is $f(6)$: the best lower bound is $48$ (a dihedral Latin instance), conjectured exact
-(OEIS A357271). The search space grows by eleven orders of magnitude, so a direct extension
-will require either much stronger symmetry breaking inside the certificates or a structural
-route through rotation posets --- for which the $176{,}130$ extremal instances enumerated here
-are the natural microscope.
+formally verified certificate checker, with a forty-line human-review surface. The companion
+paper~\cite{f6paper} takes the next step: it determines the previously open value $f(6)=48$
+by reducing instance space ($\sim\!10^{28}$) to an exhaustively enumerated space of rotation
+schedules ($2.7\times 10^{10}$), with the certified theorem proved here serving as ground
+truth for validating that enumeration machinery. The reduction lemmas of~\cite{f6paper} are
+themselves formalized in Lean (a further $1{,}849$ lines, $105$ theorems, zero
+\texttt{sorry}s, in the same repository); certifying its enumeration end-to-end is the
+natural continuation of the programme begun here.
 
 \paragraph{Artifact.} Repository with code, proofs, logs, verification guide
 (\texttt{VERIFYING.md}) and CI; certificate archive with DOI to accompany the final version.
@@ -215,6 +359,8 @@ redundancy checking in CakeML, \emph{TACAS 2021}.
 \bibitem{r45} T. Gauthier and C. E. Brown, A formal proof of $R(4,5)=25$, arXiv:2404.01761,
 2024.
 \bibitem{k8} A Lean-certified proof of $K_8(4,2)=23$, arXiv:2606.16688, 2026.
+\bibitem{f6paper} J. Xu, The maximum number of stable matchings of order six is
+forty-eight, companion manuscript, 2026.
 \bibitem{lratcatcher} LRAT-Catcher: importing SAT solver certificates into Lean 4 by
 reflection, arXiv:2607.00815, 2026.
 \end{thebibliography}
