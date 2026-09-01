@@ -117,14 +117,56 @@ printer) — the strongest possible outcome.
   (minutes, not days), Architecture 3 is dead at order 6 and the
   decision defaults to Architecture 2.
 
+## Pilot results (2026-09-01): GO at order 5, end-to-end
+
+`sched_sat.py` (this directory) implements the Architecture 3 encoding.
+Validation against ground truth, all single-core (Apple M4 Max):
+
+| order | k  | expected | result | time | decode recount |
+|-------|----|----------|--------|------|----------------|
+| 3     | 3  | SAT      | SAT    | 0.0s | sc = 3, OK     |
+| 3     | 4  | UNSAT    | UNSAT  | 0.0s | —              |
+| 4     | 10 | SAT      | SAT    | 0.0s | sc = 10, OK (6 transpositions, full budget) |
+| 4     | 11 | UNSAT    | UNSAT  | 0.1s | —              |
+| 5     | 16 | SAT      | SAT    | 10.4s| sc = 16, OK (8 transpositions) |
+| 5     | 17 | UNSAT    | **UNSAT** | **236s** | —          |
+
+Certificate chain for the order-5 refutation (6,340 vars, 226,651
+clauses, no symmetry breaking):
+
+    kissat (proof logging)  236s   -> 683 MB DRAT
+    drat-trim               267s   -> s VERIFIED, 4.3 GB LRAT
+                                       (54,308 RAT lemmas in core -
+                                        not pure RUP; fine for cake_lpr)
+    cake_lpr                 83s   -> s VERIFIED UNSAT
+
+Total ~10 single-core minutes. This is simultaneously a fourth
+independent confirmation of f(5)=16 (schedule space, certificate-
+backed) and the feasibility proof for Architecture 3 at the pilot
+scale.
+
+**Order-6 scale plan** (before any solve attempt):
+1. *Ladder (sequential-prefix) selector ordering*: the current
+   quadratic ordering block would be 48·720·721/2 ≈ 12.5M clauses at
+   order 6; prefix variables bring it to ~100k. Mandatory.
+2. *Cube on the first 1-2 steps* (the 512-shard split maps onto cubes);
+   per-cube time limits, hybrid fallback per REPLAY_DESIGN above.
+3. *Symmetry-breaking clauses* (first-appearance labeling), soundness
+   via the relabeling lemma; without them the order-6 formula likely
+   does not converge.
+4. Estimated formula size after (1): ~40k vars, ~1.6M clauses per cube.
+   Unknown remains unknown until measured: the 5x10^4-fold node blowup
+   from order 5 does not translate linearly to solver time in either
+   direction.
+
 ## Recommendation
 
 Two-track, pilot-first:
 
-1. **Order-5 SAT pilot** (Architecture 3, cheap to attempt): a Python
-   encoder (~300 lines) + kissat. Outcome measurable in a day of work.
-   - If refutation is easy at order 5 and scales to order-6 cubes:
-     pursue Architecture 3 — best trust base, reuses everything.
+1. **Order-5 SAT pilot** — DONE, see above: refutation + full
+   certificate chain in ~10 single-core minutes. Architecture 3 is GO
+   at pilot scale; next gate is an order-6 cube probe after the ladder
+   encoding.
 2. **Fallback / parallel**: formalize Lemma sym (the 500–1000 line
    commutation + relabeling layer) — needed by Architecture 2 anyway,
    and it strengthens the paper's validation story regardless.

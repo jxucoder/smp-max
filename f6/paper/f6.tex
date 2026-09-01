@@ -314,7 +314,13 @@ $2{,}657{,}773{,}436$ nodes) and never changes a maximum.
 different code path) agrees on the maxima at the budgets where it is feasible; a third,
 $40$-line reference implementation written directly from
 Definition~\ref{def:sched} and Lemma~\ref{lem:sym} reproduces the order-3 table of
-Section~\ref{sec:example} node for node.
+Section~\ref{sec:example} node for node. A fourth route bypasses enumeration entirely: a
+SAT reformulation of the schedule space (bounded frames, first-visit-derived read-off
+comparisons, selector slots) refutes ``some order-5 schedule has $\mathrm{sc}(R(S))\ge
+17$'' in four minutes, with the refutation checked end-to-end by \textsf{drat-trim} and
+\textsf{cake\_lpr} --- both an independent certificate-backed confirmation at order $5$
+and the pilot for certifying the order-6 bound itself (see \texttt{REPLAY\_DESIGN.md} in
+the repository).
 
 \paragraph{Other search spaces.} Before the enumeration, $9.7\times10^7$ hill-climbing
 evaluations in raw instance space and $1.2\times10^9$ evaluations in swap-schedule space (72
