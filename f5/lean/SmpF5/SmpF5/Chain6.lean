@@ -668,3 +668,100 @@ theorem traj_getLast {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
       some ((womanOpt I).getD m 0)
     rw [getLast?_map', hl]
     rfl
+
+/-! ## Woman-side trajectories: strict improvement, no revisits
+
+Along the chain each woman's partner rank strictly *decreases* whenever
+it changes (`opposite_interests`), so her trajectory is also
+revisit-free — the last schedule-validity constraint ("no woman
+receives a husband she has already had"). -/
+
+def wtraj (I : Inst6) (w : Nat) : List Nat :=
+  ((theChain I).map (fun μ => idxOf w μ)).destutter (· ≠ ·)
+
+theorem pairwise_imp_mem {α : Type} {R S : α → α → Prop} :
+    ∀ {l : List α}, (∀ a ∈ l, ∀ b ∈ l, R a b → S a b) →
+    l.Pairwise R → l.Pairwise S := by
+  intro l
+  induction l with
+  | nil => intro _ _; exact List.Pairwise.nil
+  | cons a t ih =>
+    intro H h
+    rw [List.pairwise_cons] at h ⊢
+    obtain ⟨h1, h2⟩ := h
+    refine ⟨?_, ih ?_ h2⟩
+    · intro b hb
+      exact H a List.mem_cons_self b (List.mem_cons_of_mem _ hb) (h1 b hb)
+    · intro x hx y hy hxy
+      exact H x (List.mem_cons_of_mem _ hx) y (List.mem_cons_of_mem _ hy) hxy
+
+theorem wrank_facts {I : Inst6} (hWF : WF6 I = true) :
+    I.wrank.length = 6 ∧ ∀ r ∈ I.wrank, isRankRow6 r = true := by
+  simp only [WF6, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at hWF
+  obtain ⟨⟨⟨_, hwl⟩, _⟩, hwrows⟩ := hWF
+  exact ⟨hwl, fun r hr => hwrows r hr⟩
+
+theorem wtraj_sublist_col (I : Inst6) (w : Nat) :
+    (wtraj I w).Sublist ((theChain I).map (fun μ => idxOf w μ)) :=
+  List.destutter_sublist _ _
+
+theorem wtraj_all_lt6 {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    {w : Nat} (hw : w < 6) : ∀ m ∈ wtraj I w, m < 6 := by
+  intro m hm
+  obtain ⟨μ, hμ, rfl⟩ := List.mem_map.1 ((wtraj_sublist_col I w).subset hm)
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  exact idxOf_lt6 (mem_sms6_perm (chainFrom_mem 31 (manOpt I) hMmem μ hμ)) hw
+
+theorem wtraj_rank_pairwise {I : Inst6} (hWF : WF6 I = true)
+    (hne : sms6 I ≠ []) {w : Nat} (hw : w < 6) :
+    List.Pairwise (fun a b => get2 I.wrank w b < get2 I.wrank w a)
+      (wtraj I w) := by
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  have hchainpw : List.Pairwise
+      (fun μ ν => get2 I.wrank w (idxOf w ν) ≤ get2 I.wrank w (idxOf w μ))
+      (theChain I) := by
+    refine pairwise_imp_mem ?_ (chain_pairwise_domLe hWF hne)
+    intro x hx y hy hdom
+    exact opposite_interests hWF
+      (chainFrom_mem 31 (manOpt I) hMmem x hx)
+      (chainFrom_mem 31 (manOpt I) hMmem y hy)
+      (fun m hm => hdom m hm) hw
+  have hcolpw : List.Pairwise
+      (fun a b : Nat => get2 I.wrank w b ≤ get2 I.wrank w a)
+      ((theChain I).map (fun μ => idxOf w μ)) := by
+    rw [List.pairwise_map]
+    exact hchainpw
+  have hle : List.Pairwise
+      (fun a b : Nat => get2 I.wrank w b ≤ get2 I.wrank w a) (wtraj I w) :=
+    hcolpw.sublist (wtraj_sublist_col I w)
+  have hchne : (wtraj I w).IsChain (fun a b : Nat => a ≠ b) :=
+    List.isChain_destutter _ _
+  have hand := isChain_and hle.isChain hchne
+  have hlt : (wtraj I w).IsChain
+      (fun a b => get2 I.wrank w b < get2 I.wrank w a) := by
+    refine isChain_imp_mem ?_ hand
+    intro a ha b hb hab
+    obtain ⟨hlen, hrows⟩ := wrank_facts hWF
+    refine lt_of_le_of_ne hab.1 (fun heq => hab.2 ?_)
+    exact (rank_inj6 hlen hrows hw (wtraj_all_lt6 hWF hne hw b hb)
+      (wtraj_all_lt6 hWF hne hw a ha) heq).symm
+  letI : Trans (fun a b : Nat => get2 I.wrank w b < get2 I.wrank w a)
+      (fun a b : Nat => get2 I.wrank w b < get2 I.wrank w a)
+      (fun a b : Nat => get2 I.wrank w b < get2 I.wrank w a) :=
+    ⟨fun h1 h2 => lt_trans h2 h1⟩
+  exact hlt.pairwise
+
+/-- No woman ever receives a husband she has already had. -/
+theorem wtraj_nodup {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    {w : Nat} (hw : w < 6) : (wtraj I w).Nodup :=
+  (wtraj_rank_pairwise hWF hne hw).imp
+    (fun {a b} h heq => absurd (heq ▸ h) (lt_irrefl _))
+
+theorem wtraj_length_le {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    {w : Nat} (hw : w < 6) : (wtraj I w).length ≤ 6 := by
+  have hsub : wtraj I w ⊆ List.range 6 := by
+    intro m hm
+    rw [List.mem_range]
+    exact wtraj_all_lt6 hWF hne hw m hm
+  have := (List.Nodup.subperm (wtraj_nodup hWF hne hw) hsub).length_le
+  simpa using this
