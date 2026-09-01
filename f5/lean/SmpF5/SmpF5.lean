@@ -8,3 +8,4 @@ import SmpF5.SixBridge
 import SmpF5.Lattice6
 import SmpF5.Chain6
 import SmpF5.Sym6
+import SmpF5.Sched6

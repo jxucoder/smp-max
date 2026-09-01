@@ -230,10 +230,21 @@ the current cube's file per worker.
    the critical path. Remaining: the schedule-level statement (relabel
    a schedule, first-participation σ makes it canonical, read-off
    commutes with relabel6) — lands with the Schedule object;
-2. encoding faithfulness for the frame/selector CNF (1500–3000 lines,
+2. the Schedule object — DONE (2026-09-01, `Sched6.lean`: applyStep /
+   schedMatchings / straj trajectories / Legal / readoffS, with
+   permutation preservation and WF6_readoffS; zero sorries).
+   Design discovery: readoffS does NOT commute with relabeling (the
+   canonical bottom completion is not equivariant), so the faithfulness
+   route avoids count-transport on read-offs entirely — instead,
+   generalize the bridge lemma to a *bottom-agnostic* form ("any
+   instance ranking each person's stable partners on top in original
+   relative order preserves all stable matchings") and push the 49
+   witnesses through `mapMu6` directly;
+3. encoding faithfulness for the frame/selector CNF (1500–3000 lines,
    `Faithfulness.lean` genre), with Chain6's validity layer supplying
-   the witness schedule from any 49-matching instance;
-3. a Lean `export_cnf`-style printer so the campaign formulas are
+   the witness schedule from any 49-matching instance and the
+   bottom-agnostic bridge supplying the 49 selector targets;
+4. a Lean `export_cnf`-style printer so the campaign formulas are
    printed from Lean definitions (single source of truth, as in f5).
 
 Verdict: Architecture 3 is GO at order 6. No blocker identified;
