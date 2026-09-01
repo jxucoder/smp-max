@@ -424,3 +424,82 @@ theorem join_mem {I : Inst6} (hWF : WF6 I = true) {μ ν : List Nat}
   rw [show transposeI (transposeI I) = I from rfl] at hdual
   rw [hdual]
   exact mem_sms6_stable hρ
+
+/-! ## The man-optimal matching (L3) -/
+
+def manOpt (I : Inst6) : List Nat :=
+  match sms6 I with
+  | [] => idRow6
+  | mu :: rest => rest.foldl (meetM I) mu
+
+theorem foldl_meet_spec {I : Inst6} (hWF : WF6 I = true) :
+    ∀ (L : List (List Nat)) (acc : List Nat), acc ∈ sms6 I →
+    (∀ x ∈ L, x ∈ sms6 I) →
+    (L.foldl (meetM I) acc ∈ sms6 I) ∧
+    (∀ m, m < 6 → get2 I.mrank m ((L.foldl (meetM I) acc).getD m 0) ≤
+      get2 I.mrank m (acc.getD m 0)) ∧
+    (∀ x ∈ L, ∀ m, m < 6 → get2 I.mrank m ((L.foldl (meetM I) acc).getD m 0) ≤
+      get2 I.mrank m (x.getD m 0)) := by
+  intro L
+  induction L with
+  | nil =>
+    intro acc hacc _
+    exact ⟨hacc, fun m hm => le_refl _, by simp⟩
+  | cons x L ih =>
+    intro acc hacc hL
+    have hx : x ∈ sms6 I := hL x List.mem_cons_self
+    have hacc' : meetM I acc x ∈ sms6 I := meet_mem hWF hacc hx
+    obtain ⟨h1, h2, h3⟩ := ih (meetM I acc x) hacc'
+      (fun y hy => hL y (List.mem_cons_of_mem _ hy))
+    simp only [List.foldl_cons]
+    refine ⟨h1, ?_, ?_⟩
+    · intro m hm
+      have hb := (meet_best (I := I) (μ := acc) (ν := x) hm).1
+      have h2m := h2 m hm
+      omega
+    · intro y hy m hm
+      rcases List.mem_cons.1 hy with rfl | hy'
+      · have hb := (meet_best (I := I) (μ := acc) (ν := y) hm).2
+        have h2m := h2 m hm
+        omega
+      · exact h3 y hy' m hm
+
+theorem manOpt_spec {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ []) :
+    manOpt I ∈ sms6 I ∧
+    ∀ ν ∈ sms6 I, ∀ m, m < 6 →
+      get2 I.mrank m ((manOpt I).getD m 0) ≤ get2 I.mrank m (ν.getD m 0) := by
+  rcases hsms : sms6 I with _ | ⟨mu, rest⟩
+  · exact absurd hsms hne
+  · have hmu : mu ∈ sms6 I := by rw [hsms]; exact List.mem_cons_self
+    have hrest : ∀ x ∈ rest, x ∈ sms6 I := by
+      intro x hx; rw [hsms]; exact List.mem_cons_of_mem _ hx
+    obtain ⟨h1, h2, h3⟩ := foldl_meet_spec hWF rest mu hmu hrest
+    have hman : manOpt I = rest.foldl (meetM I) mu := by
+      simp only [manOpt, hsms]
+    constructor
+    · rw [hman, ← hsms]; exact h1
+    · intro ν hν m hm
+      rw [hman]
+      rcases List.mem_cons.1 hν with rfl | hν'
+      · exact h2 m hm
+      · exact h3 ν hν' m hm
+
+/-- Dominance is antisymmetric on stable matchings. -/
+theorem dominance_antisymm {I : Inst6} (hWF : WF6 I = true)
+    {μ ν : List Nat} (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I)
+    (h1 : ∀ m, m < 6 →
+      get2 I.mrank m (μ.getD m 0) ≤ get2 I.mrank m (ν.getD m 0))
+    (h2 : ∀ m, m < 6 →
+      get2 I.mrank m (ν.getD m 0) ≤ get2 I.mrank m (μ.getD m 0)) :
+    μ = ν := by
+  simp only [WF6, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at hWF
+  obtain ⟨⟨⟨hml, _⟩, hmrows⟩, _⟩ := hWF
+  have hpμ := mem_sms6_perm hμ
+  have hpν := mem_sms6_perm hν
+  apply List.ext_getElem
+  · rw [perm6_length hpμ, perm6_length hpν]
+  · intro i hi1 hi2
+    have hi : i < 6 := by rw [perm6_length hpμ] at hi1; exact hi1
+    rw [← List.getD_eq_getElem _ _ hi1, ← List.getD_eq_getElem _ _ hi2]
+    exact rank_inj6 hml hmrows hi (perm6_getD_lt hpμ hi)
+      (perm6_getD_lt hpν hi) (by have := h1 i hi; have := h2 i hi; omega)
