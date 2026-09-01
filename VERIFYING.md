@@ -31,17 +31,18 @@ lake exe cache get      # prebuilt Mathlib (or build from source if paranoid)
 lake build              # kernel-checks every theorem; must end with no errors
 ```
 
-Confirm no hidden holes and the exact axiom base:
+Confirm no hidden holes and the exact axiom base of the main theorem
+(upper and lower bound combined):
 
 ```bash
-echo 'import SmpF5.Bridge
-#print axioms f5_upper_of_unsat' > /tmp/ax.lean && lake env lean /tmp/ax.lean
+echo 'import SmpF5.Lower
+#print axioms f5_eq_16_of_unsat' > /tmp/ax.lean && lake env lean /tmp/ax.lean
 ```
 
 Expected output (nothing else):
 
 ```
-'f5_upper_of_unsat' depends on axioms: [propext, Classical.choice, Quot.sound]
+'f5_eq_16_of_unsat' depends on axioms: [propext, Classical.choice, Quot.sound]
 ```
 
 Also check the lower-bound witness (standalone, kernel-only):
@@ -53,9 +54,11 @@ lake env lean ../Witness.lean     # prints: depends on axioms: [propext]
 `grep -rn sorry SmpF5/` must return nothing.
 
 What this buys you: **IF the 120 cube formulas are unsatisfiable THEN
-f(5) ≤ 16** (`f5_upper_of_unsat`), and **a concrete instance with exactly
-16 stable matchings exists** (`Witness.lean`), both as machine-checked
-theorems over the definitions you read in item 3 above.
+f(5) = 16** (`f5_eq_16_of_unsat`: the upper bound for every well-formed
+instance AND an embedded witness with exactly 16, in one statement over
+one `stableCount`), as a machine-checked theorem over the definitions
+you read in item 3 above. `Witness.lean` re-proves the witness count
+standalone using only `propext`.
 
 ## Step 2 — read the definitions (~30 min, human)
 
@@ -116,13 +119,46 @@ Together with Step 1 this discharges the hypothesis of
 - Independent earlier refutations of "≥17" with a different encoding and
   solver configs live in `f5/README.md` (results log).
 
-## Known gaps (state of 2026-08-31)
+## Verifying the f(6) reduction layer (Lean, ~5 min on top of Step 1)
 
-- Upper and lower bounds are two theorems over two syntactically
-  different (definitionally equivalent-by-construction) counts:
-  `Witness.lean` enumerates via a bespoke `permsOf`, the package via
-  `List.permutations`. The ~50-line enumeration-equivalence lemma that
-  merges them into a single `f5 = 16` statement is pending.
+The same `lake build` also kernel-checks the f(6)=48 reduction lemmas
+(`SmpF5/SixBridge.lean`, `SmpF5/Lattice6.lean`, `SmpF5/Chain6.lean`).
+Check their axiom base:
+
+```bash
+echo 'import SmpF5
+#print axioms bridge
+#print axioms chain_complete
+#print axioms traj_mem_iff
+#print axioms wtraj_nodup
+#print axioms total_moves_le_30' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
+```
+
+All must report `[propext, Classical.choice, Quot.sound]`. What these
+say (definitions to read: `Inst6`, `WF6`, `isStable6`, `stableCount6`,
+`stab`, `readoff` at the top of `SixBridge.lean`, same style as the
+order-5 ones):
+
+- `bridge` : for well-formed order-6 `I`,
+  `stableCount6 I <= stableCount6 (readoff I)` — the bridge lemma;
+- `chain_complete`, `traj_*`, `wtraj_*`, `prevOwner_*` : the validity
+  lemma — an explicit maximal chain from the man-optimal to the
+  woman-optimal stable matching whose trajectories are exactly the
+  stable partners in preference order, within all schedule budgets,
+  with each step decomposing into disjoint cyclic swaps (the closing
+  docstring of `Chain6.lean` maps every clause to its theorem).
+
+**What is NOT formalized:** the exhaustive enumeration of the schedule
+space (26.6e9 nodes, C program `f6/gen_enum.c`) and the symmetry
+reduction soundness of its canonicalization (validated computationally:
+on/off agreement; see `f6/paper/f6.pdf` Section "Validation"). The
+f(6)=48 claim = these Lean lemmas + the validated enumeration + the
+dihedral lower bound (checkable in seconds: `python3 smp.py`).
+
+## Known gaps (state of 2026-09-01)
+
 - LRAT certificates are not archived (regenerable in ~2 h; a Zenodo
   archive with DOI is planned so verifiers can skip solving and only
   re-check).
+- The f(6) enumeration is validated, not certified (see the section
+  above); a verified replay is future work.

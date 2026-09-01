@@ -4,9 +4,18 @@ Machine-checkable proofs for f(n) = max number of stable matchings of an
 n x n stable-marriage instance (Knuth 1976, Research Problem #5;
 Gusfield-Irving 1989, Open Problem #1).
 
-- **[f5/](f5/)** — done (computational phase): independent confirmation of
-  f(5)=16 with the first proof certificate. Lean formalization pending.
-- **[f6/](f6/)** — open: the conjecture f(6)=48 (OEIS A357271). Staging.
+- **[f5/](f5/)** — DONE: first machine-checkable proof of f(5)=16.
+  Single Lean theorem `f5_eq_16_of_unsat` (zero sorries, standard
+  axioms), 120 Lean-defined CNFs refuted with certificates checked by
+  the formally verified cake_lpr, 120/120. Paper: `f5/paper/f5.pdf`.
+- **[f6/](f6/)** — RESOLVED: f(6)=48 (previously open, conjectured in
+  OEIS A357271). Schedule reduction + exhaustive evaluation of all
+  26,574,282,886 schedule read-off instances; the reduction lemmas
+  (bridge + validity) are formalized in Lean with zero sorries. Paper:
+  `f6/paper/f6.pdf`; theory notes: `f6/theory.pdf`.
+
+**Status: PRIVATE.** Not yet published; OEIS not yet notified. See
+`INSIGHTS.md` for the retrospective and the publication checklist.
 
 ## Layout
 
@@ -32,9 +41,9 @@ External tool: [drat-trim](https://github.com/marijnheule/drat-trim)
 - f(5)=16: announced by Dan Eilers (Sep 2022, MiniZinc); his paper is
   still "in preparation", and no proof object of any kind existed before
   this project.
-- f(6): open; best lower bound 48 (dihedral Latin instance,
-  [A351413](https://oeis.org/A351413)); conjectured exact
-  ([A357271](https://oeis.org/A357271)).
+- f(6): was open with best lower bound 48 (dihedral Latin instance,
+  [A351413](https://oeis.org/A351413)), conjectured exact
+  ([A357271](https://oeis.org/A357271)) — **resolved here: f(6)=48**.
 - General bounds: 2.28^n <= f(n) (Thurber 2002), f(n) <= 3.55^n
   (Palmer-Pálvölgyi), first exponential bound Karlin-Oveis Gharan-Weber
   STOC 2018.
@@ -117,10 +126,35 @@ canonical man0=id solutions across 120 cubes, ~5 min on 8 cores;
 `f5/cube_enum.py`, `f5/enum_results.txt`). The quotient 4,227,120/24 =
 176,130 also confirms his reduced-instance count in OEIS A357269.
 
+## f(6) = 48 (2026-08-31 .. 09-01)
+
+The schedule reduction (see `f6/theory.pdf` and `f6/paper/f6.pdf`):
+every instance is dominated in stable-matching count by the read-off
+instance of its own rotation schedule, so exhausting the schedule space
+(26,574,282,886 nodes, every node's read-off count computed exactly,
+~10 h on 8 cores) proves the upper bound; the dihedral instance gives
+the lower. Validation: the same machinery reproduces f(3)/f(4)/f(5) =
+3/10/16 (the last certified by this repo's own Lean theorem),
+canonicalization on/off agrees at 4.5x/14x/48x tree blowups, and an
+independent Python implementation agrees throughout.
+
+**Lean formalization of the reduction (complete, 2026-09-01):**
+`f5/lean/SmpF5/SmpF5/{SixBridge,Lattice6,Chain6}.lean` — 1,849 lines,
+105 theorems, zero sorries, axioms = the standard trio. Highlights:
+`bridge` (sc(I) <= sc(readoff I)), `chain_complete` (a maximal cover
+chain from man-optimal to woman-optimal realizes every stable pair),
+the trajectory budget theorems (`traj_*`, `wtraj_*`,
+`total_moves_le_30`), and the step cycle-structure lemmas
+(`prevOwner_*`). The only unformalized link is a verified replay of the
+enumeration itself.
+
 ## Next steps
 
-1. Unify the two stableCount definitions (permsOf vs List.permutations
-   enumeration lemma, ~50 lines) to state "f(5)=16" as one theorem.
-2. Rewrite the paper for the final architecture (selector encoding,
-   Lean-sourced CNFs, cake_lpr); include artifact hashes.
-3. Phase 2: see `f6/README.md`.
+1. (When owner says go) publication sequence: see `INSIGHTS.md`
+   checklist — repo public, Zenodo DOI, arXiv both papers, OEIS.
+2. Verified replay / certified reimplementation of the f(6) enumeration.
+3. The general-n conjecture (all-size-2 schedules; full budget at even
+   orders) — stated as Conjecture 1 in `f6/paper/f6.pdf`.
+4. f(7) feasibility (schedule tree ~1e14-1e15, budget 42, lower bound
+   71 — genuinely uncertain since Eilers conjectured exactness only at
+   even orders).
