@@ -94,9 +94,12 @@ below for the day that changes.
 
 ## Remaining work (when resumed)
 
-1. Lean certification of the f(6) chain: bridge lemma (elementary list
-   argument), verified replay or certified reimplementation of the
-   enumeration. Reuses all f(5) infrastructure.
+1. Lean certification of the f(6) chain: DONE for the theory layer
+   (bridge lemma in SixBridge.lean; lattice/chain theory + the full
+   validity/coverage lemma in Lattice6.lean + Chain6.lean — maximal
+   chain, cover steps, completeness, trajectory budgets both sides,
+   cyclic step structure; zero sorries, standard axioms). Remaining:
+   verified replay or certified reimplementation of the enumeration.
 2. Paper polish: expand both drafts to venue length; decide venues
    (f5 -> ITP 2027, CFP ~Jan-Mar 2027; f6 -> combinatorics journal or
    SAT/CP).

@@ -137,6 +137,18 @@ lex-smaller one, available by finitely many exchanges of type (i), which preserv
 $R(S)$.
 \end{proof}
 
+\paragraph{Formalization status.} Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are
+formalized in Lean~4 in the accompanying development (\texttt{SixBridge.lean},
+\texttt{Lattice6.lean}, \texttt{Chain6.lean}; no \texttt{sorry}, axioms
+\texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}). The chain of covers is
+constructed by repeatedly moving to the strict dominator of minimum rank-sum; its
+completeness (every stable pair appears) follows from a no-skip lemma on covers, and the
+trajectory constraints of Definition~\ref{def:sched} --- preference-order monotonicity,
+no revisits on either side, the per-man cap and the total budget, and the decomposition
+of each step into disjoint cyclic swaps of size $\ge 2$ --- are individual theorems.
+Lemma~\ref{lem:sym} concerns only the enumeration's internal symmetry reduction and is
+validated computationally (canonicalization on/off agreement).
+
 \section{The theorem}
 
 \begin{theorem}\label{thm:f6}

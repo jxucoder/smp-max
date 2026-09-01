@@ -222,9 +222,12 @@ The computational lineage on $f(n)$ is Eilers' ($f(4)$, $f(5)$, and the extremal
 which we replicated independently in~\cite{f5paper}), building on Thurber~\cite{thurber} and
 Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}. Certified computational values of
 comparable flavour include $R(4,5)=25$, the empty hexagon number, Keller's conjecture and Schur
-number five; our companion paper~\cite{f5paper} follows that tradition for $f(5)$, and certifying
-the present enumeration (a verified replay of the DFS, and the bridge lemma in Lean --- an
-elementary argument over finite lists) is natural future work. The next open value, $f(7)$
+number five; our companion paper~\cite{f5paper} follows that tradition for $f(5)$, and the
+accompanying Lean~4 development already formalizes the reduction itself: the bridge lemma
+and the validity lemma (the maximal-chain traversal, its cover steps, the trajectory
+budgets on both sides, and the cyclic structure of each step) are machine-checked with no
+\texttt{sorry}, under the standard axioms. Certifying the enumeration (a verified replay
+of the DFS) is the remaining step toward end-to-end certification. The next open value, $f(7)$
 (best lower bound $71$, budget $42$), appears to need either a much faster certified evaluator or
 new structural cuts: the schedule tree grows by roughly three orders of magnitude.
 
