@@ -223,8 +223,13 @@ checkable. The driver builds the base once in memory and writes only
 the current cube's file per worker.
 
 **Lean critical path** (unchanged in kind, now concrete):
-1. Lemma sym in Lean (canonical-cube coverage: any witness schedule
-   relabels/commutes to a canonical one) — the 500–1000-line layer;
+1. Lemma sym in Lean — instance level DONE (2026-09-01, `Sym6.lean`,
+   364 lines: `relabel6`/`mapMu6`, WF6 + stability + count invariance,
+   zero sorries). Campaign cubes are generated with rule (a) only
+   (first-appearance), so the commutation lemma (rule (b)) is NOT on
+   the critical path. Remaining: the schedule-level statement (relabel
+   a schedule, first-participation σ makes it canonical, read-off
+   commutes with relabel6) — lands with the Schedule object;
 2. encoding faithfulness for the frame/selector CNF (1500–3000 lines,
    `Faithfulness.lean` genre), with Chain6's validity layer supplying
    the witness schedule from any 49-matching instance;
