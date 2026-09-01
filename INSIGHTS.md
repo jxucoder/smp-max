@@ -103,9 +103,11 @@ below for the day that changes.
    validity/coverage lemma in Lattice6.lean + Chain6.lean — maximal
    chain, cover steps, completeness, trajectory budgets both sides,
    cyclic step structure; zero sorries, standard axioms). Remaining:
-   verified replay or certified reimplementation of the enumeration —
-   see f6/REPLAY_DESIGN.md (SAT-reduction pilot first, verified-Lean
-   enumerator as fallback).
+   the SAT-reduction route to a certified upper bound is GO at both
+   pilot and order-6 probe scale (f6/REPLAY_DESIGN.md: order-5
+   refutation certified end-to-end in ~10 min; order-6 hardest-region
+   cubes refute in minutes; campaign estimated 100-1000 core-hours).
+   Left: cube driver + Lemma sym in Lean + encoding faithfulness.
 2. Paper polish: expand both drafts to venue length; decide venues
    (f5 -> ITP 2027, CFP ~Jan-Mar 2027; f6 -> combinatorics journal or
    SAT/CP).

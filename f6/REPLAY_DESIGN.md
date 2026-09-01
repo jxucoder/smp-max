@@ -1,8 +1,9 @@
 # Design: certifying the f(6) enumeration (the last unformalized link)
 
-Status (2026-09-01): design + Architecture 3 pilot DONE (`sched_sat.py`,
-order-5 refutation certified end-to-end — see "Pilot results" below).
-Order-6 attempt not yet started.
+Status (2026-09-01): design done; Architecture 3 pilot DONE and GO
+(order-5 refutation certified end-to-end); order-6 probes DONE and GO
+(hardest-region cubes refute in minutes; see "Order-6 probe results").
+Remaining: cube-campaign driver + the two Lean layers.
 
 ## What is missing, precisely
 
@@ -160,6 +161,55 @@ scale.
    Unknown remains unknown until measured: the 5x10^4-fold node blowup
    from order 5 does not translate linearly to solver time in either
    direction.
+
+## Order-6 probe results (2026-09-01, same day): VIABLE
+
+Ladder rebuild first: order-5 regression strictly improves (k=16 SAT
+10.4s -> 0.2s; k=17 UNSAT 236s -> 156s; clauses 227k -> 118k). The
+order-6 k=49 formula is 84,882 vars / 2.71M clauses / 46 MB, built in
+2 s — the feared 12.5M-clause ordering block is gone.
+
+Probes (single-core M4 Max, kissat, no symmetry-breaking clauses):
+
+| probe                                   | result  | time   |
+|-----------------------------------------|---------|--------|
+| k=48, full dihedral schedule pinned     | SAT     | 0.2s (decode recount sc=48 OK — order-6 encoding validated) |
+| k=48, free search (find a witness)      | unknown | >580s  |
+| k=49, no cube (full refutation)         | unknown | >580s  |
+| k=49, depth-2 dihedral-prefix cube      | unknown | >560s  |
+| k=49, depth-3 dihedral-prefix cube      | UNSAT   | 522s   |
+| k=49, depth-4 dihedral-prefix cube      | UNSAT   | 76.5s  |
+
+The depth-3/4 cubes sit in the *hardest* region of the space — the
+shard family containing the true extremum — and they refute within
+minutes. Scaling is ~6.8x per un-fixed level, extrapolating to a
+~45-core-hour raw formula; cube-and-conquer makes it parallel and
+robust.
+
+Canonical (first-appearance) prefix counts, from the reference
+implementation: 153 at depth 1, 25,339 at depth 2, 1,818,512 at
+depth 3.
+
+**Campaign design**: adaptive cube-and-conquer over canonical prefixes
+— launch the 25,339 depth-2 cubes with a per-cube time limit; split
+timeouts to depth 3 (and 4). Expected order 100–1000 core-hours
+(days on 8 cores, or a small cloud burst) — the same magnitude as the
+C enumeration, but every cube emits a DRAT checked by
+drat-trim + cake_lpr and then deleted (f5-style streaming, ~0.7 GB
+transient per hard cube).
+
+**Lean critical path** (unchanged in kind, now concrete):
+1. Lemma sym in Lean (canonical-cube coverage: any witness schedule
+   relabels/commutes to a canonical one) — the 500–1000-line layer;
+2. encoding faithfulness for the frame/selector CNF (1500–3000 lines,
+   `Faithfulness.lean` genre), with Chain6's validity layer supplying
+   the witness schedule from any 49-matching instance;
+3. a Lean `export_cnf`-style printer so the campaign formulas are
+   printed from Lean definitions (single source of truth, as in f5).
+
+Verdict: Architecture 3 is GO at order 6. No blocker identified;
+remaining work is (a) the cube-campaign driver + compute budget, and
+(b) the two Lean layers above.
 
 ## Recommendation
 
