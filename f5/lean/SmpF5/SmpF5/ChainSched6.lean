@@ -154,3 +154,63 @@ theorem destutter_ne_run_cons (a : α) (n : Nat) (l : List α) :
   rw [this, destutter_ne_replicate]
 
 end Destutter
+
+/-! ## Block column is two-valued -/
+
+/-- Scanl version of `foldl_orbits`: over a disjoint-orbit list, every
+visited matching sends each man to his `μ'`-partner or his `ν`-partner. -/
+theorem scanl_orbits_two_valued {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) :
+    ∀ (L : List (List Nat)) (μ' : List Nat), OrbAcc μ ν L →
+    (∀ y ∈ L.flatten, μ'.getD y 0 = μ.getD y 0) →
+    ∀ σ ∈ List.scanl (fun mu st => applyStep st mu) μ' L,
+    ∀ x, x < 6 → σ.getD x 0 = μ'.getD x 0 ∨ σ.getD x 0 = ν.getD x 0 := by
+  intro L
+  induction L with
+  | nil =>
+    intro μ' _ _ σ hσ x hx
+    simp only [List.scanl_nil, List.mem_cons, List.not_mem_nil,
+      or_false] at hσ
+    left; rw [hσ]
+  | cons O rest ih =>
+    intro μ' hOrb hagree σ hσ x hx
+    obtain ⟨horbs, hdisj⟩ := hOrb
+    obtain ⟨m0, hm06, hmov, hOdef⟩ := horbs O List.mem_cons_self
+    have hOrbRest : OrbAcc μ ν rest :=
+      ⟨fun st hst => horbs st (List.mem_cons_of_mem _ hst), hdisj.of_cons⟩
+    have hdisjO : ∀ z ∈ O, ∀ t ∈ rest, z ∉ t :=
+      fun z hz t ht => (List.pairwise_cons.1 hdisj).1 t ht z hz
+    rw [List.scanl_cons] at hσ
+    rcases List.mem_cons.1 hσ with rfl | hσ'
+    · left; rfl
+    · -- base for the tail: applyStep O μ'
+      have hagreeO : ∀ y ∈ orbit μ ν m0, μ'.getD y 0 = μ.getD y 0 := by
+        intro y hy
+        exact hagree y (List.mem_flatten.2 ⟨O, List.mem_cons_self,
+          hOdef ▸ hy⟩)
+      -- applyStep O μ' is two-valued vs μ'
+      have hbase2 : ∀ z, z < 6 →
+          (applyStep O μ').getD z 0 = μ'.getD z 0 ∨
+          (applyStep O μ').getD z 0 = ν.getD z 0 := by
+        intro z hz
+        by_cases hzO : z ∈ O
+        · right
+          subst hOdef
+          exact applyStep_orbit_moved' hpμ hpν hm06 hagreeO hzO hz
+        · left; exact applyStep_getD_notMem hz hzO
+      have hagree' : ∀ y ∈ rest.flatten,
+          (applyStep O μ').getD y 0 = μ.getD y 0 := by
+        intro y hy
+        have hy6 : y < 6 := orbAcc_flatten_lt6 hpμ hpν hOrbRest hy
+        have hynO : y ∉ O := by
+          intro hyO
+          obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+          exact hdisjO y hyO t ht hyt
+        rw [applyStep_getD_notMem hy6 hynO]
+        obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+        exact hagree y (List.mem_flatten.2 ⟨t,
+          List.mem_cons_of_mem _ ht, hyt⟩)
+      have hIH := ih (applyStep O μ') hOrbRest hagree' σ hσ' x hx
+      rcases hIH with h | h
+      · rw [h]; exact hbase2 x hx
+      · right; exact h
