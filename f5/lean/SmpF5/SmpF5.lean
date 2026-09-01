@@ -6,3 +6,4 @@ import SmpF5.Faithfulness
 import SmpF5.Lower
 import SmpF5.SixBridge
 import SmpF5.Lattice6
+import SmpF5.Chain6

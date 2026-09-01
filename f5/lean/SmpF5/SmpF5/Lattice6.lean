@@ -617,3 +617,42 @@ theorem no_skip {I : Inst6} (hWF : WF6 I = true) {μ ν σ : List Nat}
   · rw [h] at hτm
     rw [hτm] at hs2
     omega
+
+/-! ## The woman-optimal matching (top element) -/
+
+theorem mem_sms6_untranspose {I : Inst6} {ρ : List Nat}
+    (hρ : ρ ∈ sms6 (transposeI I)) : invMatch ρ ∈ sms6 I := by
+  have hpρ := mem_sms6_perm hρ
+  refine List.mem_filter.2
+    ⟨List.mem_permutations.2 (invMatch_perm hpρ), ?_⟩
+  have hdual := isStable6_transposeI (I := transposeI I) hpρ
+  rw [show transposeI (transposeI I) = I from rfl] at hdual
+  rw [hdual]
+  exact mem_sms6_stable hρ
+
+def womanOpt (I : Inst6) : List Nat := invMatch (manOpt (transposeI I))
+
+theorem sms6_transposeI_ne {I : Inst6} (hne : sms6 I ≠ []) :
+    sms6 (transposeI I) ≠ [] := by
+  obtain ⟨mu, hmu⟩ := List.exists_mem_of_ne_nil _ hne
+  exact List.ne_nil_of_mem (mem_sms6_transposeI hmu)
+
+theorem womanOpt_spec {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ []) :
+    womanOpt I ∈ sms6 I ∧
+    ∀ ν ∈ sms6 I, domLe I ν (womanOpt I) := by
+  have hWFt := WF6_transposeI hWF
+  have hnet := sms6_transposeI_ne hne
+  obtain ⟨hTmem, hTdom⟩ := manOpt_spec hWFt hnet
+  have hpT := mem_sms6_perm hTmem
+  constructor
+  · exact mem_sms6_untranspose hTmem
+  · intro ν hν m hm
+    have hoi := opposite_interests hWFt hTmem (mem_sms6_transposeI hν)
+      (fun w hw => hTdom _ (mem_sms6_transposeI hν) w hw) (w := m) hm
+    rw [show (transposeI I).wrank = I.mrank from rfl] at hoi
+    rw [idxOf_invMatch (mem_sms6_perm hν) hm] at hoi
+    have hwo : (womanOpt I).getD m 0 = idxOf m (manOpt (transposeI I)) := by
+      change (invMatch _).getD m 0 = _
+      exact invMatch_getD hm
+    rw [hwo]
+    exact hoi
