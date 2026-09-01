@@ -503,3 +503,117 @@ theorem dominance_antisymm {I : Inst6} (hWF : WF6 I = true)
     rw [← List.getD_eq_getElem _ _ hi1, ← List.getD_eq_getElem _ _ hi2]
     exact rank_inj6 hml hmrows hi (perm6_getD_lt hpμ hi)
       (perm6_getD_lt hpν hi) (by have := h1 i hi; have := h2 i hi; omega)
+
+/-! ## Pointwise characterization of the join (L4 prep) -/
+
+theorem joinS_eq_or {I : Inst6} (hWF : WF6 I = true) {μ ν : List Nat}
+    (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I) {m : Nat} (hm : m < 6) :
+    (joinS I μ ν).getD m 0 = μ.getD m 0 ∨
+    (joinS I μ ν).getD m 0 = ν.getD m 0 := by
+  have hpμ := mem_sms6_perm hμ
+  have hpν := mem_sms6_perm hν
+  have hρ : meetM (transposeI I) (invMatch μ) (invMatch ν) ∈
+      sms6 (transposeI I) :=
+    meet_mem (WF6_transposeI hWF) (mem_sms6_transposeI hμ)
+      (mem_sms6_transposeI hν)
+  have hpρ := mem_sms6_perm hρ
+  have hj : (joinS I μ ν).getD m 0 =
+      idxOf m (meetM (transposeI I) (invMatch μ) (invMatch ν)) := by
+    change (invMatch _).getD m 0 = _
+    exact invMatch_getD hm
+  have hw6 : (joinS I μ ν).getD m 0 < 6 := by
+    rw [hj]
+    exact idxOf_lt6 hpρ hm
+  have hlw : (meetM (transposeI I) (invMatch μ) (invMatch ν)).getD
+      ((joinS I μ ν).getD m 0) 0 = m := by
+    rw [hj]
+    exact getD_idxOf (perm6_mem hpρ hm)
+  rcases meet_eq_or (I := transposeI I) (μ := invMatch μ) (ν := invMatch ν)
+    (m := (joinS I μ ν).getD m 0) hw6 with h | h
+  · left
+    rw [hlw, invMatch_getD hw6] at h
+    exact ((partner_eq_iff hpμ hm hw6).2 h.symm).symm
+  · right
+    rw [hlw, invMatch_getD hw6] at h
+    exact ((partner_eq_iff hpν hm hw6).2 h.symm).symm
+
+theorem joinS_ge {I : Inst6} (hWF : WF6 I = true) {μ ν : List Nat}
+    (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I) {m : Nat} (hm : m < 6) :
+    get2 I.mrank m (μ.getD m 0) ≤ get2 I.mrank m ((joinS I μ ν).getD m 0) ∧
+    get2 I.mrank m (ν.getD m 0) ≤ get2 I.mrank m ((joinS I μ ν).getD m 0) := by
+  have hWFt := WF6_transposeI hWF
+  have hρ : meetM (transposeI I) (invMatch μ) (invMatch ν) ∈
+      sms6 (transposeI I) :=
+    meet_mem hWFt (mem_sms6_transposeI hμ) (mem_sms6_transposeI hν)
+  have hj : ∀ x, x < 6 → (joinS I μ ν).getD x 0 =
+      idxOf x (meetM (transposeI I) (invMatch μ) (invMatch ν)) := by
+    intro x hx
+    change (invMatch _).getD x 0 = _
+    exact invMatch_getD hx
+  constructor
+  · -- opposite interests in the transposed world, λ vs invMatch μ
+    have hdom : ∀ w, w < 6 →
+        get2 (transposeI I).mrank w
+          ((meetM (transposeI I) (invMatch μ) (invMatch ν)).getD w 0) ≤
+        get2 (transposeI I).mrank w ((invMatch μ).getD w 0) :=
+      fun w hw => (meet_best (I := transposeI I) (μ := invMatch μ)
+        (ν := invMatch ν) hw).1
+    have hoi := opposite_interests hWFt hρ (mem_sms6_transposeI hμ) hdom
+      (w := m) hm
+    rw [show (transposeI I).wrank = I.mrank from rfl] at hoi
+    rw [idxOf_invMatch (mem_sms6_perm hμ) hm, ← hj m hm] at hoi
+    exact hoi
+  · have hdom : ∀ w, w < 6 →
+        get2 (transposeI I).mrank w
+          ((meetM (transposeI I) (invMatch μ) (invMatch ν)).getD w 0) ≤
+        get2 (transposeI I).mrank w ((invMatch ν).getD w 0) :=
+      fun w hw => (meet_best (I := transposeI I) (μ := invMatch μ)
+        (ν := invMatch ν) hw).2
+    have hoi := opposite_interests hWFt hρ (mem_sms6_transposeI hν) hdom
+      (w := m) hm
+    rw [show (transposeI I).wrank = I.mrank from rfl] at hoi
+    rw [idxOf_invMatch (mem_sms6_perm hν) hm, ← hj m hm] at hoi
+    exact hoi
+
+/-! ## The no-skip lemma (L4) -/
+
+def domLe (I : Inst6) (μ ν : List Nat) : Prop :=
+  ∀ m, m < 6 → get2 I.mrank m (μ.getD m 0) ≤ get2 I.mrank m (ν.getD m 0)
+
+/-- On a cover `μ ⋖ ν` of the dominance order, no man passes over a
+stable partner: there is no stable `σ` with
+`rank(μ(m)) < rank(σ(m)) < rank(ν(m))`. -/
+theorem no_skip {I : Inst6} (hWF : WF6 I = true) {μ ν σ : List Nat}
+    (hμ : μ ∈ sms6 I) (hν : ν ∈ sms6 I) (hσ : σ ∈ sms6 I)
+    (hdom : domLe I μ ν)
+    (hcov : ∀ τ ∈ sms6 I, domLe I μ τ → domLe I τ ν → τ = μ ∨ τ = ν)
+    {m : Nat} (hm : m < 6) :
+    ¬(get2 I.mrank m (μ.getD m 0) < get2 I.mrank m (σ.getD m 0) ∧
+      get2 I.mrank m (σ.getD m 0) < get2 I.mrank m (ν.getD m 0)) := by
+  rintro ⟨hs1, hs2⟩
+  have hjmem := join_mem hWF hμ hσ
+  have hτmem := meet_mem hWF hν hjmem
+  have hjm : (joinS I μ σ).getD m 0 = σ.getD m 0 := by
+    rcases joinS_eq_or hWF hμ hσ hm with h | h
+    · exfalso
+      have hge := (joinS_ge hWF hμ hσ hm).2
+      rw [h] at hge
+      omega
+    · exact h
+  have hτm : (meetM I ν (joinS I μ σ)).getD m 0 = σ.getD m 0 := by
+    rw [meet_getD hm, hjm]
+    rw [if_neg (by omega)]
+  have hμτ : domLe I μ (meetM I ν (joinS I μ σ)) := by
+    intro x hx
+    rcases meet_eq_or (I := I) (μ := ν) (ν := joinS I μ σ) hx with h | h
+    · rw [h]; exact hdom x hx
+    · rw [h]; exact (joinS_ge hWF hμ hσ hx).1
+  have hτν : domLe I (meetM I ν (joinS I μ σ)) ν := fun x hx =>
+    (meet_best (I := I) (μ := ν) (ν := joinS I μ σ) hx).1
+  rcases hcov _ hτmem hμτ hτν with h | h
+  · rw [h] at hτm
+    rw [hτm] at hs1
+    omega
+  · rw [h] at hτm
+    rw [hτm] at hs2
+    omega
