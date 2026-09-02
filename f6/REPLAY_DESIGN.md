@@ -233,12 +233,12 @@ the current cube's file per worker.
 2. the Schedule object — DONE (`Sched6.lean`); cycle decomposition —
    DONE (`Cycle6.lean`: orbit extraction, `stepDecomp_spec` realizes
    any μ→ν difference as disjoint cyclic steps); chain concatenation —
-   IN PROGRESS (`ChainSched6.lean`: `chainSched`/`linkSteps`, endpoint
-   threading `linkSteps_foldl_last`, abstract destutter run-collapse,
-   block two-valued `scanl_orbits_two_valued` all done; remaining:
-   block-column monotonicity → block destutter = [μ(m),ν(m)] → assemble
-   across blocks → `strajM = traj`/`wtraj`, with `manOpt = idRow6`
-   normalized via Sym6).
+   `strajM = traj` DONE (`ChainSched6.lean` ~670 lines: `chainSched`/
+   `linkSteps`, `block_col_destutter`, destutter junction + append-split
+   lemmas, master induction `col_destutter_link`, `strajM_eq_traj` under
+   `manOpt = idRow6` normalized via Sym6). Remaining: woman-side
+   `strajW = wtraj` (dual), `Legal (chainSched I)`, then instantiate the
+   bottom-agnostic bridge at `readoffS` to close validity.
    Design discovery: readoffS does NOT commute with relabeling (the
    canonical bottom completion is not equivariant), so the faithfulness
    route avoids count-transport on read-offs entirely. The
