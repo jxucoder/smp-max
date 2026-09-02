@@ -138,15 +138,23 @@ $R(S)$.
 \end{proof}
 
 \paragraph{Formalization status.} Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are
-formalized in Lean~4 in the accompanying development (\texttt{SixBridge.lean},
-\texttt{Lattice6.lean}, \texttt{Chain6.lean}; no \texttt{sorry}, axioms
-\texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}). The chain of covers is
-constructed by repeatedly moving to the strict dominator of minimum rank-sum; its
-completeness (every stable pair appears) follows from a no-skip lemma on covers, and the
-trajectory constraints of Definition~\ref{def:sched} --- preference-order monotonicity,
-no revisits on either side, the per-man cap and the total budget, and the decomposition
-of each step into disjoint cyclic swaps of size $\ge 2$ --- are individual theorems.
-Lemma~\ref{lem:sym} concerns only the enumeration's internal symmetry reduction and is
+formalized in Lean~4 in the accompanying development (nine files from
+\texttt{SixBridge.lean} to \texttt{WRelabel6.lean}, $\sim$4{,}600 lines; no
+\texttt{sorry}, axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}).
+The bridge is formalized in a bottom-agnostic form (\texttt{AbsBridge6.lean}): any
+instance that ranks each person's stable partners on top in original order dominates
+the original in stable-matching count, whatever its bottoms. The validity lemma is
+formalized as an explicit schedule: a cover chain from the man-optimal to the
+woman-optimal matching, built by repeatedly moving to the strict dominator of minimum
+rank-sum (\texttt{Chain6.lean}); each cover difference is decomposed into disjoint cyclic
+swaps by orbit extraction (\texttt{Cycle6.lean}); the concatenation is a legal schedule
+whose trajectories are exactly the stable-partner sequences
+(\texttt{ChainSched6.lean}); and a women-only relabelling normalizes the man-optimal
+matching to the identity (\texttt{WRelabel6.lean}). The composed statement
+\texttt{validity\_unconditional} reads: for every well-formed instance $I$ there is a
+legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(S))$.
+Lemma~\ref{lem:sym} concerns only the enumeration's internal symmetry reduction; its
+relabelling half is proved at the instance level (\texttt{Sym6.lean}) and the rest is
 validated computationally (canonicalization on/off agreement).
 
 \section{The theorem}

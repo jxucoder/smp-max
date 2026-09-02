@@ -240,10 +240,12 @@ the current cube's file per worker.
    and **`sc_le_readoffS_chainSched : sc(I) ≤ sc(readoffS (chainSched I))`**
    under `manOpt I = idRow6`, via the bottom-agnostic bridge with
    read-off order-preservation (`readoffS_mrank_mono/top`,
-   `readoffS_wrank_mono`). Remaining: drop the `manOpt = idRow6`
-   precondition by a women-relabel normalization (the paper's "relabel
-   women so the man-optimal matching is the identity" — a routine
-   symmetry, ~150 Lean lines).
+   `readoffS_wrank_mono`). The `manOpt = idRow6` precondition is
+   discharged by the women-only relabel (`WRelabel6.lean`:
+   `stableCount6_wrelabel6`, `manOpt_wrelabel6`), giving the
+   unconditional **`validity_unconditional`**: for every WF6 instance
+   there is a Legal schedule dominating it. The reduction's Lean layer
+   is complete.
    Design discovery: readoffS does NOT commute with relabeling (the
    canonical bottom completion is not equivariant), so the faithfulness
    route avoids count-transport on read-offs entirely. The

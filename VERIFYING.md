@@ -131,7 +131,11 @@ echo 'import SmpF5
 #print axioms chain_complete
 #print axioms traj_mem_iff
 #print axioms wtraj_nodup
-#print axioms total_moves_le_30' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
+#print axioms total_moves_le_30
+#print axioms count_le_of_orderPreserving
+#print axioms sc_le_readoffS_chainSched
+#print axioms manOpt_wrelabel6
+#print axioms validity_unconditional' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
 ```
 
 All must report `[propext, Classical.choice, Quot.sound]`. What these
@@ -142,11 +146,21 @@ order-5 ones):
 - `bridge` : for well-formed order-6 `I`,
   `stableCount6 I <= stableCount6 (readoff I)` — the bridge lemma;
 - `chain_complete`, `traj_*`, `wtraj_*`, `prevOwner_*` : the validity
-  lemma — an explicit maximal chain from the man-optimal to the
+  layer — an explicit maximal chain from the man-optimal to the
   woman-optimal stable matching whose trajectories are exactly the
   stable partners in preference order, within all schedule budgets,
   with each step decomposing into disjoint cyclic swaps (the closing
-  docstring of `Chain6.lean` maps every clause to its theorem).
+  docstring of `Chain6.lean` maps every clause to its theorem);
+- `count_le_of_orderPreserving` (AbsBridge6.lean): the bridge in
+  bottom-agnostic form;
+- `sc_le_readoffS_chainSched` (ValidityBridge6.lean) and, unconditionally,
+  **`validity_unconditional`** (WRelabel6.lean): for every well-formed
+  order-6 instance `I` there is a `Legal` schedule `S` with
+  `stableCount6 I <= stableCount6 (readoffS S)` — the composed Validity +
+  Bridge statement; `readoffS`/`Legal` in `Sched6.lean` are the read-off
+  instance and schedule legality of Definitions 1–2 (bottom completion in
+  ascending label order, women's trajectories reversed, exactly as
+  `gen_enum.c` builds them).
 
 **What is NOT formalized:** the exhaustive enumeration of the schedule
 space (26.6e9 nodes, C program `f6/gen_enum.c`) and the symmetry

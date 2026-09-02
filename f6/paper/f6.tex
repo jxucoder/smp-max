@@ -35,8 +35,9 @@ laptop --- attaining maximum $48$. The methodology is validated against ground t
 $3,4,5$ it reproduces $3, 10, 16$, the last being the value the author's companion development
 certifies formally (Lean + verified SAT certificates); an independent implementation and
 canonicalization on/off comparisons (up to a $2.66\times 10^9$-node check) agree throughout.
-The reduction lemmas themselves are machine-checked in Lean~4 (no \texttt{sorry}, standard
-axioms); only a verified replay of the enumeration remains unformalized.
+The bridge and validity lemmas are machine-checked in Lean~4 (no \texttt{sorry}, standard
+axioms); the symmetry lemma is validated computationally, and a verified replay of the
+enumeration remains future work.
 \end{abstract}
 
 \section{Introduction}
@@ -336,14 +337,24 @@ full-budget, all-size-2 phenomena.
 
 \section{Formalization in Lean 4}\label{sec:lean}
 
-The reduction of Section~\ref{sec:reduction} --- Lemmas~\ref{lem:valid}
-and~\ref{lem:bridge} in full --- is formalized in Lean~4 with Mathlib in the
-accompanying development ($1{,}849$ lines across three files:
-\texttt{SixBridge.lean}, \texttt{Lattice6.lean}, \texttt{Chain6.lean}, atop the
-order-5 infrastructure of~\cite{f5paper}). Every theorem is proved with no
-\texttt{sorry}, and \texttt{\#print axioms} reports only the standard
-\texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}; continuous
-integration rebuilds the development and re-checks both claims on every commit.
+Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are formalized in Lean~4 with Mathlib in
+the accompanying development ($\sim$4{,}600 lines across nine files, from
+\texttt{SixBridge.lean} through \texttt{WRelabel6.lean}, atop the order-5 infrastructure
+of~\cite{f5paper}). The end statement is unconditional: for every well-formed order-6
+instance $I$ there is a legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(S))$
+(\texttt{validity\_unconditional}), obtained by composing the validity chain with a
+\emph{bottom-agnostic} form of the bridge (\texttt{count\_le\_of\_orderPreserving}:
+$J$ dominates $I$ whenever $J$ ranks each person's $I$-stable partners on top in
+$I$-order, with no condition on the rest of the lists) and a women-only relabelling that
+normalizes the man-optimal matching to the identity
+(\texttt{stableCount6\_wrelabel6}, \texttt{manOpt\_wrelabel6}). Lemma~\ref{lem:sym}
+is \emph{not} formalized: its relabelling half is proved at the instance level
+(\texttt{Sym6.lean}), its commutation half is validated computationally only, and the
+certification campaign of Section~\ref{sec:outlook} is designed to need neither
+(canonical first-appearance cubes are generated without the commutation rule). Every
+theorem is proved with no \texttt{sorry}, and \texttt{\#print axioms} reports only the
+standard \texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}; continuous
+integration rebuilds the development and re-checks these claims on every commit.
 
 \paragraph{Design.} Instances are pairs of $6\times 6$ rank tables over
 \texttt{List Nat}; a matching is a list, stability is a decidable predicate, and the

@@ -31,9 +31,9 @@ jobs:
       - name: Axiom check (f6 reduction layer)
         working-directory: f5/lean/SmpF5
         run: |
-          printf 'import SmpF5\n#print axioms bridge\n#print axioms chain_complete\n#print axioms traj_mem_iff\n#print axioms wtraj_nodup\n#print axioms total_moves_le_30\n' > /tmp/ax6.lean
+          printf 'import SmpF5\n#print axioms bridge\n#print axioms chain_complete\n#print axioms traj_mem_iff\n#print axioms wtraj_nodup\n#print axioms total_moves_le_30\n#print axioms count_le_of_orderPreserving\n#print axioms sc_le_readoffS_chainSched\n#print axioms manOpt_wrelabel6\n#print axioms validity_unconditional\n' > /tmp/ax6.lean
           lake env lean /tmp/ax6.lean | tee /tmp/ax6.out
-          test "$(grep -c 'depends on axioms: \[propext, Classical.choice, Quot.sound\]' /tmp/ax6.out)" = "5"
+          test "$(grep -c 'depends on axioms: \[propext, Classical.choice, Quot.sound\]' /tmp/ax6.out)" = "9"
       - name: Witness standalone (kernel-only, propext)
         working-directory: f5/lean
         run: |
