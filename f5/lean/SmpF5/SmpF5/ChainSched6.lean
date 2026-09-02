@@ -819,3 +819,182 @@ theorem scanl_idxOf_notMem_husband :
       have hrec := ih (applyStep O μ') (fun st hst => hWF st (List.mem_cons_of_mem _ hst))
         hp' hw hnh' σ hσ'
       rw [hrec, hfix]
+
+/-! ## Woman column block destutter -/
+
+theorem foldl_idxOf_notMem :
+    ∀ (L : List (List Nat)) (μ' : List Nat), (∀ st ∈ L, WFStep st) →
+    μ'.Perm idRow6 → {w : Nat} → w < 6 → idxOf w μ' ∉ L.flatten →
+    idxOf w (L.foldl (fun mu st => applyStep st mu) μ') = idxOf w μ' := by
+  intro L
+  induction L with
+  | nil => intro μ' _ _ w _ _; rfl
+  | cons O rest ih =>
+    intro μ' hWF hμ' w hw hnh
+    rw [List.flatten_cons, List.mem_append, not_or] at hnh
+    obtain ⟨hnO, hnrest⟩ := hnh
+    have hOWF : WFStep O := hWF O List.mem_cons_self
+    have hfix : idxOf w (applyStep O μ') = idxOf w μ' :=
+      applyStep_idxOf_notMem_husband hOWF hμ' hw hnO
+    rw [List.foldl_cons,
+      ih (applyStep O μ') (fun st hst => hWF st (List.mem_cons_of_mem _ hst))
+        (applyStep_perm hOWF hμ') hw (by rw [hfix]; exact hnrest), hfix]
+
+theorem block_woman_col {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {w : Nat} (hw : w < 6) :
+    ∀ (L : List (List Nat)) (μ' : List Nat), OrbAcc μ ν L →
+    (∀ y ∈ L.flatten, μ'.getD y 0 = μ.getD y 0) → μ'.Perm idRow6 →
+    ((List.scanl (fun mu st => applyStep st mu) μ' L).map
+      (fun σ => idxOf w σ)).destutter (· ≠ ·)
+      = if idxOf w μ' ∈ L.flatten
+        then [idxOf w μ',
+          idxOf w (L.foldl (fun mu st => applyStep st mu) μ')]
+        else [idxOf w μ'] := by
+  intro L
+  induction L with
+  | nil =>
+    intro μ' _ _ _
+    simp [List.scanl_nil]
+  | cons O rest ih =>
+    intro μ' hOrb hagree hμ'
+    obtain ⟨horbs, hdisj⟩ := hOrb
+    obtain ⟨m0, hm06, hmov, hOdef⟩ := horbs O List.mem_cons_self
+    have hOWF : WFStep O := by
+      rw [hOdef]; exact orbit_WFStep hpμ hpν hm06 hmov
+    have hOrbRest : OrbAcc μ ν rest :=
+      ⟨fun st hst => horbs st (List.mem_cons_of_mem _ hst), hdisj.of_cons⟩
+    have hdisjO : ∀ z ∈ O, ∀ t ∈ rest, z ∉ t :=
+      fun z hz t ht => (List.pairwise_cons.1 hdisj).1 t ht z hz
+    have hWFrest : ∀ st ∈ rest, WFStep st := fun st hst =>
+      orbAcc_all_WFStep hpμ hpν hOrbRest st hst
+    have hagree' : ∀ y ∈ rest.flatten,
+        (applyStep O μ').getD y 0 = μ.getD y 0 := by
+      intro y hy
+      have hy6 : y < 6 := orbAcc_flatten_lt6 hpμ hpν hOrbRest hy
+      have hynO : y ∉ O := by
+        intro hyO
+        obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+        exact hdisjO y hyO t ht hyt
+      rw [applyStep_getD_notMem hy6 hynO]
+      obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+      exact hagree y (List.mem_flatten.2 ⟨t,
+        List.mem_cons_of_mem _ ht, hyt⟩)
+    rw [List.scanl_cons, List.map_cons, List.foldl_cons]
+    by_cases hhO : idxOf w μ' ∈ O
+    · -- husband moves: jumps to h ∈ O, stays through rest
+      have hnew : idxOf w (applyStep O μ') ∈ O :=
+        applyStep_idxOf_mem_husband hOWF hμ' hw hhO
+      have hnnrest : idxOf w (applyStep O μ') ∉ rest.flatten := by
+        intro hc
+        obtain ⟨t, ht, hmt⟩ := List.mem_flatten.1 hc
+        exact hdisjO _ hnew t ht hmt
+      have hp' : (applyStep O μ').Perm idRow6 := applyStep_perm hOWF hμ'
+      have hconst : ∀ σ ∈ List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest, idxOf w σ = idxOf w (applyStep O μ') :=
+        fun σ hσ => scanl_idxOf_notMem_husband rest (applyStep O μ')
+          hWFrest hp' hw hnnrest σ hσ
+      have hfoldval : idxOf w (rest.foldl (fun mu st => applyStep st mu)
+          (applyStep O μ')) = idxOf w (applyStep O μ') :=
+        foldl_idxOf_notMem rest (applyStep O μ') hWFrest hp' hw hnnrest
+      -- the moved husband is different from the old one
+      have hane : idxOf w μ' ≠ idxOf w (applyStep O μ') := by
+        intro he
+        have hνa0 : (applyStep O μ').getD (idxOf w μ') 0
+            = ν.getD (idxOf w μ') 0 := by
+          rw [hOdef]
+          exact applyStep_orbit_moved' hpμ hpν hm06
+            (fun y hy => hagree y (List.mem_flatten.2
+              ⟨O, List.mem_cons_self, hOdef ▸ hy⟩))
+            (hOdef ▸ hhO) (idxOf_lt6 hμ' hw)
+        have hwa : (applyStep O μ').getD (idxOf w μ') 0 = w := by
+          rw [he]; exact getD_idxOf (perm6_mem hp' hw)
+        have hνw : ν.getD (idxOf w μ') 0 = w := hνa0.symm.trans hwa
+        have hmoved : μ.getD (idxOf w μ') 0 ≠ ν.getD (idxOf w μ') 0 :=
+          orbit_all_moved hpμ hpν hm06 hmov _ (hOdef ▸ hhO)
+        have hwmu : w = μ.getD (idxOf w μ') 0 := by
+          rw [← hagree (idxOf w μ') (List.mem_flatten.2
+            ⟨O, List.mem_cons_self, hhO⟩)]
+          exact (getD_idxOf (perm6_mem hμ' hw)).symm
+        exact hmoved (hνw.trans hwmu).symm
+      -- tail column = replicate of the new husband
+      have htaileq : (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).map (fun σ => idxOf w σ)
+          = List.replicate ((List.scanl (fun mu st => applyStep st mu)
+              (applyStep O μ') rest).length) (idxOf w (applyStep O μ')) := by
+        rw [List.eq_replicate_iff]
+        refine ⟨by rw [List.length_map], ?_⟩
+        intro b hb
+        obtain ⟨σ, hσ, rfl⟩ := List.mem_map.1 hb
+        exact hconst σ hσ
+      obtain ⟨k, hk⟩ : ∃ k, (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).length = k + 1 := by
+        obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu)
+          (applyStep O μ') rest
+        exact ⟨T.length, by rw [hT]; simp⟩
+      rw [htaileq, hk, destutter_ne_cons_replicate k hane,
+        hfoldval, if_pos (List.mem_flatten.2 ⟨O, List.mem_cons_self, hhO⟩)]
+    · -- husband fixed by this orbit: leading dup collapses
+      have hfix : idxOf w (applyStep O μ') = idxOf w μ' :=
+        applyStep_idxOf_notMem_husband hOWF hμ' hw hhO
+      have hp' : (applyStep O μ').Perm idRow6 := applyStep_perm hOWF hμ'
+      obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu)
+        (applyStep O μ') rest
+      have hcolM : (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).map (fun σ => idxOf w σ)
+          = idxOf w μ' :: T.map (fun σ => idxOf w σ) := by
+        rw [hT, List.map_cons, hfix]
+      rw [hcolM, destutter_ne_dup, ← hcolM,
+        ih (applyStep O μ') hOrbRest hagree' hp', hfix]
+      by_cases hmr : idxOf w μ' ∈ rest.flatten
+      · rw [if_pos hmr, if_pos (List.mem_flatten.2 (by
+          obtain ⟨t, ht, hmt⟩ := List.mem_flatten.1 hmr
+          exact ⟨t, List.mem_cons_of_mem _ ht, hmt⟩))]
+      · rw [if_neg hmr, if_neg (by
+          rw [List.flatten_cons, List.mem_append]
+          exact fun h => hmr (h.resolve_left hhO))]
+
+/-- Woman-column block destutter in `κ`-form. -/
+theorem block_woman_kappa {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {w : Nat} (hw : w < 6) :
+    ((List.scanl (fun mu st => applyStep st mu) μ
+      (stepDecomp μ ν)).map (fun σ => idxOf w σ)).destutter (· ≠ ·)
+      = if idxOf w μ ≠ idxOf w ν
+        then [idxOf w μ, idxOf w ν] else [idxOf w μ] := by
+  have ha6 : idxOf w μ < 6 := idxOf_lt6 hpμ hw
+  have hcond : idxOf w μ ∈ (stepDecomp μ ν).flatten
+      ↔ idxOf w μ ≠ idxOf w ν := by
+    rw [stepDecomp_flatten_iff_moved hpμ hpν ha6,
+      getD_idxOf (perm6_mem hpμ hw)]
+    constructor
+    · intro h he
+      apply h
+      rw [he]
+      exact (getD_idxOf (perm6_mem hpν hw)).symm
+    · intro h hc
+      exact h (partner_idxOf_of_eq hpν ha6 hc.symm).symm
+  rw [block_woman_col hpμ hpν hw (stepDecomp μ ν) μ
+    (stepDecomp_spec hpμ hpν).1 (fun y _ => rfl) hpμ,
+    foldl_stepDecomp_eq hpμ hpν]
+  by_cases hc : idxOf w μ ∈ (stepDecomp μ ν).flatten
+  · rw [if_pos hc, if_pos (hcond.1 hc)]
+  · rw [if_neg hc, if_neg (fun h => hc (hcond.2 h))]
+
+/-- **The schedule realizes the chain trajectories** (woman side). -/
+theorem strajW_eq_wtraj {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    (hmo : manOpt I = idRow6) {w : Nat} (hw : w < 6) :
+    strajW (chainSched I) w = wtraj I w := by
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  have hhead : (theChain I).head? = some (manOpt I) :=
+    chainFrom_head I 31 (manOpt I)
+  have hchain : theChain I = idRow6 :: (theChain I).tail := by
+    have h := list_eq_head_tail hhead
+    rwa [hmo] at h
+  have hpid : idRow6.Perm idRow6 := List.Perm.refl _
+  have hptail : ∀ mu ∈ (theChain I).tail, mu.Perm idRow6 :=
+    fun mu hmu => chain_mem_perm hWF hne (List.mem_of_mem_tail hmu)
+  have hkey := col_destutter_link_gen (fun σ => idxOf w σ)
+    (fun μ ν hpμ hpν => block_woman_kappa hpμ hpν hw)
+    (theChain I).tail idRow6 hpid hptail
+  unfold strajW chainSched schedMatchings wtraj
+  conv_lhs => rw [hchain]
+  rw [hkey, ← hchain]
