@@ -233,12 +233,17 @@ the current cube's file per worker.
 2. the Schedule object — DONE (`Sched6.lean`); cycle decomposition —
    DONE (`Cycle6.lean`: orbit extraction, `stepDecomp_spec` realizes
    any μ→ν difference as disjoint cyclic steps); chain concatenation —
-   `strajM = traj` DONE (`ChainSched6.lean` ~670 lines: `chainSched`/
-   `linkSteps`, `block_col_destutter`, destutter junction + append-split
-   lemmas, master induction `col_destutter_link`, `strajM_eq_traj` under
-   `manOpt = idRow6` normalized via Sym6). Remaining: woman-side
-   `strajW = wtraj` (dual), `Legal (chainSched I)`, then instantiate the
-   bottom-agnostic bridge at `readoffS` to close validity.
+   the **Validity Lemma is formalized in normalized form**
+   (`ChainSched6.lean` ~1015 lines + `ValidityBridge6.lean` ~200 lines):
+   `strajM = traj` and `strajW = wtraj` (schedule trajectories = chain
+   trajectories, generic κ-parametric assembly), `Legal (chainSched I)`,
+   and **`sc_le_readoffS_chainSched : sc(I) ≤ sc(readoffS (chainSched I))`**
+   under `manOpt I = idRow6`, via the bottom-agnostic bridge with
+   read-off order-preservation (`readoffS_mrank_mono/top`,
+   `readoffS_wrank_mono`). Remaining: drop the `manOpt = idRow6`
+   precondition by a women-relabel normalization (the paper's "relabel
+   women so the man-optimal matching is the identity" — a routine
+   symmetry, ~150 Lean lines).
    Design discovery: readoffS does NOT commute with relabeling (the
    canonical bottom completion is not equivariant), so the faithfulness
    route avoids count-transport on read-offs entirely. The
