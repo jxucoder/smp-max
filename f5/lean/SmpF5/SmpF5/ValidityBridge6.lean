@@ -156,3 +156,45 @@ theorem readoffS_mrank_top {m : Nat} (hm : m < 6) {w w' : Nat}
   omega
 
 end
+
+section
+variable {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+  (hmo : manOpt I = idRow6)
+
+include hWF hne hmo in
+theorem readoffS_wrank_mono {w : Nat} (hw : w < 6) {m m' : Nat}
+    (hm : m < 6) (hm' : m' < 6) (hsm : stab I m w = true)
+    (hsm' : stab I m' w = true)
+    (hlt : get2 I.wrank w m < get2 I.wrank w m') :
+    get2 (readoffS (chainSched I)).wrank w m
+      < get2 (readoffS (chainSched I)).wrank w m' := by
+  rw [get2_readoffS_wrank hw hm, get2_readoffS_wrank hw hm']
+  have hmw : m ∈ wtraj I w := (wtraj_mem_iff hWF hne hw hm).2 hsm
+  have hm'w : m' ∈ wtraj I w := (wtraj_mem_iff hWF hne hw hm').2 hsm'
+  have hmrev : m ∈ (strajW (chainSched I) w).reverse := by
+    rw [strajW_eq_wtraj hWF hne hmo hw, List.mem_reverse]; exact hmw
+  have hm'rev : m' ∈ (strajW (chainSched I) w).reverse := by
+    rw [strajW_eq_wtraj hWF hne hmo hw, List.mem_reverse]; exact hm'w
+  unfold rowOrderW
+  rw [idxOf_append_mem hmrev, idxOf_append_mem hm'rev]
+  have hpair : ((strajW (chainSched I) w).reverse).Pairwise
+      (fun a b => get2 I.wrank w a < get2 I.wrank w b) := by
+    rw [strajW_eq_wtraj hWF hne hmo hw, List.pairwise_reverse]
+    exact wtraj_rank_pairwise hWF hne hw
+  exact idxOf_lt_of_sorted _ hpair hmrev hm'rev hlt
+
+include hWF hne hmo in
+/-- **The Validity Lemma** (order-6, `manOpt = idRow6` form): every
+instance is dominated in stable-matching count by the read-off instance
+of its own chain schedule. -/
+theorem sc_le_readoffS_chainSched :
+    stableCount6 I ≤ stableCount6 (readoffS (chainSched I)) := by
+  refine count_le_of_orderPreserving hWF ?_ ?_ ?_
+  · intro m hm w hw w' hw' hsw hsw' hlt
+    exact readoffS_mrank_mono hWF hne hmo hm hw hw' hsw hsw' hlt
+  · intro m hm w hw w' hw' hsw hsw'
+    exact readoffS_mrank_top hWF hne hmo hm hw hw' hsw hsw'
+  · intro w hw m hm m' hm' hsm hsm' hlt
+    exact readoffS_wrank_mono hWF hne hmo hw hm hm' hsm hsm' hlt
+
+end
