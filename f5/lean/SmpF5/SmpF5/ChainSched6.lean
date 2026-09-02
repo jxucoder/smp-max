@@ -504,3 +504,166 @@ theorem block_col_destutter {μ ν : List Nat} (hpμ : μ.Perm idRow6)
       · rw [if_neg hmr, if_neg (by
           rw [List.flatten_cons, List.mem_append]
           exact fun h => hmr (h.resolve_left hmO))]
+
+/-! ## Assembly helpers -/
+
+theorem foldl_notMem_const :
+    ∀ (L : List (List Nat)) (μ' : List Nat) (m : Nat), m < 6 →
+    m ∉ L.flatten →
+    (L.foldl (fun mu st => applyStep st mu) μ').getD m 0 = μ'.getD m 0 := by
+  intro L
+  induction L with
+  | nil => intro μ' m _ _; rfl
+  | cons O rest ih =>
+    intro μ' m hm6 hnm
+    rw [List.flatten_cons, List.mem_append, not_or] at hnm
+    obtain ⟨hnO, hnrest⟩ := hnm
+    rw [List.foldl_cons, ih (applyStep O μ') m hm6 hnrest]
+    exact applyStep_getD_notMem hm6 hnO
+
+theorem scanl_getLast?_foldl (f : List Nat → List Nat → List Nat)
+    (a : List Nat) (L : List (List Nat)) :
+    (List.scanl f a L).getLast? = some (L.foldl f a) := by
+  induction L generalizing a with
+  | nil => rfl
+  | cons s rest ih =>
+    rw [List.scanl_cons, List.getLast?_cons_of_ne_nil (by
+      simp [List.scanl_ne_nil]), ih, List.foldl_cons]
+
+theorem stepDecomp_flatten_iff_moved {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) :
+    m ∈ (stepDecomp μ ν).flatten ↔ μ.getD m 0 ≠ ν.getD m 0 := by
+  constructor
+  · intro hmem
+    obtain ⟨hOrb, _⟩ := stepDecomp_spec hpμ hpν
+    obtain ⟨st, hst, hmst⟩ := List.mem_flatten.1 hmem
+    obtain ⟨m0, hm06, hmov, rfl⟩ := hOrb.1 st hst
+    exact orbit_all_moved hpμ hpν hm06 hmov m hmst
+  · intro hmov
+    by_contra hnm
+    have h1 := foldl_notMem_const (stepDecomp μ ν) μ m hm hnm
+    have h2 := (stepDecomp_spec hpμ hpν).2 m hm
+    rw [h1] at h2
+    exact hmov h2
+
+/-! ## strajM = traj -/
+
+/-- Master lemma: the destuttered partner column of the schedule
+generated from `μ0 :: rest` equals that of the matching list itself. -/
+theorem col_destutter_link {m : Nat} (hm : m < 6) :
+    ∀ (rest : List (List Nat)) (μ0 : List Nat), μ0.Perm idRow6 →
+    (∀ mu ∈ rest, mu.Perm idRow6) →
+    ((List.scanl (fun mu st => applyStep st mu) μ0
+        (linkSteps (μ0 :: rest))).map (fun σ => σ.getD m 0)).destutter (· ≠ ·)
+      = ((μ0 :: rest).map (fun σ => σ.getD m 0)).destutter (· ≠ ·) := by
+  intro rest
+  induction rest with
+  | nil =>
+    intro μ0 _ _
+    simp [linkSteps, List.scanl_nil]
+  | cons μ1 rest2 ih =>
+    intro μ0 hp0 hprest
+    have hp1 : μ1.Perm idRow6 := hprest μ1 List.mem_cons_self
+    have hprest2 : ∀ mu ∈ rest2, mu.Perm idRow6 :=
+      fun mu hmu => hprest mu (List.mem_cons_of_mem _ hmu)
+    -- split the scanl
+    have hlink : linkSteps (μ0 :: μ1 :: rest2)
+        = stepDecomp μ0 μ1 ++ linkSteps (μ1 :: rest2) := rfl
+    rw [hlink, scanl_append_f, foldl_stepDecomp_eq hp0 hp1, List.map_append,
+      List.map_tail]
+    -- names
+    set Afull := List.scanl (fun mu st => applyStep st mu) μ0
+      (stepDecomp μ0 μ1) with hAf
+    set Bfull := List.scanl (fun mu st => applyStep st mu) μ1
+      (linkSteps (μ1 :: rest2)) with hBf
+    set A := Afull.map (fun σ => σ.getD m 0) with hA
+    set Bcol := Bfull.map (fun σ => σ.getD m 0) with hBc
+    -- A ends in μ1(m)
+    have hAlast : A.getLast? = some (μ1.getD m 0) := by
+      rw [hA, getLast?_map', hAf, scanl_getLast?_foldl,
+        foldl_stepDecomp_eq hp0 hp1]
+      rfl
+    -- Bcol starts with μ1(m)
+    have hBhead : Bcol = μ1.getD m 0 :: Bcol.tail := by
+      apply list_eq_head_tail
+      rw [hBc, List.head?_map, hBf]
+      obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu) μ1
+        (linkSteps (μ1 :: rest2))
+      rw [hT]; rfl
+    -- junction: destutter (A ++ Bcol.tail) = destutter (A ++ Bcol)
+    have hjoin : (A ++ Bcol.tail).destutter (· ≠ ·)
+        = (A ++ Bcol).destutter (· ≠ ·) := by
+      conv_rhs => rw [hBhead]
+      exact (destutter_ne_join Bcol.tail hAlast).symm
+    -- append split
+    have hsplit : (A ++ Bcol).destutter (· ≠ ·)
+        = A.destutter (· ≠ ·)
+          ++ ((μ1.getD m 0 :: Bcol).destutter (· ≠ ·)).tail :=
+      destutter_ne_append_getLast Bcol hAlast
+    -- (μ1(m) :: Bcol) destutter tail = (destutter Bcol).tail
+    have hBcoldup : ((μ1.getD m 0 :: Bcol).destutter (· ≠ ·)).tail
+        = (Bcol.destutter (· ≠ ·)).tail := by
+      conv_lhs => rw [hBhead]
+      rw [destutter_ne_dup]
+      conv_rhs => rw [hBhead]
+    -- IH on Bcol
+    have hIH : Bcol.destutter (· ≠ ·)
+        = ((μ1 :: rest2).map (fun σ => σ.getD m 0)).destutter (· ≠ ·) := by
+      rw [hBc, hBf]
+      exact ih μ1 hp1 hprest2
+    -- block col destutter
+    have hblock : A.destutter (· ≠ ·)
+        = if m ∈ (stepDecomp μ0 μ1).flatten
+          then [μ0.getD m 0, μ1.getD m 0] else [μ0.getD m 0] := by
+      rw [hA, hAf]
+      exact block_col_destutter hp0 hp1 hm (stepDecomp μ0 μ1) μ0
+        (stepDecomp_spec hp0 hp1).1 (fun y _ => rfl)
+    rw [hjoin, hsplit, hblock, hBcoldup, hIH]
+    -- RHS target
+    have hRHS : ((μ0 :: μ1 :: rest2).map (fun σ => σ.getD m 0)).destutter
+        (· ≠ ·)
+        = (μ0.getD m 0 :: μ1.getD m 0 :: rest2.map (fun σ => σ.getD m 0)
+          ).destutter (· ≠ ·) := by simp [List.map_cons]
+    rw [hRHS]
+    -- RHS_B
+    set RB := ((μ1 :: rest2).map (fun σ => σ.getD m 0)).destutter (· ≠ ·)
+      with hRB
+    have hRBhead : RB = μ1.getD m 0 :: RB.tail := by
+      rw [hRB, List.map_cons]
+      apply list_eq_head_tail
+      rw [List.destutter_cons']
+      exact destutter'_head? _ _
+    by_cases hmem : m ∈ (stepDecomp μ0 μ1).flatten
+    · rw [if_pos hmem]
+      have hne : μ0.getD m 0 ≠ μ1.getD m 0 :=
+        (stepDecomp_flatten_iff_moved hp0 hp1 hm).1 hmem
+      simp only [List.cons_append, List.nil_append]
+      rw [← hRBhead, List.destutter_cons_cons, if_pos hne,
+        ← List.destutter_cons', hRB, List.map_cons]
+    · rw [if_neg hmem]
+      have heq : μ0.getD m 0 = μ1.getD m 0 := by
+        by_contra hc
+        exact hmem ((stepDecomp_flatten_iff_moved hp0 hp1 hm).2 hc)
+      simp only [List.cons_append, List.nil_append]
+      rw [heq, ← hRBhead, destutter_ne_dup, hRB, List.map_cons]
+
+/-- **The schedule realizes the chain trajectories** (man side), under
+the normalization `manOpt I = idRow6` so the schedule starts at the
+identity. -/
+theorem strajM_eq_traj {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    (hmo : manOpt I = idRow6) {m : Nat} (hm : m < 6) :
+    strajM (chainSched I) m = traj I m := by
+  obtain ⟨hMmem, _⟩ := manOpt_spec hWF hne
+  have hhead : (theChain I).head? = some (manOpt I) :=
+    chainFrom_head I 31 (manOpt I)
+  have hchain : theChain I = idRow6 :: (theChain I).tail := by
+    have h := list_eq_head_tail hhead
+    rwa [hmo] at h
+  have hpid : idRow6.Perm idRow6 := List.Perm.refl _
+  have hptail : ∀ mu ∈ (theChain I).tail, mu.Perm idRow6 := by
+    intro mu hmu
+    exact chain_mem_perm hWF hne (List.mem_of_mem_tail hmu)
+  have hkey := col_destutter_link hm (theChain I).tail idRow6 hpid hptail
+  unfold strajM chainSched schedMatchings traj
+  conv_lhs => rw [hchain]
+  rw [hkey, ← hchain]
