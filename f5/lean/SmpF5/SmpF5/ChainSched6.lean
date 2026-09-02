@@ -237,6 +237,65 @@ theorem destutter_ne_cons_replicate {a b : α} (n : Nat) (hab : a ≠ b) :
 
 end Destutter2
 
+section DestutterMid
+variable {α : Type} [DecidableEq α]
+
+/-- Removing one duplicated element in the middle preserves
+`destutter'`. -/
+theorem destutter'_ne_dup_mid :
+    ∀ (l : List α) (b x : α) (t : List α),
+    (l ++ x :: x :: t).destutter' (· ≠ ·) b
+      = (l ++ x :: t).destutter' (· ≠ ·) b := by
+  intro l
+  induction l with
+  | nil =>
+    intro b x t
+    simp only [List.nil_append]
+    have hxx : ¬ ((x : α) ≠ x) := by simp
+    by_cases hbx : b ≠ x
+    · rw [List.destutter'_cons_pos _ hbx, List.destutter'_cons_pos _ hbx,
+        List.destutter'_cons_neg _ hxx]
+    · rw [List.destutter'_cons_neg _ hbx, List.destutter'_cons_neg _ hbx]
+  | cons a l' ih =>
+    intro b x t
+    simp only [List.cons_append]
+    by_cases hba : b ≠ a
+    · rw [List.destutter'_cons_pos _ hba, List.destutter'_cons_pos _ hba,
+        ih a x t]
+    · rw [List.destutter'_cons_neg _ hba, List.destutter'_cons_neg _ hba,
+        ih b x t]
+
+/-- Junction duplicate removal: a list ending in `x` followed by
+`x :: t` collapses the duplicate. -/
+theorem destutter_ne_join_concat (l' : List α) (x : α) (t : List α) :
+    ((l' ++ [x]) ++ x :: t).destutter (· ≠ ·)
+      = ((l' ++ [x]) ++ t).destutter (· ≠ ·) := by
+  cases l' with
+  | nil =>
+    simp only [List.nil_append, List.singleton_append]
+    exact destutter_ne_dup x t
+  | cons a l'' =>
+    have e1 : (a :: l'') ++ [x] ++ x :: t
+        = (a :: l'') ++ x :: x :: t := by simp
+    have e2 : (a :: l'') ++ [x] ++ t = (a :: l'') ++ x :: t := by simp
+    rw [e1, e2, List.cons_append, List.cons_append,
+      List.destutter_cons', List.destutter_cons']
+    exact destutter'_ne_dup_mid l'' a x t
+
+theorem destutter_ne_join {l : List α} {x : α} (t : List α)
+    (hl : l.getLast? = some x) :
+    (l ++ x :: t).destutter (· ≠ ·) = (l ++ t).destutter (· ≠ ·) := by
+  induction l using List.reverseRecOn with
+  | nil => simp at hl
+  | append_singleton l' a _ =>
+    rw [List.getLast?_concat] at hl
+    have hax : a = x := Option.some_inj.1 hl
+    subst hax
+    exact destutter_ne_join_concat l' a t
+
+end DestutterMid
+
+
 /-- Off the orbit union, the whole scanl column is constant. -/
 theorem scanl_notMem_const :
     ∀ (L : List (List Nat)) (μ' : List Nat) (m : Nat), m < 6 →
