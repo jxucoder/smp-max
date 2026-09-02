@@ -295,6 +295,89 @@ theorem destutter_ne_join {l : List α} {x : α} (t : List α)
 
 end DestutterMid
 
+section DestutterSplit
+variable {α : Type} [DecidableEq α]
+
+theorem list_eq_head_tail {l : List α} {a : α} (h : l.head? = some a) :
+    l = a :: l.tail := by
+  cases l with
+  | nil => simp at h
+  | cons c t =>
+    rw [List.head?_cons, Option.some_inj] at h
+    subst h; rfl
+
+theorem destutter'_head_cons (b : α) (B : List α) :
+    B.destutter' (· ≠ ·) b = b :: (B.destutter' (· ≠ ·) b).tail :=
+  list_eq_head_tail (destutter'_head? B b)
+
+theorem destutter_ne_cons_head (a : α) (B : List α) :
+    (a :: B).destutter (· ≠ ·) = a :: ((a :: B).destutter (· ≠ ·)).tail := by
+  apply list_eq_head_tail
+  rw [List.destutter_cons']
+  exact destutter'_head? B a
+
+theorem destutter'_ne_snoc_append :
+    ∀ (A' : List α) (s b : α) (B : List α),
+    ((A' ++ [b]) ++ B).destutter' (· ≠ ·) s
+      = (A' ++ [b]).destutter' (· ≠ ·) s
+        ++ ((b :: B).destutter (· ≠ ·)).tail := by
+  intro A'
+  induction A' with
+  | nil =>
+    intro s b B
+    simp only [List.nil_append, List.singleton_append]
+    have hRtail : ((b :: B).destutter (· ≠ ·)).tail
+        = (B.destutter' (· ≠ ·) b).tail := by rw [List.destutter_cons']
+    by_cases hsb : s ≠ b
+    · have hL : (b :: B).destutter' (· ≠ ·) s = s :: B.destutter' (· ≠ ·) b :=
+        List.destutter'_cons_pos B hsb
+      have hR1 : (b :: ([] : List α)).destutter' (· ≠ ·) s = [s, b] := by
+        rw [List.destutter'_cons_pos [] hsb, List.destutter'_nil]
+      rw [hL, hR1, hRtail]
+      conv_lhs => rw [destutter'_head_cons b B]
+      rfl
+    · have hbe : s = b := by simpa using hsb
+      subst hbe
+      have hL : (s :: B).destutter' (· ≠ ·) s = B.destutter' (· ≠ ·) s :=
+        List.destutter'_cons_neg B (by simp)
+      have hR1 : (s :: ([] : List α)).destutter' (· ≠ ·) s = [s] := by
+        rw [List.destutter'_cons_neg [] (by simp), List.destutter'_nil]
+      rw [hL, hR1, hRtail]
+      conv_lhs => rw [destutter'_head_cons s B]
+      rfl
+  | cons a A'' ih =>
+    intro s b B
+    simp only [List.cons_append]
+    by_cases hsa : s ≠ a
+    · rw [List.destutter'_cons_pos _ hsa, List.destutter'_cons_pos _ hsa,
+        ih a b B, List.cons_append]
+    · rw [List.destutter'_cons_neg _ hsa, List.destutter'_cons_neg _ hsa,
+        ih s b B]
+
+theorem destutter_ne_append_getLast {A : List α} {b : α} (B : List α)
+    (hA : A.getLast? = some b) :
+    (A ++ B).destutter (· ≠ ·)
+      = A.destutter (· ≠ ·) ++ ((b :: B).destutter (· ≠ ·)).tail := by
+  induction A using List.reverseRecOn with
+  | nil => simp at hA
+  | append_singleton A' a _ =>
+    rw [List.getLast?_concat] at hA
+    obtain rfl : a = b := Option.some_inj.1 hA
+    cases A' with
+    | nil =>
+      simp only [List.nil_append, List.singleton_append,
+        List.destutter_singleton]
+      conv_lhs => rw [destutter_ne_cons_head a B]
+    | cons c A'' =>
+      have hL : ((c :: A'') ++ [a]) ++ B = c :: ((A'' ++ [a]) ++ B) := by
+        simp
+      have hR : (c :: A'') ++ [a] = c :: (A'' ++ [a]) := by simp
+      rw [hL, hR, List.destutter_cons', List.destutter_cons']
+      exact destutter'_ne_snoc_append A'' c a B
+
+end DestutterSplit
+
+
 
 /-- Off the orbit union, the whole scanl column is constant. -/
 theorem scanl_notMem_const :
