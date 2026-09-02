@@ -667,3 +667,155 @@ theorem strajM_eq_traj {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
   unfold strajM chainSched schedMatchings traj
   conv_lhs => rw [hchain]
   rw [hkey, ← hchain]
+
+/-! ## Generic column assembly
+
+The junction/append-split machinery is agnostic to *which* coordinate
+of the matching we track. Abstract it over a column function `κ`, with
+the per-block destutter as a hypothesis; instantiate for the man column
+(`σ.getD m 0`) and the woman column (`idxOf w σ`). -/
+
+theorem col_destutter_link_gen (κ : List Nat → Nat)
+    (hblock : ∀ (μ ν : List Nat), μ.Perm idRow6 → ν.Perm idRow6 →
+      ((List.scanl (fun mu st => applyStep st mu) μ
+        (stepDecomp μ ν)).map κ).destutter (· ≠ ·)
+        = if κ μ ≠ κ ν then [κ μ, κ ν] else [κ μ]) :
+    ∀ (rest : List (List Nat)) (μ0 : List Nat), μ0.Perm idRow6 →
+    (∀ mu ∈ rest, mu.Perm idRow6) →
+    ((List.scanl (fun mu st => applyStep st mu) μ0
+        (linkSteps (μ0 :: rest))).map κ).destutter (· ≠ ·)
+      = ((μ0 :: rest).map κ).destutter (· ≠ ·) := by
+  intro rest
+  induction rest with
+  | nil =>
+    intro μ0 _ _
+    simp [linkSteps, List.scanl_nil]
+  | cons μ1 rest2 ih =>
+    intro μ0 hp0 hprest
+    have hp1 : μ1.Perm idRow6 := hprest μ1 List.mem_cons_self
+    have hprest2 : ∀ mu ∈ rest2, mu.Perm idRow6 :=
+      fun mu hmu => hprest mu (List.mem_cons_of_mem _ hmu)
+    have hlink : linkSteps (μ0 :: μ1 :: rest2)
+        = stepDecomp μ0 μ1 ++ linkSteps (μ1 :: rest2) := rfl
+    rw [hlink, scanl_append_f, foldl_stepDecomp_eq hp0 hp1, List.map_append,
+      List.map_tail]
+    set Afull := List.scanl (fun mu st => applyStep st mu) μ0
+      (stepDecomp μ0 μ1) with hAf
+    set Bfull := List.scanl (fun mu st => applyStep st mu) μ1
+      (linkSteps (μ1 :: rest2)) with hBf
+    set A := Afull.map κ with hA
+    set Bcol := Bfull.map κ with hBc
+    have hAlast : A.getLast? = some (κ μ1) := by
+      rw [hA, getLast?_map', hAf, scanl_getLast?_foldl,
+        foldl_stepDecomp_eq hp0 hp1]
+      rfl
+    have hBhead : Bcol = κ μ1 :: Bcol.tail := by
+      apply list_eq_head_tail
+      rw [hBc, List.head?_map, hBf]
+      obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu) μ1
+        (linkSteps (μ1 :: rest2))
+      rw [hT]; rfl
+    have hjoin : (A ++ Bcol.tail).destutter (· ≠ ·)
+        = (A ++ Bcol).destutter (· ≠ ·) := by
+      conv_rhs => rw [hBhead]
+      exact (destutter_ne_join Bcol.tail hAlast).symm
+    have hsplit : (A ++ Bcol).destutter (· ≠ ·)
+        = A.destutter (· ≠ ·) ++ ((κ μ1 :: Bcol).destutter (· ≠ ·)).tail :=
+      destutter_ne_append_getLast Bcol hAlast
+    have hBcoldup : ((κ μ1 :: Bcol).destutter (· ≠ ·)).tail
+        = (Bcol.destutter (· ≠ ·)).tail := by
+      conv_lhs => rw [hBhead]
+      rw [destutter_ne_dup]
+      conv_rhs => rw [hBhead]
+    have hIH : Bcol.destutter (· ≠ ·)
+        = ((μ1 :: rest2).map κ).destutter (· ≠ ·) := by
+      rw [hBc, hBf]; exact ih μ1 hp1 hprest2
+    have hblk : A.destutter (· ≠ ·)
+        = if κ μ0 ≠ κ μ1 then [κ μ0, κ μ1] else [κ μ0] := by
+      rw [hA, hAf]; exact hblock μ0 μ1 hp0 hp1
+    rw [hjoin, hsplit, hblk, hBcoldup, hIH]
+    have hRHS : ((μ0 :: μ1 :: rest2).map κ).destutter (· ≠ ·)
+        = (κ μ0 :: κ μ1 :: rest2.map κ).destutter (· ≠ ·) := by
+      simp [List.map_cons]
+    rw [hRHS]
+    set RB := ((μ1 :: rest2).map κ).destutter (· ≠ ·) with hRB
+    have hRBhead : RB = κ μ1 :: RB.tail := by
+      rw [hRB, List.map_cons]
+      apply list_eq_head_tail
+      rw [List.destutter_cons']
+      exact destutter'_head? _ _
+    by_cases hne : κ μ0 ≠ κ μ1
+    · rw [if_pos hne]
+      simp only [List.cons_append, List.nil_append]
+      rw [← hRBhead, List.destutter_cons_cons, if_pos hne,
+        ← List.destutter_cons', hRB, List.map_cons]
+    · rw [if_neg hne]
+      have heq : κ μ0 = κ μ1 := by simpa using hne
+      simp only [List.cons_append, List.nil_append]
+      rw [heq, ← hRBhead, destutter_ne_dup, hRB, List.map_cons]
+
+/-- Man-column block destutter in `κ`-form. -/
+theorem block_man_kappa {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) :
+    ((List.scanl (fun mu st => applyStep st mu) μ
+      (stepDecomp μ ν)).map (fun σ => σ.getD m 0)).destutter (· ≠ ·)
+      = if μ.getD m 0 ≠ ν.getD m 0
+        then [μ.getD m 0, ν.getD m 0] else [μ.getD m 0] := by
+  rw [block_col_destutter hpμ hpν hm (stepDecomp μ ν) μ
+    (stepDecomp_spec hpμ hpν).1 (fun y _ => rfl)]
+  by_cases hmem : m ∈ (stepDecomp μ ν).flatten
+  · rw [if_pos hmem, if_pos ((stepDecomp_flatten_iff_moved hpμ hpν hm).1 hmem)]
+  · rw [if_neg hmem, if_neg (fun hc =>
+      hmem ((stepDecomp_flatten_iff_moved hpμ hpν hm).2 hc))]
+
+/-! ## Woman column: how the husband of `w` changes under a step -/
+
+theorem applyStep_idxOf_notMem_husband {O μ' : List Nat} (hO : WFStep O)
+    (hμ' : μ'.Perm idRow6) {w : Nat} (hw : w < 6) (hnh : idxOf w μ' ∉ O) :
+    idxOf w (applyStep O μ') = idxOf w μ' := by
+  have ha6 : idxOf w μ' < 6 := idxOf_lt6 hμ' hw
+  have hval : (applyStep O μ').getD (idxOf w μ') 0 = w := by
+    rw [applyStep_getD_notMem ha6 hnh]
+    exact getD_idxOf (perm6_mem hμ' hw)
+  exact partner_idxOf_of_eq (applyStep_perm hO hμ') ha6 hval
+
+theorem applyStep_idxOf_mem_husband {O μ' : List Nat} (hO : WFStep O)
+    (hμ' : μ'.Perm idRow6) {w : Nat} (hw : w < 6) (hh : idxOf w μ' ∈ O) :
+    idxOf w (applyStep O μ') ∈ O := by
+  by_contra hnew
+  have hp := applyStep_perm hO hμ'
+  have hnew6 : idxOf w (applyStep O μ') < 6 := idxOf_lt6 hp hw
+  have hval : (applyStep O μ').getD (idxOf w (applyStep O μ')) 0 = w :=
+    getD_idxOf (perm6_mem hp hw)
+  rw [applyStep_getD_notMem hnew6 hnew] at hval
+  have heqi : idxOf w μ' = idxOf w (applyStep O μ') :=
+    partner_idxOf_of_eq hμ' hnew6 hval
+  exact hnew (heqi ▸ hh)
+
+theorem scanl_idxOf_notMem_husband :
+    ∀ (L : List (List Nat)) (μ' : List Nat), (∀ st ∈ L, WFStep st) →
+    μ'.Perm idRow6 → {w : Nat} → w < 6 → idxOf w μ' ∉ L.flatten →
+    ∀ σ ∈ List.scanl (fun mu st => applyStep st mu) μ' L,
+    idxOf w σ = idxOf w μ' := by
+  intro L
+  induction L with
+  | nil =>
+    intro μ' _ _ w _ _ σ hσ
+    simp only [List.scanl_nil, List.mem_cons, List.not_mem_nil,
+      or_false] at hσ
+    rw [hσ]
+  | cons O rest ih =>
+    intro μ' hWF hμ' w hw hnh σ hσ
+    rw [List.flatten_cons, List.mem_append, not_or] at hnh
+    obtain ⟨hnO, hnrest⟩ := hnh
+    have hOWF : WFStep O := hWF O List.mem_cons_self
+    have hfix : idxOf w (applyStep O μ') = idxOf w μ' :=
+      applyStep_idxOf_notMem_husband hOWF hμ' hw hnO
+    rw [List.scanl_cons] at hσ
+    rcases List.mem_cons.1 hσ with rfl | hσ'
+    · rfl
+    · have hp' : (applyStep O μ').Perm idRow6 := applyStep_perm hOWF hμ'
+      have hnh' : idxOf w (applyStep O μ') ∉ rest.flatten := by rw [hfix]; exact hnrest
+      have hrec := ih (applyStep O μ') (fun st hst => hWF st (List.mem_cons_of_mem _ hst))
+        hp' hw hnh' σ hσ'
+      rw [hrec, hfix]
