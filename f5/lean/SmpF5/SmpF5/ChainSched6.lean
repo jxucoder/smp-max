@@ -998,3 +998,18 @@ theorem strajW_eq_wtraj {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
   unfold strajW chainSched schedMatchings wtraj
   conv_lhs => rw [hchain]
   rw [hkey, ← hchain]
+
+/-- **The chain schedule is legal.** -/
+theorem Legal_chainSched {I : Inst6} (hWF : WF6 I = true) (hne : sms6 I ≠ [])
+    (hmo : manOpt I = idRow6) : Legal (chainSched I) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro st hst
+    refine linkSteps_all_WFStep (theChain I) ?_ st hst
+    intro mu hmu
+    exact chain_mem_perm hWF hne hmu
+  · intro m hm
+    rw [strajM_eq_traj hWF hne hmo hm]
+    exact traj_nodup hWF hne hm
+  · intro w hw
+    rw [strajW_eq_wtraj hWF hne hmo hw]
+    exact wtraj_nodup hWF hne hw
