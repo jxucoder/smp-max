@@ -214,3 +214,151 @@ theorem scanl_orbits_two_valued {μ ν : List Nat} (hpμ : μ.Perm idRow6)
       rcases hIH with h | h
       · rw [h]; exact hbase2 x hx
       · right; exact h
+
+/-! ## Block column destutters to two values -/
+
+section Destutter2
+variable {α : Type} [DecidableEq α]
+
+theorem destutter_ne_replicate_eq (a : α) (n : Nat) :
+    (List.replicate (n + 1) a).destutter (· ≠ ·) = [a] := by
+  induction n with
+  | zero => simp
+  | succ k ih =>
+    rw [List.replicate_succ]
+    rw [show a :: List.replicate (k + 1) a = a :: a :: List.replicate k a by
+      rw [List.replicate_succ]]
+    rw [destutter_ne_dup, ← List.replicate_succ, ih]
+
+theorem destutter_ne_cons_replicate {a b : α} (n : Nat) (hab : a ≠ b) :
+    (a :: List.replicate (n + 1) b).destutter (· ≠ ·) = [a, b] := by
+  rw [List.replicate_succ, List.destutter_cons_cons, if_pos hab,
+    ← List.destutter_cons', ← List.replicate_succ, destutter_ne_replicate_eq]
+
+end Destutter2
+
+/-- Off the orbit union, the whole scanl column is constant. -/
+theorem scanl_notMem_const :
+    ∀ (L : List (List Nat)) (μ' : List Nat) (m : Nat), m < 6 →
+    m ∉ L.flatten →
+    ∀ σ ∈ List.scanl (fun mu st => applyStep st mu) μ' L,
+    σ.getD m 0 = μ'.getD m 0 := by
+  intro L
+  induction L with
+  | nil =>
+    intro μ' m hm hnm σ hσ
+    simp only [List.scanl_nil, List.mem_cons, List.not_mem_nil,
+      or_false] at hσ
+    rw [hσ]
+  | cons O rest ih =>
+    intro μ' m hm hnm σ hσ
+    rw [List.flatten_cons, List.mem_append, not_or] at hnm
+    obtain ⟨hnO, hnrest⟩ := hnm
+    rw [List.scanl_cons] at hσ
+    rcases List.mem_cons.1 hσ with rfl | hσ'
+    · rfl
+    · have := ih (applyStep O μ') m hm hnrest σ hσ'
+      rw [this, applyStep_getD_notMem hm hnO]
+
+theorem scanl_eq_cons (f : List Nat → List Nat → List Nat) (a : List Nat)
+    (L : List (List Nat)) : ∃ T, List.scanl f a L = a :: T := by
+  cases L with
+  | nil => exact ⟨[], rfl⟩
+  | cons s rest => exact ⟨_, by rw [List.scanl_cons]⟩
+
+/-- The destuttered partner column over a disjoint-orbit list: two
+values (`μ'(m)` then `ν(m)`) if `m` moves in the block, one otherwise. -/
+theorem block_col_destutter {μ ν : List Nat} (hpμ : μ.Perm idRow6)
+    (hpν : ν.Perm idRow6) {m : Nat} (hm : m < 6) :
+    ∀ (L : List (List Nat)) (μ' : List Nat), OrbAcc μ ν L →
+    (∀ y ∈ L.flatten, μ'.getD y 0 = μ.getD y 0) →
+    (((List.scanl (fun mu st => applyStep st mu) μ' L).map
+      (fun σ => σ.getD m 0)).destutter (· ≠ ·)) =
+      if m ∈ L.flatten then [μ'.getD m 0, ν.getD m 0]
+      else [μ'.getD m 0] := by
+  intro L
+  induction L with
+  | nil =>
+    intro μ' _ _
+    simp [List.scanl_nil]
+  | cons O rest ih =>
+    intro μ' hOrb hagree
+    obtain ⟨horbs, hdisj⟩ := hOrb
+    obtain ⟨m0, hm06, hmov, hOdef⟩ := horbs O List.mem_cons_self
+    have hOrbRest : OrbAcc μ ν rest :=
+      ⟨fun st hst => horbs st (List.mem_cons_of_mem _ hst), hdisj.of_cons⟩
+    have hdisjO : ∀ z ∈ O, ∀ t ∈ rest, z ∉ t :=
+      fun z hz t ht => (List.pairwise_cons.1 hdisj).1 t ht z hz
+    have hagreeO : ∀ y ∈ orbit μ ν m0, μ'.getD y 0 = μ.getD y 0 := by
+      intro y hy
+      exact hagree y (List.mem_flatten.2 ⟨O, List.mem_cons_self,
+        hOdef ▸ hy⟩)
+    have hagree' : ∀ y ∈ rest.flatten,
+        (applyStep O μ').getD y 0 = μ.getD y 0 := by
+      intro y hy
+      have hy6 : y < 6 := orbAcc_flatten_lt6 hpμ hpν hOrbRest hy
+      have hynO : y ∉ O := by
+        intro hyO
+        obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+        exact hdisjO y hyO t ht hyt
+      rw [applyStep_getD_notMem hy6 hynO]
+      obtain ⟨t, ht, hyt⟩ := List.mem_flatten.1 hy
+      exact hagree y (List.mem_flatten.2 ⟨t,
+        List.mem_cons_of_mem _ ht, hyt⟩)
+    rw [List.scanl_cons, List.map_cons]
+    by_cases hmO : m ∈ O
+    · -- m moves in this orbit: partner jumps to ν(m) and stays
+      have hbaseν : (applyStep O μ').getD m 0 = ν.getD m 0 := by
+        subst hOdef
+        exact applyStep_orbit_moved' hpμ hpν hm06 hagreeO hmO hm
+      have hmnrest : m ∉ rest.flatten := by
+        intro hc
+        obtain ⟨t, ht, hmt⟩ := List.mem_flatten.1 hc
+        exact hdisjO m hmO t ht hmt
+      have hconst : ∀ σ ∈ List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest, σ.getD m 0 = ν.getD m 0 := fun σ hσ =>
+        (scanl_notMem_const rest (applyStep O μ') m hm hmnrest σ hσ).trans
+          hbaseν
+      have htaileq : (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).map (fun σ => σ.getD m 0)
+          = List.replicate ((List.scanl (fun mu st => applyStep st mu)
+              (applyStep O μ') rest).length) (ν.getD m 0) := by
+        rw [List.eq_replicate_iff]
+        refine ⟨by rw [List.length_map], ?_⟩
+        intro b hb
+        obtain ⟨σ, hσ, rfl⟩ := List.mem_map.1 hb
+        exact hconst σ hσ
+      have hlenpos : 0 < (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).length := by
+        obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu)
+          (applyStep O μ') rest
+        rw [hT]; simp
+      obtain ⟨k, hk⟩ : ∃ k, (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).length = k + 1 :=
+        ⟨(List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).length - 1, by omega⟩
+      have hmovm : moved μ ν m :=
+        orbit_all_moved hpμ hpν hm06 hmov m (hOdef ▸ hmO)
+      have hμm : μ'.getD m 0 = μ.getD m 0 := hagree m
+        (List.mem_flatten.2 ⟨O, List.mem_cons_self, hmO⟩)
+      have hne : μ'.getD m 0 ≠ ν.getD m 0 := by rw [hμm]; exact hmovm
+      rw [htaileq, hk, destutter_ne_cons_replicate k hne,
+        if_pos (List.mem_flatten.2 ⟨O, List.mem_cons_self, hmO⟩)]
+    · -- m fixed by this orbit: leading duplicate collapses
+      have hbasefix : (applyStep O μ').getD m 0 = μ'.getD m 0 :=
+        applyStep_getD_notMem hm hmO
+      obtain ⟨T, hT⟩ := scanl_eq_cons (fun mu st => applyStep st mu)
+        (applyStep O μ') rest
+      have hcolM : (List.scanl (fun mu st => applyStep st mu)
+          (applyStep O μ') rest).map (fun σ => σ.getD m 0)
+          = μ'.getD m 0 :: T.map (fun σ => σ.getD m 0) := by
+        rw [hT, List.map_cons, hbasefix]
+      rw [hcolM, destutter_ne_dup, ← hcolM,
+        ih (applyStep O μ') hOrbRest hagree', hbasefix]
+      by_cases hmr : m ∈ rest.flatten
+      · rw [if_pos hmr, if_pos (List.mem_flatten.2 (by
+          obtain ⟨t, ht, hmt⟩ := List.mem_flatten.1 hmr
+          exact ⟨t, List.mem_cons_of_mem _ ht, hmt⟩))]
+      · rw [if_neg hmr, if_neg (by
+          rw [List.flatten_cons, List.mem_append]
+          exact fun h => hmr (h.resolve_left hmO))]
