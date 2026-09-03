@@ -607,7 +607,13 @@ def run_cube(task):
         return rec
 
     if rc != 20:
-        # ---- tool failure (crash, wrapper kill): non-terminal, retried
+        # ---- tool failure (crash, wrapper kill): non-terminal, retried;
+        # EXCEPT a wrapper-killed solver on an OPEN cube: the solver blew
+        # through its own -t while streaming a huge proof -> split instead
+        if killed and not closed:
+            _split_or_hold(rec, prefix, closed, cfg, "solver_killed")
+            cleanup(keep=cfg["keep_failures"])
+            return rec
         rec["status"] = "error"
         rec["reason"] = f"{solver}_killed" if killed else f"{solver}_rc_{rc}"
         rec[f"{solver}_tail"] = out[-1000:] + err[-1000:]
