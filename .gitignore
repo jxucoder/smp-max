@@ -20,3 +20,7 @@ f6/paper/*.out
 f6/theory.log
 f6/theory.aux
 f6/theory.out
+cadical-src/
+f6/campaign/scratch*/
+f6/campaign/*.lock
+f6/campaign/expect*/
