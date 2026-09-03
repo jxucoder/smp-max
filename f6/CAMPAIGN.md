@@ -70,10 +70,11 @@ schedules.  `--audit` checks the journal against the exact root set.
 1. write `base + units` as DIMACS (48.7 MB; base clause body is built once
    in the parent and inherited copy-on-write by forked workers) and record
    its sha256 (`cnf_sha256`) **before** solving;
-2. `kissat -q --time=T cnf drat` (binary DRAT);
-3. rc 20 -> `drat-trim cnf drat -L lrat` (require `s VERIFIED`) -> record
-   `lrat_sha256` -> `cake_lpr cnf lrat` (require `s VERIFIED UNSAT`) ->
-   status `verified`, delete cnf/drat/lrat;
+2. `kissat -q --time=T cnf drat` (binary DRAT), or with `--solver cadical`
+   `cadical -q -t T --lrat --binary=false cnf lrat` (native text LRAT);
+3. rc 20 -> [kissat only: `drat-trim cnf drat -L lrat` (require `s VERIFIED`)]
+   -> record `lrat_sha256` -> `cake_lpr cnf lrat` (require `s VERIFIED UNSAT`)
+   -> status `verified`, delete cnf/drat/lrat;
 4. rc 10 -> status `SAT`: the CNF and the raw model (`v` lines, plus full
    kissat stdout/stderr) are copied under `campaign/keep/SAT_*` *before*
    anything is decoded; then, inside try/except, the model is decoded
@@ -119,8 +120,9 @@ even if terminal (last record wins).
 `--audit` (exit 0 iff OK) checks: coverage of the exact root set (every
 root `verified`, or `split` with all children recursively covered); the
 header's base sha256 equals the recomputed formula; and, for every
-`verified` record, `kissat_rc == 20`, `drattrim_verified`,
-`cake_verified`, no killed flag, and well-formed `cnf_sha256` /
+`verified` record, solver rc == 20 (`kissat_rc` / `cadical_rc` per the
+record's `solver`), `drattrim_verified` (kissat records), `cake_rc == 0`
+and `cake_verified`, no killed flag, and well-formed `cnf_sha256` /
 `lrat_sha256` (defense in depth - the status alone is not trusted).
 With `--expect-cnf-dir DIR` the audit also rewrites `base + units` for
 every verified cube into DIR, compares its sha256 with the journaled
@@ -240,3 +242,68 @@ workers, `--time 60`) run with the hardened driver, 34 s wall:
 
 Not an easy cube: `0,1;0,2` hits a 60 s limit and splits into 140
 children (the `(0,1)` family again, cf. the calibration).
+
+## Solver choice (2026-09-02): `--solver cadical` (native LRAT)
+
+`cube_campaign.py --solver {kissat,cadical}` (default kissat, path
+unchanged).  The cadical path runs
+
+    cadical-src/build/cadical -q -t T --lrat --binary=false cnf lrat
+
+(CaDiCaL rel-3.0.1, commit c60730422e758ef1cebe7aeddf2dda31c996bf04,
+built from `cadical-src/` with `./configure && make`; `cadical-src/` must
+be gitignored like `dt-src/` and `cake_lpr-src/`), then `cake_lpr cnf lrat`
+directly on the solver's textual LRAT: no drat-trim.  Exit codes are the
+same as kissat's (10 SAT, 20 UNSAT, 0 = its own `-t` limit, printing
+`c UNKNOWN`), so the status mapping is identical (`verified`, `SAT`,
+`split` / `timeout_closed` / `timeout_maxdepth`, `error`).  Every record
+carries `solver`, `solver_version` (`cadical --build` line: version +
+git commit), the exact `solver_argv`, `solver_rc`/`solver_killed` plus
+`cadical_rc`/`cadical_killed` (or `kissat_*`), `cnf_sha256` (before
+solving) and `lrat_sha256` (hashed before cake_lpr).  `--audit` accepts
+a `verified` record iff its solver's rc is 20, `cake_rc == 0` with
+`cake_verified`, no killed flag, and both hashes are present; kissat
+records additionally need `drattrim_rc == 0` + `drattrim_verified`.
+The header records `solver`, `solver_path`, `solver_version` (and both
+solvers' versions).  cake_lpr's verdict is the certificate either way.
+
+Measured (M4 Max, single core per cube; cake_lpr = `cake_lpr-src/cake_lpr`):
+
+| instance                        | chain            | solve   | LRAT     | drat-trim | cake_lpr | verdict          |
+|---------------------------------|------------------|---------|----------|-----------|----------|------------------|
+| order-5 pilot (n=5,k=17)        | kissat+drat-trim | 156-236 s | 4.3 GB | 267 s     | 83 s     | s VERIFIED UNSAT |
+| order-5 pilot (n=5,k=17)        | cadical --lrat   | 150 s   | 4.35 GB  | -         | 93 s     | s VERIFIED UNSAT |
+| order-6 `stop`                  | cadical --lrat   | 0.4 s   | 14.7 MB  | -         | 2.1 s    | s VERIFIED UNSAT |
+| order-6 `0,5,4,2,1,3;0,2,5,1,3,4` (Lean-exported CNF, sha `f2ea077c...`) | cadical --lrat | 0.6 s | 39.4 MB | - | 2.4 s | s VERIFIED UNSAT |
+| order-6 `0,1;2,3` (hard)        | cadical --lrat, `--time 300` | 300 s (limit) | 13.2 GB (transient, deleted) | - | - | `split` -> 168 children (not closed; kissat did not close it in 560 s either) |
+
+Per-cube cost at order 5 drops from ~500-590 s to ~245 s (the drat-trim
+term is gone; cake_lpr is unchanged since the LRAT is the same size).
+At order 6 the dry run's drat-trim median of 112 s per cube (~85% of
+per-cube work) disappears, so the depth-2 layer budget falls from
+~900 core-hours to roughly the solve + cake_lpr time (~10-20 s median
+per cube, i.e. of the order of 100 core-hours at the dry-run mix).
+
+Caveats.  (1) CaDiCaL's LRAT is written eagerly during search, at
+~40 MB/s on the hard cube: a cube that runs to a 600 s limit leaves a
+~25 GB transient LRAT per worker (deleted on timeout), so budget disk for
+`--workers x 25 GB` on hard layers, or lower `--time` there.  (2) The
+text LRAT is ~3.5x kissat's DRAT, but no larger than drat-trim's LRAT
+was.  (3) cadical does not print a `v` model line with `-n`; the driver
+does not pass `-n`, so a SAT cube still records its model.
+
+Driver check (`campaign/cadical_check.jsonl`, `campaign/cadical_check.log`;
+3 workers, `--time 120`): `stop`, `0,1;stop`, `0,5,4,2,1,3;0,2,5,1,3,4`
+all `verified` in 5.9 s wall (solve 0.4-0.7 s, LRAT 14.7-39.4 MB,
+cake_lpr 4.8 s each; the third cube's `cnf_sha256` equals the Lean
+exporter's `f2ea077c...`); `--audit` reports `bad=0 header_problems=0`
+(fails only on the 25,490 roots not run).  The kissat path and the audit
+of pre-switch journals (`campaign/fixcheck.jsonl`) are unchanged
+(re-run: 2 cubes verified, `bad=0`).  The hard-cube run is journaled in
+`campaign/cadical_hard.jsonl`.
+
+Full campaign with cadical:
+
+    nohup python3 cube_campaign.py --solver cadical --workers 12 --time 600 \
+        --max-depth 4 --shuffle --journal campaign/campaign.jsonl \
+        --scratch campaign/scratch > campaign/campaign.log 2>&1 &

@@ -9,6 +9,13 @@ canonical cubes, each with an independently checkable certificate:
     steps  --kissat-->  DRAT  --drat-trim-->  LRAT  --cake_lpr-->
     "s VERIFIED UNSAT"
 
+or, with --solver cadical (CaDiCaL's native LRAT output, no drat-trim):
+
+    base + units  --cadical --lrat--> LRAT  --cake_lpr--> "s VERIFIED UNSAT"
+
+cake_lpr's verdict is the certificate either way: it checks the LRAT
+against the journaled CNF regardless of which solver produced it.
+
 Cubes
 -----
 Canonical depth-2 prefixes (S[0] = s1, S[1] = s2) under the first-
@@ -44,25 +51,30 @@ exporter print it -- with numVars/numClauses, and the path + sha256 of
 sched_sat.py.  Then one record per finished cube, with
 
     cnf_sha256   sha256 of the CNF file the solver consumed (computed
-                 BEFORE kissat runs),
+                 BEFORE the solver runs),
     lrat_sha256  sha256 of the LRAT file cake_lpr verified (verified
                  cubes; also recorded when cake_lpr rejects it),
-    *_rc / *_killed for every subprocess (kissat, drat-trim, cake_lpr).
+    solver / solver_version / solver_argv   which solver, its version
+                 (+ git commit for cadical) and the exact command line,
+    *_rc / *_killed for every subprocess (solver_rc/solver_killed, and
+                 kissat_* or cadical_* by name; drattrim_*, cake_*).
 
-Statuses.  Terminal (never re-run, except --force with explicit --cubes):
-    verified   kissat rc 20, drat-trim "s VERIFIED", cake_lpr
-               "s VERIFIED UNSAT";
-    SAT        kissat rc 10 (see below);
-    split      open cube hit the kissat time limit; children enqueued.
+Statuses (identical meaning for both solvers; "solver rc" is kissat's or
+cadical's exit code: 10 SAT, 20 UNSAT, 0 own time limit).
+Terminal (never re-run, except --force with explicit --cubes):
+    verified   solver rc 20, [kissat only: drat-trim "s VERIFIED",]
+               cake_lpr "s VERIFIED UNSAT";
+    SAT        solver rc 10 (see below);
+    split      open cube hit the solver time limit; children enqueued.
 Non-terminal (recorded, skipped on rerun unless listed in --retry-status,
 default "error"):
-    timeout_closed  closed cube hit the kissat limit (no children; rerun
+    timeout_closed  closed cube hit the solver limit (no children; rerun
                     with a larger --time);
-    error           kissat rc not in {0,10,20} / killed by the wrapper,
+    error           solver rc not in {0,10,20} / killed by the wrapper,
                     worker exception, or worker_lost (see below);
     check_timeout   drat-trim or cake_lpr killed by --check-timeout
                     (rerun with a larger --check-timeout);
-    drattrim_fail   drat-trim did not print "s VERIFIED";
+    drattrim_fail   drat-trim did not print "s VERIFIED" (kissat only);
     cake_fail       cake_lpr did not print "s VERIFIED UNSAT".
 A restart skips terminal cubes, re-derives the children of every "split"
 record, and re-attempts the --retry-status ones (`--retry-status all`
@@ -71,7 +83,8 @@ record, and re-attempts the --retry-status ones (`--retry-status all`
 `--audit` checks that the journal covers the whole root cube set (every
 root verified, or split with all children recursively covered), that the
 header's base sha256 equals the recomputed formula, and that every
-"verified" record has kissat_rc == 20, drattrim_verified, cake_verified,
+"verified" record has solver rc == 20 (kissat_rc or cadical_rc per its
+`solver` field), drattrim_verified (kissat records only), cake_verified,
 no killed flag, and a cnf_sha256 / lrat_sha256 (defense in depth).  With
 --expect-cnf-dir DIR the audit additionally rewrites base + units for
 every verified cube into DIR, compares its sha256 with the journaled
@@ -107,6 +120,7 @@ Usage
   python3 cube_campaign.py --count
   python3 cube_campaign.py --dryrun --workers 8 --time 90 --journal dryrun.jsonl
   python3 cube_campaign.py --workers 8 --time 600 --journal campaign.jsonl
+  python3 cube_campaign.py --solver cadical --workers 12 --time 600 --journal campaign.jsonl
   python3 cube_campaign.py --retry-status check_timeout,drattrim_fail --check-timeout 14400 ...
   python3 cube_campaign.py --cubes "0,1;2,3" --force --journal campaign.jsonl
   python3 cube_campaign.py --audit [--expect-cnf-dir DIR] --journal campaign.jsonl
@@ -138,6 +152,8 @@ PERMAN = N - 1                # per-man cap (5)
 DT = os.path.join(HERE, "..", "dt-src", "drat-trim")
 CAKE = os.path.join(HERE, "..", "cake_lpr-src", "cake_lpr")
 KISSAT = shutil.which("kissat") or "kissat"
+CADICAL = os.path.join(HERE, "..", "cadical-src", "build", "cadical")
+SOLVERS = ("kissat", "cadical")
 SCHED_SAT = os.path.join(HERE, "sched_sat.py")
 LEAN_EXPORT = os.path.join(HERE, "..", "f5", "lean", "SmpF5", ".lake", "build", "bin",
                            "export_sched_cnf")
@@ -324,14 +340,30 @@ def _tool_version(cmd, flag="--version"):
         return f"unavailable ({ex.__class__.__name__})"
 
 
-def header_record():
+def solver_path(name):
+    return KISSAT if name == "kissat" else os.path.abspath(CADICAL)
+
+
+def solver_version(name):
+    """kissat: `kissat --version`; cadical: `cadical --build` first line
+    ("Version 3.0.1 <git commit>")."""
+    if name == "kissat":
+        return _tool_version(KISSAT)
+    return _tool_version(solver_path("cadical"), "--build")
+
+
+def header_record(solver="kissat"):
     _ensure_base()
     return {"status": "header", "ts": time.time(), "n": N, "k": K,
             "num_vars": _G["nvars"], "num_clauses": _G["nclauses"],
             "base_sha256": _G["base_sha256"],
             "sched_sat_path": os.path.abspath(SCHED_SAT),
             "sched_sat_sha256": _G["sched_sat_sha256"],
+            "solver": solver, "solver_path": solver_path(solver),
+            "solver_version": solver_version(solver),
             "kissat": KISSAT, "kissat_version": _tool_version(KISSAT),
+            "cadical": os.path.abspath(CADICAL),
+            "cadical_version": solver_version("cadical"),
             "drat_trim": os.path.abspath(DT), "cake_lpr": os.path.abspath(CAKE),
             "lean_exporter": os.path.abspath(LEAN_EXPORT),
             "driver_pid": os.getpid(), "argv": sys.argv[1:]}
@@ -399,9 +431,10 @@ def _handle_sat(rec, tag, cnf, out, err, cfg):
     vlines = [l for l in out.splitlines() if l.startswith("v ")]
     with open(os.path.join(keep, "model.txt"), "w") as f:
         f.write("\n".join(vlines) + "\n")
-    with open(os.path.join(keep, "kissat.out"), "w") as f:
+    solver = rec.get("solver", "kissat")
+    with open(os.path.join(keep, f"{solver}.out"), "w") as f:
         f.write(out)
-    with open(os.path.join(keep, "kissat.err"), "w") as f:
+    with open(os.path.join(keep, f"{solver}.err"), "w") as f:
         f.write(err)
     rec.update({"status": "SAT", "kept": keep, "n_vlines": len(vlines),
                 "recount_ok": False, "encoding_bug": True, "verdict": "ENCODING_BUG"})
@@ -453,10 +486,13 @@ def run_cube(task):
     cnf = os.path.join(d, f"c_{tag}.cnf")
     drat = os.path.join(d, f"c_{tag}.drat")
     lrat = os.path.join(d, f"c_{tag}.lrat")
+    solver = cfg.get("solver", "kissat")
     rec = {"cube": cid, "prefix": [list(s) for s in prefix], "closed": closed,
            "depth": len(prefix), "worker": os.getpid(), "ts": time.time(),
            "time_limit": cfg["time"], "check_timeout": cfg["check_timeout"],
-           "base_sha256": _G["base_sha256"]}
+           "base_sha256": _G["base_sha256"],
+           "solver": solver, "solver_path": solver_path(solver),
+           "solver_version": cfg.get("solver_version")}
     units = cube_units(_G["hooks"], prefix, closed)
     rec["n_units"] = len(units)
     rec["units"] = units
@@ -464,13 +500,24 @@ def run_cube(task):
     rec["cnf_bytes"] = os.path.getsize(cnf)
     rec["cnf_sha256"] = sha256_file(cnf)          # provenance: BEFORE solving
 
-    rc, out, err, dt, killed = _run(
-        [KISSAT, "-q", f"--time={cfg['time']}", cnf, drat],
-        timeout=cfg["time"] + 120)
+    if solver == "kissat":
+        # kissat: binary DRAT, converted to LRAT by drat-trim below
+        argv = [KISSAT, "-q", f"--time={cfg['time']}", cnf, drat]
+    else:
+        # cadical: native textual LRAT (the format cake_lpr reads); -t is its
+        # own wall-clock limit (rc 0 + "c UNKNOWN", like kissat's --time)
+        argv = [solver_path("cadical"), "-q", "-t", str(cfg["time"]),
+                "--lrat", "--binary=false", cnf, lrat]
+    rec["solver_argv"] = argv
+    rc, out, err, dt, killed = _run(argv, timeout=cfg["time"] + 120)
     rec["solve_s"] = round(dt, 2)
-    rec["kissat_rc"] = rc
-    rec["kissat_killed"] = killed
+    rec["solver_rc"] = rc
+    rec["solver_killed"] = killed
+    rec[f"{solver}_rc"] = rc
+    rec[f"{solver}_killed"] = killed
     rec["drat_bytes"] = os.path.getsize(drat) if os.path.exists(drat) else 0
+    if solver == "cadical":
+        rec["lrat_bytes"] = os.path.getsize(lrat) if os.path.exists(lrat) else 0
 
     def cleanup(keep=False):
         if keep:
@@ -506,33 +553,35 @@ def run_cube(task):
     if rc != 20:
         # ---- tool failure (crash, wrapper kill): non-terminal, retried
         rec["status"] = "error"
-        rec["reason"] = "kissat_killed" if killed else f"kissat_rc_{rc}"
-        rec["kissat_tail"] = out[-1000:] + err[-1000:]
+        rec["reason"] = f"{solver}_killed" if killed else f"{solver}_rc_{rc}"
+        rec[f"{solver}_tail"] = out[-1000:] + err[-1000:]
         cleanup(keep=cfg["keep_failures"])
         return rec
 
-    # ---- UNSAT: drat-trim -> LRAT, then cake_lpr
-    rc2, out2, err2, dt2, killed2 = _run([DT, cnf, drat, "-L", lrat],
-                                         timeout=cfg["check_timeout"])
-    rec["drattrim_s"] = round(dt2, 2)
-    rec["drattrim_rc"] = rc2
-    rec["drattrim_killed"] = killed2
-    rec["drattrim_verified"] = ("s VERIFIED" in out2) and not killed2
-    rec["lrat_bytes"] = os.path.getsize(lrat) if os.path.exists(lrat) else 0
-    ratl = [l.strip() for l in out2.splitlines() if "RAT lemmas" in l]
-    if ratl:
-        rec["drattrim_rat"] = ratl[0]
-    if killed2:
-        rec["status"] = "check_timeout"
-        rec["check_stage"] = "drat-trim"
-        rec["drattrim_tail"] = out2[-2000:] + err2[-1000:]
-        cleanup(keep=cfg["keep_failures"])
-        return rec
-    if not rec["drattrim_verified"]:
-        rec["status"] = "drattrim_fail"
-        rec["drattrim_tail"] = out2[-2000:] + err2[-1000:]
-        cleanup(keep=cfg["keep_failures"])
-        return rec
+    if solver == "kissat":
+        # ---- UNSAT: drat-trim -> LRAT, then cake_lpr
+        rc2, out2, err2, dt2, killed2 = _run([DT, cnf, drat, "-L", lrat],
+                                             timeout=cfg["check_timeout"])
+        rec["drattrim_s"] = round(dt2, 2)
+        rec["drattrim_rc"] = rc2
+        rec["drattrim_killed"] = killed2
+        rec["drattrim_verified"] = ("s VERIFIED" in out2) and not killed2
+        rec["lrat_bytes"] = os.path.getsize(lrat) if os.path.exists(lrat) else 0
+        ratl = [l.strip() for l in out2.splitlines() if "RAT lemmas" in l]
+        if ratl:
+            rec["drattrim_rat"] = ratl[0]
+        if killed2:
+            rec["status"] = "check_timeout"
+            rec["check_stage"] = "drat-trim"
+            rec["drattrim_tail"] = out2[-2000:] + err2[-1000:]
+            cleanup(keep=cfg["keep_failures"])
+            return rec
+        if not rec["drattrim_verified"]:
+            rec["status"] = "drattrim_fail"
+            rec["drattrim_tail"] = out2[-2000:] + err2[-1000:]
+            cleanup(keep=cfg["keep_failures"])
+            return rec
+    # (cadical: the LRAT was written natively by the solver; no drat-trim)
     rec["lrat_sha256"] = sha256_file(lrat)        # the LRAT cake_lpr consumes
     rc3, out3, err3, dt3, killed3 = _run([CAKE, cnf, lrat],
                                          timeout=cfg["check_timeout"])
@@ -620,15 +669,18 @@ def summarize(recs, title="summary"):
               f"max={solve[-1]:.1f} mean={statistics.mean(solve):.1f} "
               f"sum={sum(solve):.1f}")
     if ver:
-        drat = sorted(r["drat_bytes"] / 1e6 for r in ver)
+        drat = sorted(r.get("drat_bytes", 0) / 1e6 for r in ver)
         lrat = sorted(r["lrat_bytes"] / 1e6 for r in ver)
-        dts = sorted(r["drattrim_s"] for r in ver)
+        dts = sorted(r["drattrim_s"] for r in ver if "drattrim_s" in r)
         cks = sorted(r["cake_s"] for r in ver)
-        print(f"   verified {len(ver)}: DRAT median={statistics.median(drat):.1f}MB "
+        bysolver = collections.Counter(r.get("solver", "kissat") for r in ver)
+        print(f"   verified {len(ver)} {dict(bysolver)}: "
+              f"DRAT median={statistics.median(drat):.1f}MB "
               f"max={drat[-1]:.1f}MB  LRAT median={statistics.median(lrat):.1f}MB "
-              f"max={lrat[-1]:.1f}MB  drat-trim median={statistics.median(dts):.1f}s "
-              f"max={dts[-1]:.1f}s  cake_lpr median={statistics.median(cks):.1f}s "
-              f"max={cks[-1]:.1f}s")
+              f"max={lrat[-1]:.1f}MB  "
+              + (f"drat-trim median={statistics.median(dts):.1f}s max={dts[-1]:.1f}s  "
+                 if dts else "")
+              + f"cake_lpr median={statistics.median(cks):.1f}s max={cks[-1]:.1f}s")
     nonterm = {s: n for s, n in by.items() if s in NONTERMINAL}
     if nonterm:
         print(f"   non-terminal (rerun with --retry-status): {nonterm}")
@@ -644,13 +696,24 @@ def verify_record(cid, r, base_sha=None):
     """Defense in depth for a 'verified' record: list of problems ([] if ok)."""
     prefix, closed = parse_cube_id(cid)
     p = []
-    if r.get("kissat_rc") != 20:
-        p.append(f"kissat_rc={r.get('kissat_rc')}")
-    if r.get("drattrim_verified") is not True:
-        p.append("drattrim_verified!=True")
+    solver = r.get("solver", "kissat")     # pre-solver-switch records: kissat
+    if solver not in SOLVERS:
+        p.append(f"unknown solver {solver!r}")
+    # UNSAT exit code is 20 for both kissat and cadical (confirmed)
+    if r.get(f"{solver}_rc") != 20:
+        p.append(f"{solver}_rc={r.get(f'{solver}_rc')}")
+    if "solver_rc" in r and r.get("solver_rc") != 20:
+        p.append(f"solver_rc={r.get('solver_rc')}")
+    if solver == "kissat":
+        if r.get("drattrim_verified") is not True:
+            p.append("drattrim_verified!=True")
+        if r.get("drattrim_rc") != 0:
+            p.append(f"drattrim_rc={r.get('drattrim_rc')}")
     if r.get("cake_verified") is not True:
         p.append("cake_verified!=True")
-    for k in ("kissat_killed", "drattrim_killed", "cake_killed"):
+    if r.get("cake_rc") != 0:
+        p.append(f"cake_rc={r.get('cake_rc')}")
+    for k in (f"{solver}_killed", "solver_killed", "drattrim_killed", "cake_killed"):
         if r.get(k):
             p.append(f"{k}=True")
     if not is_sha256(r.get("cnf_sha256")):
@@ -698,6 +761,12 @@ def audit(recs, depth=2, headers=(), expect_dir=None):
         if h.get("sched_sat_sha256") != _G["sched_sat_sha256"]:
             problems.append("header sched_sat_sha256 != current sched_sat.py "
                             "(formula sha256 still matches)")
+        if "solver" in h:
+            print(f"   header: solver={h['solver']} path={h.get('solver_path')} "
+                  f"version={h.get('solver_version')!r}")
+        else:
+            print(f"   header: (pre-solver-switch) kissat={h.get('kissat')} "
+                  f"version={h.get('kissat_version')!r}")
     if expect_dir:
         os.makedirs(expect_dir, exist_ok=True)
     roots = root_cubes(depth)
@@ -758,7 +827,11 @@ def main():
     ap.add_argument("--scratch", default=os.path.join(HERE, "campaign", "scratch"))
     ap.add_argument("--keep-dir", default=os.path.join(HERE, "campaign", "keep"))
     ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--time", type=int, default=600, help="kissat --time per cube (s)")
+    ap.add_argument("--solver", choices=SOLVERS, default="kissat",
+                    help="kissat (DRAT -> drat-trim -> LRAT) or cadical (native "
+                         "LRAT via --lrat --binary=false, no drat-trim); default kissat")
+    ap.add_argument("--time", type=int, default=600,
+                    help="solver time limit per cube (s): kissat --time / cadical -t")
     ap.add_argument("--check-timeout", type=int, default=7200,
                     help="subprocess timeout for drat-trim / cake_lpr (s)")
     ap.add_argument("--depth", type=int, default=2, help="root cube depth")
@@ -867,10 +940,18 @@ def main():
         return
 
     os.makedirs(os.path.dirname(os.path.abspath(args.journal)), exist_ok=True)
+    args.scratch = os.path.abspath(args.scratch)   # journaled argv is absolute
     os.makedirs(args.scratch, exist_ok=True)
     os.makedirs(args.keep_dir, exist_ok=True)
+    if args.solver == "cadical" and not os.access(CADICAL, os.X_OK):
+        sys.exit(f"--solver cadical: {os.path.abspath(CADICAL)} not found/executable "
+                 "(build cadical-src: ./configure && make)")
     cfg = {"time": args.time, "check_timeout": args.check_timeout,
-           "keep_dir": args.keep_dir, "keep_failures": args.keep_failures, "max_depth": args.max_depth}
+           "keep_dir": args.keep_dir, "keep_failures": args.keep_failures,
+           "max_depth": args.max_depth,
+           "solver": args.solver, "solver_version": solver_version(args.solver)}
+    print(f"solver: {args.solver} {solver_path(args.solver)} "
+          f"({cfg['solver_version']})", flush=True)
 
     # ---- single driver per journal
     lock_path = args.journal + ".lock"
@@ -902,10 +983,16 @@ def main():
             print("warning: sched_sat.py changed since the journal header "
                   "(formula sha256 unchanged)", flush=True)
     if not headers:
-        hdr = header_record()
+        hdr = header_record(args.solver)
         journal_append(jf, hdr)
         headers.append(hdr)
-        print(f"journal header written: base_sha256={hdr['base_sha256']}", flush=True)
+        print(f"journal header written: base_sha256={hdr['base_sha256']} "
+              f"solver={hdr['solver']} ({hdr['solver_version']})", flush=True)
+    elif any(h.get("solver", "kissat") != args.solver for h in headers):
+        # allowed (each record names its own solver) but worth a loud note
+        print(f"note: journal header solver={headers[0].get('solver', 'kissat')}, "
+              f"this run uses --solver {args.solver}; records carry their solver",
+              flush=True)
 
     def stub(cid):
         p, c = parse_cube_id(cid)
@@ -952,9 +1039,12 @@ def main():
                 st = rec["status"]
                 extra = ""
                 if st == "verified":
-                    extra = (f"solve={rec['solve_s']}s drat={rec['drat_bytes']/1e6:.1f}MB "
-                             f"lrat={rec['lrat_bytes']/1e6:.1f}MB dt={rec['drattrim_s']}s "
-                             f"cake={rec['cake_s']}s cnf_sha={rec['cnf_sha256'][:12]}")
+                    extra = (f"[{rec.get('solver', 'kissat')}] solve={rec['solve_s']}s "
+                             + (f"drat={rec['drat_bytes']/1e6:.1f}MB "
+                                if rec.get("solver", "kissat") == "kissat" else "")
+                             + f"lrat={rec['lrat_bytes']/1e6:.1f}MB "
+                             + (f"dt={rec['drattrim_s']}s " if "drattrim_s" in rec else "")
+                             + f"cake={rec['cake_s']}s cnf_sha={rec['cnf_sha256'][:12]}")
                 elif st == "split":
                     extra = f"timeout after {rec['solve_s']}s -> {rec['n_children']} children"
                     if not args.no_split and rec["depth"] < args.max_depth:
@@ -969,7 +1059,8 @@ def main():
                              f"problems={rec.get('problems')} kept={rec.get('kept')}")
                 else:
                     extra = json.dumps({k: v for k, v in rec.items()
-                                        if k in ("solve_s", "kissat_rc", "kissat_killed",
+                                        if k in ("solve_s", "solver", "solver_rc",
+                                                 "solver_killed",
                                                  "reason", "error", "check_stage",
                                                  "drattrim_verified", "cake_out",
                                                  "requeued")})

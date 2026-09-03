@@ -1,0 +1,12 @@
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 3 cubes (0 already journaled; skipped {}; retry=['error'])
+solver: cadical /Users/jiaruixu/work_space/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 1.9s
+journal header written: base_sha256=28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b solver=cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+[1/3     5.5s] stop: verified [cadical] solve=0.41s lrat=14.7MB cake=4.83s cnf_sha=3de5bab1bb3b
+[2/3     5.5s] 0,1;stop: verified [cadical] solve=0.41s lrat=14.8MB cake=4.85s cnf_sha=bbb840117985
+[3/3     5.7s] 0,5,4,2,1,3;0,2,5,1,3,4: verified [cadical] solve=0.68s lrat=39.4MB cake=4.86s cnf_sha=f2ea077ca59a
+done: 3 cubes in 5.9s wall
+== cadical_check.jsonl: 3 cubes  {'verified': 3}
+   solve_s: median=0.4 max=0.7 mean=0.5 sum=1.5
+   verified 3 {'cadical': 3}: DRAT median=0.0MB max=0.0MB  LRAT median=14.8MB max=39.4MB  cake_lpr median=4.8s max=4.9s

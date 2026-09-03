@@ -1,0 +1,9 @@
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 1 cubes (0 already journaled; skipped {}; retry=['error'])
+solver: cadical /Users/jiaruixu/work_space/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 1.9s
+journal header written: base_sha256=28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b solver=cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+[1/1   300.2s] 0,1;2,3: split timeout after 300.03s -> 168 children
+done: 1 cubes in 300.4s wall
+== cadical_hard.jsonl: 1 cubes  {'split': 1}
+   solve_s: median=300.0 max=300.0 mean=300.0 sum=300.0
