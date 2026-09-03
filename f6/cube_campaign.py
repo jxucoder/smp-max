@@ -127,6 +127,7 @@ Usage
   python3 cube_campaign.py --summary --journal campaign.jsonl
 """
 import argparse
+import signal
 import collections
 import fcntl
 import hashlib
@@ -382,16 +383,30 @@ def _worker_init(scratch_root, cfg):
 
 
 def _run(cmd, timeout):
-    """(rc, stdout, stderr, seconds, killed); rc is None iff killed."""
+    """(rc, stdout, stderr, seconds, killed); rc is None iff killed.
+    The child runs in its own process group; on timeout the whole group is
+    SIGKILLed and reaped (subprocess.run's own timeout was observed to leave
+    multi-GB cake_lpr checks running for hours)."""
     t0 = time.time()
-
-    def _s(x):
-        return x.decode(errors="replace") if isinstance(x, bytes) else (x or "")
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, start_new_session=True)
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        return r.returncode, r.stdout, r.stderr, time.time() - t0, False
-    except subprocess.TimeoutExpired as ex:
-        return None, _s(ex.stdout), _s(ex.stderr), time.time() - t0, True
+        out, err = proc.communicate(timeout=timeout)
+        return proc.returncode, out or "", err or "", time.time() - t0, False
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except Exception:
+            pass
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        try:
+            out, err = proc.communicate(timeout=60)
+        except Exception:
+            out, err = "", ""
+        return None, out or "", err or "", time.time() - t0, True
 
 
 def readoff_ranks(n, sched):
@@ -475,6 +490,22 @@ def _handle_sat(rec, tag, cnf, out, err, cfg):
         json.dump(rec, f, indent=1)
     return rec
 
+
+
+def _split_or_hold(rec, prefix, closed, cfg, reason):
+    """A cube whose certificate cannot be checked within budget: split it
+    (children have far smaller proofs) unless it is closed or at max depth."""
+    rec["reason"] = reason
+    if closed:
+        rec["status"] = "check_timeout"
+        rec["n_children"] = 0
+    elif cfg.get("max_depth") is not None and len(prefix) >= cfg["max_depth"]:
+        rec["status"] = "timeout_maxdepth"
+        rec["n_children"] = 0
+    else:
+        rec["status"] = "split"
+        rec["n_children"] = len(split_children(prefix, closed))
+    return rec
 
 def run_cube(task):
     """task = cube_id (str). Returns the journal record (dict)."""
@@ -571,9 +602,9 @@ def run_cube(task):
         if ratl:
             rec["drattrim_rat"] = ratl[0]
         if killed2:
-            rec["status"] = "check_timeout"
             rec["check_stage"] = "drat-trim"
             rec["drattrim_tail"] = out2[-2000:] + err2[-1000:]
+            _split_or_hold(rec, prefix, closed, cfg, "check_timeout_drattrim")
             cleanup(keep=cfg["keep_failures"])
             return rec
         if not rec["drattrim_verified"]:
@@ -582,6 +613,14 @@ def run_cube(task):
             cleanup(keep=cfg["keep_failures"])
             return rec
     # (cadical: the LRAT was written natively by the solver; no drat-trim)
+    rec["lrat_bytes"] = os.path.getsize(lrat) if os.path.exists(lrat) else 0
+    lim = cfg.get("lrat_split_bytes")
+    if lim and rec["lrat_bytes"] > lim and not closed:
+        # cake_lpr cost is superlinear in proof size: split instead of checking
+        _split_or_hold(rec, prefix, closed, cfg, "lrat_too_large")
+        rec["check_stage"] = "cake_lpr(skipped)"
+        cleanup()
+        return rec
     rec["lrat_sha256"] = sha256_file(lrat)        # the LRAT cake_lpr consumes
     rc3, out3, err3, dt3, killed3 = _run([CAKE, cnf, lrat],
                                          timeout=cfg["check_timeout"])
@@ -591,9 +630,9 @@ def run_cube(task):
     rec["cake_out"] = out3.strip()[-200:]
     rec["cake_verified"] = ("s VERIFIED UNSAT" in out3) and not killed3
     if killed3:
-        rec["status"] = "check_timeout"
         rec["check_stage"] = "cake_lpr"
         rec["cake_tail"] = out3[-2000:] + err3[-1000:]
+        _split_or_hold(rec, prefix, closed, cfg, "check_timeout_cake")
         cleanup(keep=cfg["keep_failures"])
     elif rec["cake_verified"]:
         rec["status"] = "verified"
@@ -832,6 +871,8 @@ def main():
                          "LRAT via --lrat --binary=false, no drat-trim); default kissat")
     ap.add_argument("--time", type=int, default=600,
                     help="solver time limit per cube (s): kissat --time / cadical -t")
+    ap.add_argument("--lrat-split-mb", type=int, default=1500,
+                    help="open cubes whose LRAT exceeds this size are split instead of checked (0 = off)")
     ap.add_argument("--check-timeout", type=int, default=7200,
                     help="subprocess timeout for drat-trim / cake_lpr (s)")
     ap.add_argument("--depth", type=int, default=2, help="root cube depth")
@@ -947,6 +988,7 @@ def main():
         sys.exit(f"--solver cadical: {os.path.abspath(CADICAL)} not found/executable "
                  "(build cadical-src: ./configure && make)")
     cfg = {"time": args.time, "check_timeout": args.check_timeout,
+           "lrat_split_bytes": args.lrat_split_mb * 1000000,
            "keep_dir": args.keep_dir, "keep_failures": args.keep_failures,
            "max_depth": args.max_depth,
            "solver": args.solver, "solver_version": solver_version(args.solver)}
@@ -1046,7 +1088,7 @@ def main():
                              + (f"dt={rec['drattrim_s']}s " if "drattrim_s" in rec else "")
                              + f"cake={rec['cake_s']}s cnf_sha={rec['cnf_sha256'][:12]}")
                 elif st == "split":
-                    extra = f"timeout after {rec['solve_s']}s -> {rec['n_children']} children"
+                    extra = f"{rec.get('reason','timeout')} after {rec.get('solve_s')}s -> {rec['n_children']} children"
                     if not args.no_split and rec["depth"] < args.max_depth:
                         p, c = parse_cube_id(cid)
                         kids = [cube_id(cp, cc) for cp, cc in split_children(p, c)]
