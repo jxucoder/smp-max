@@ -222,6 +222,35 @@ kissat proof logging so every cube's refutation is independently
 checkable. The driver builds the base once in memory and writes only
 the current cube's file per worker.
 
+**Progress 2026-09-02 (workflow-driven):**
+- `SchedCNF6.lean` + `ExportSchedCnf.lean`: the schedule CNF transcribed
+  into Lean in Python allocation order; `export_sched_cnf` prints DIMACS
+  **byte-identical** to `sched_sat.py` (full n=6,k=49 formula sha256
+  `28421fb6…`, 84,882 vars / 2,709,212 clauses; the (0,1);(2,3) cube; and
+  the n=5,k=17 pilot) — verified independently by the orchestrator and a
+  critic. The campaign therefore has a single source of truth for the
+  formula, as in f(5).
+- `cube_campaign.py` (+ `CAMPAIGN.md`): production driver — rule-(a)-only
+  canonical cubes (25,339 at depth 2, identical to the (a)+(b)-lex set
+  since rule (b) is vacuous at depth 2; plus 154 short cubes = 25,493
+  roots), per-cube kissat→drat-trim→cake_lpr with streamed deletion,
+  append-only resumable journal, adaptive depth-3/4 splitting, loud SAT
+  handling with decode+recount. Dry run (25 cubes, 8 workers, kissat
+  --time 90): 24 `s VERIFIED UNSAT`, 1 timeout (the known-hard (0,1);(2,3)
+  cube → 168 depth-3 children), median solve 3.1 s. **Finding: drat-trim,
+  not kissat, dominates per-cube cost** (backward check against the
+  2.7M-clause base: median 112 s vs 3.1 s solve) → depth-2 layer ≈ 900
+  core-hours ≈ 3 days on 12 workers, plus split trees. A CaDiCaL build with
+  native `--lrat` would remove drat-trim and cut this ~5×; add a `--solver`
+  switch before launching at scale.
+- `FAITHFULNESS_PLAN.md`: lemma-by-lemma plan for
+  `campaign_faithful : WF6 I → 49 ≤ sc I → ∃ c ∈ canonicalCubes, Satisfiable (cubeCNF 49 c)`
+  (~78 lemmas / ~3,700 lines), built on SchedCNF6's exact layout; the one
+  genuinely new mathematical piece is canonical-cube coverage via a
+  schedule-level common relabel σ (trajectory equivariance + bridge applied
+  to `relabel6 σ I`, never assuming `readoffS` commutes with relabel) and a
+  proven frame bound `S.length ≤ 15`.
+
 **Lean critical path** (unchanged in kind, now concrete):
 1. Lemma sym in Lean — instance level DONE (2026-09-01, `Sym6.lean`,
    364 lines: `relabel6`/`mapMu6`, WF6 + stability + count invariance,

@@ -20,3 +20,7 @@ name = "SmpF5"
 [[lean_exe]]
 name = "export_cnf"
 root = "ExportCnf"
+
+[[lean_exe]]
+name = "export_sched_cnf"
+root = "ExportSchedCnf"
