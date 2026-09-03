@@ -127,6 +127,7 @@ Usage
   python3 cube_campaign.py --summary --journal campaign.jsonl
 """
 import argparse
+import tempfile
 import signal
 import collections
 import fcntl
@@ -384,29 +385,53 @@ def _worker_init(scratch_root, cfg):
 
 def _run(cmd, timeout):
     """(rc, stdout, stderr, seconds, killed); rc is None iff killed.
-    The child runs in its own process group; on timeout the whole group is
-    SIGKILLed and reaped (subprocess.run's own timeout was observed to leave
-    multi-GB cake_lpr checks running for hours)."""
+    No pipes and no communicate(timeout): stdout/stderr go to temp files,
+    the child runs in its own process group, and we poll with a wall-clock
+    deadline, SIGKILLing the whole group on expiry (both subprocess.run's
+    timeout and communicate(timeout) were observed to leave multi-GB
+    cake_lpr checks running for hours on this machine)."""
     t0 = time.time()
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            text=True, start_new_session=True)
-    try:
-        out, err = proc.communicate(timeout=timeout)
-        return proc.returncode, out or "", err or "", time.time() - t0, False
-    except subprocess.TimeoutExpired:
+    fo = tempfile.TemporaryFile(mode="w+")
+    fe = tempfile.TemporaryFile(mode="w+")
+    proc = subprocess.Popen(cmd, stdout=fo, stderr=fe, stdin=subprocess.DEVNULL,
+                            start_new_session=True)
+    killed = False
+    deadline = t0 + timeout
+    while True:
+        rc = proc.poll()
+        if rc is not None:
+            break
+        if time.time() > deadline:
+            killed = True
+            for sig in (signal.SIGKILL,):
+                try:
+                    os.killpg(proc.pid, sig)
+                except Exception:
+                    pass
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+            try:
+                proc.wait(timeout=60)
+            except Exception:
+                pass
+            rc = None
+            break
+        time.sleep(0.5)
+    def _read(f):
         try:
-            os.killpg(proc.pid, signal.SIGKILL)
+            f.seek(0)
+            return f.read()
         except Exception:
-            pass
-        try:
-            proc.kill()
-        except Exception:
-            pass
-        try:
-            out, err = proc.communicate(timeout=60)
-        except Exception:
-            out, err = "", ""
-        return None, out or "", err or "", time.time() - t0, True
+            return ""
+        finally:
+            try:
+                f.close()
+            except Exception:
+                pass
+    out, err = _read(fo), _read(fe)
+    return (None if killed else rc), out, err, time.time() - t0, killed
 
 
 def readoff_ranks(n, sched):
