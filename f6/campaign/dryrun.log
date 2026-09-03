@@ -1,0 +1,32 @@
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 25 cubes (0 already journaled)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, built in 1.8s
+[1/25    43.4s] 0,5,4,2,1,3;0,2,5,1,3,4: verified solve=1.76s drat=30.9MB lrat=147.6MB dt=37.06s cake=4.49s
+[2/25    76.7s] 0,2,5,3,1,4;0,1,2,5,4: verified solve=1.94s drat=31.3MB lrat=135.8MB dt=70.12s cake=4.51s
+[3/25    81.9s] 0,2,4,5,1,3;0,2,5,1,3: verified solve=1.98s drat=32.1MB lrat=145.5MB dt=74.37s cake=5.29s
+[4/25    83.9s] 0,2,5,4,3,1;1,5,4,2,3: verified solve=2.18s drat=32.4MB lrat=156.6MB dt=76.36s cake=5.15s
+[5/25   113.3s] 0,1,4,3,2,5;0,4,5,1,3: verified solve=2.14s drat=32.0MB lrat=208.7MB dt=105.66s cake=5.49s
+[6/25   129.9s] 0,2,3,5,1,4;0,5,1,4,2,3: verified solve=1.91s drat=31.0MB lrat=165.7MB dt=41.0s cake=4.73s
+[7/25   137.3s] 0,1,5,4,3,2;1,4,2,5,3: verified solve=2.37s drat=32.2MB lrat=154.4MB dt=86.54s cake=4.66s
+[8/25   153.8s] 0,3,5,1,2,4;0,5,2,4: verified solve=3.11s drat=34.9MB lrat=191.9MB dt=145.09s cake=5.44s
+[9/25   176.5s] 0,3,4,5,1,2;0,5,3,2,4,1: verified solve=1.91s drat=31.0MB lrat=155.6MB dt=39.37s cake=5.03s
+[10/25   229.3s] 0,3,2,5,4,1;0,5,1,2: verified solve=4.2s drat=46.8MB lrat=181.0MB dt=142.53s cake=5.43s
+[11/25   246.6s] 0,1,3,2,4,5;1,4,3,2: verified solve=3.24s drat=34.4MB lrat=157.3MB dt=123.9s cake=5.86s
+[12/25   250.1s] 0,3,4,1,5,2;1,5,2: verified solve=8.97s drat=98.8MB lrat=328.2MB dt=231.45s cake=9.56s
+[13/25   294.6s] 0,3,2,4,1;0,4,3,5,1: verified solve=3.73s drat=36.4MB lrat=183.8MB dt=148.07s cake=5.25s
+[14/25   306.6s] 0,1,5,2,4,3;0,5,4,3: verified solve=3.23s drat=36.0MB lrat=240.8MB dt=143.2s cake=6.08s
+[15/25   321.0s] 0,2,1,4,3;0,2,5,1,4,3: verified solve=2.04s drat=31.3MB lrat=137.6MB dt=67.66s cake=4.35s
+[16/25   339.6s] 0,3,2,4,1;1,2,4,3,5: verified solve=3.75s drat=36.1MB lrat=185.0MB dt=153.66s cake=5.3s
+[17/25   346.5s] 0,1,4,2,3,5;0,3,4,5,1,2: verified solve=1.9s drat=30.7MB lrat=198.1MB dt=44.48s cake=5.17s
+[18/25   355.0s] 0,5,4,2,1,3;2,3,5,4: verified solve=3.13s drat=36.3MB lrat=147.1MB dt=117.77s cake=4.47s
+[19/25   364.0s] 0,4,2,3,5,1;0,4,3: verified solve=10.48s drat=77.2MB lrat=345.6MB dt=260.31s cake=8.93s
+[20/25   379.9s] 0,4,3,1,2,5;0,3,2,4,1,5: verified solve=1.82s drat=31.0MB lrat=166.0MB dt=33.75s cake=4.44s
+[21/25   383.6s] 0,3,5,4,1,2;0,4,3,5,2: verified solve=2.08s drat=31.7MB lrat=147.1MB dt=70.21s cake=4.35s
+[22/25   405.9s] 0,3,1,2;2,5,4,3: verified solve=32.82s drat=211.4MB lrat=930.8MB dt=350.34s cake=22.66s
+[23/25   413.0s] 0,4,3,5,1,2;0,5,1,3: verified solve=3.64s drat=36.2MB lrat=185.7MB dt=153.87s cake=4.94s
+[24/25   436.9s] 0,1;2,3: split timeout after 90.03s -> 168 children
+[25/25   660.4s] 0,5,2,4,1,3;4,5: verified solve=37.86s drat=250.3MB lrat=1104.2MB dt=278.84s cake=22.36s
+done: 25 cubes in 660.6s wall
+== dryrun.jsonl: 25 cubes  {'verified': 24, 'split': 1}
+   solve_s: median=3.1 max=90.0 mean=9.3 sum=232.2
+   verified 24: DRAT median=33.4MB max=250.3MB  LRAT median=173.5MB max=1104.2MB  drat-trim median=111.7s max=350.3s  cake_lpr median=5.2s max=22.7s
