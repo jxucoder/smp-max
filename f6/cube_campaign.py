@@ -383,39 +383,50 @@ def _worker_init(scratch_root, cfg):
     _G["cfg"] = cfg
 
 
-def _run(cmd, timeout):
-    """(rc, stdout, stderr, seconds, killed); rc is None iff killed.
+def _run(cmd, timeout, watch_file=None, max_bytes=None):
+    """(rc, stdout, stderr, seconds, killed[, reason]); rc is None iff killed.
     No pipes and no communicate(timeout): stdout/stderr go to temp files,
     the child runs in its own process group, and we poll with a wall-clock
-    deadline, SIGKILLing the whole group on expiry (both subprocess.run's
-    timeout and communicate(timeout) were observed to leave multi-GB
-    cake_lpr checks running for hours on this machine)."""
+    deadline. Optional watchdog: if watch_file grows past max_bytes the
+    child is terminated (the cube would be split anyway). Termination is
+    SIGTERM (cadical/cake_lpr exit promptly) followed by SIGKILL of the
+    whole group after 5 s. Both subprocess.run's and communicate's
+    timeouts were observed to leave multi-GB checks running for hours."""
     t0 = time.time()
     fo = tempfile.TemporaryFile(mode="w+")
     fe = tempfile.TemporaryFile(mode="w+")
     proc = subprocess.Popen(cmd, stdout=fo, stderr=fe, stdin=subprocess.DEVNULL,
                             start_new_session=True)
     killed = False
+    why = None
     deadline = t0 + timeout
     while True:
         rc = proc.poll()
         if rc is not None:
             break
-        if time.time() > deadline:
-            killed = True
-            for sig in (signal.SIGKILL,):
+        now = time.time()
+        if now > deadline:
+            killed, why = True, "timeout"
+        elif watch_file and max_bytes:
+            try:
+                if os.path.getsize(watch_file) > max_bytes:
+                    killed, why = True, "size"
+            except OSError:
+                pass
+        if killed:
+            for sig, grace in ((signal.SIGTERM, 5.0), (signal.SIGKILL, 60.0)):
                 try:
                     os.killpg(proc.pid, sig)
                 except Exception:
-                    pass
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
-            try:
-                proc.wait(timeout=60)
-            except Exception:
-                pass
+                    try:
+                        proc.send_signal(sig)
+                    except Exception:
+                        pass
+                t1 = time.time()
+                while proc.poll() is None and time.time() - t1 < grace:
+                    time.sleep(0.05)
+                if proc.poll() is not None:
+                    break
             rc = None
             break
         time.sleep(0.5)
@@ -431,6 +442,7 @@ def _run(cmd, timeout):
             except Exception:
                 pass
     out, err = _read(fo), _read(fe)
+    _run.last_reason = why
     return (None if killed else rc), out, err, time.time() - t0, killed
 
 
@@ -565,7 +577,11 @@ def run_cube(task):
         argv = [solver_path("cadical"), "-q", "-t", str(cfg["time"]),
                 "--lrat", "--binary=false", cnf, lrat]
     rec["solver_argv"] = argv
-    rc, out, err, dt, killed = _run(argv, timeout=cfg["time"] + 120)
+    lim = cfg.get("lrat_split_bytes")
+    rc, out, err, dt, killed = _run(argv, timeout=cfg["time"] + 120,
+                                    watch_file=(lrat if (solver == "cadical" and lim and not closed) else None),
+                                    max_bytes=lim)
+    rec["kill_reason"] = getattr(_run, "last_reason", None)
     rec["solve_s"] = round(dt, 2)
     rec["solver_rc"] = rc
     rec["solver_killed"] = killed
@@ -611,7 +627,8 @@ def run_cube(task):
         # EXCEPT a wrapper-killed solver on an OPEN cube: the solver blew
         # through its own -t while streaming a huge proof -> split instead
         if killed and not closed:
-            _split_or_hold(rec, prefix, closed, cfg, "solver_killed")
+            _split_or_hold(rec, prefix, closed, cfg,
+                           "lrat_growth" if rec.get("kill_reason") == "size" else "solver_killed")
             cleanup(keep=cfg["keep_failures"])
             return rec
         rec["status"] = "error"
