@@ -344,3 +344,45 @@ and every record here is terminal and independently checkable).  Parallel
 drivers will re-derive the same split children and may duplicate some
 work; nothing is invalidated.  The `flock` guard is per-filesystem, so it
 does not prevent this - only one driver per journal *file*.
+
+## Depth-3 pricing probe (2026-09-05, `campaign/depth3_probe.jsonl`)
+
+The depth-2 layer splits at 4.7%, and each split replaces one cube with
+~110 children, so the campaign's total size is set by the split rate one
+level down - which had never been measured: at the depth-2 rate the tree
+grows to ~460k nodes with a depth-4 layer `--max-depth` forbids from
+splitting; if depth-3 cubes simply close, it is ~145k.
+
+150 cubes drawn uniformly (seed 20260905) from the 70,282 children of the
+631 journaled split parents, campaign knobs (`--time 300`, 1.5 GB LRAT
+watchdog), `--max-depth 3` so a cube that would split is journaled
+`timeout_maxdepth` instead of enqueuing children.  Linux/x86-64
+container, 3 workers, 633 s wall:
+
+| metric | depth-3 probe | depth-2 layer (for comparison) |
+|---|---|---|
+| verified | **150 / 150** | 12,727 |
+| **split** | **0** (95% CI upper bound 2.0%, rule of three) | 4.7% |
+| solve | median 1.5 s, mean 2.7 s, max 18.5 s | median 2.7 s, mean 14.8 s |
+| cake_lpr | median 8.5 s, mean 9.4 s, max 20.5 s | median 4.9 s, mean 20.5 s |
+| solve+cake | median 10.0 s, **mean 12.2 s** | mean 35.3 s |
+| LRAT | median 36.6 MB, max 338 MB | median 107 MB, max 9.8 GB |
+
+Every record carries `cadical_rc 20`, `cake_verified`, `cnf_sha256` and
+`lrat_sha256`; no killed flags.  (Two of the 150 are the depth-2 `stop`
+children of split parents, which is what a uniform draw over the child
+population gives.)
+
+**Fixing one step more makes a cube roughly three times cheaper and, on
+this evidence, closes it.**  Restricting the schedule prefix cuts the
+proof rather than merely displacing it: LRAT drops 3x and cake_lpr - not
+the solver - becomes the dominant term (77% of per-cube cost at depth 3).
+
+Projection with these numbers: 12,107 roots left, plus ~133,600 depth-3
+cubes (the 70,282 children already enqueued, plus ~571 further splits
+among the remaining roots at the observed 4.7%), so **~146k cubes and
+~584 core-hours** on this container's cores - 8 days at 3 workers, about
+a day across eight such containers, and a depth-4 layer that on present
+evidence may not exist at all.  The earlier ~460k-node worry is
+unsupported: it assumed the depth-2 split rate recurred at depth 3, and
+0/150 rules that rate out at better than 95% confidence.
