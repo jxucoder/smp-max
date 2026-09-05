@@ -107,6 +107,21 @@ carries verdict COUNTEREXAMPLE only if exactly K matchings were selected,
 each is stable in the recounted read-off and the recount is >= K,
 otherwise verdict ENCODING_BUG (reported loudly either way).
 
+Sharding
+--------
+`--shard I/N` restricts a run to the root cubes whose sha256(id) mod N
+== I (0 <= I < N).  The partition is by ROOT: a root's whole adaptive
+split subtree is run by the shard that owns the root, because children
+are enqueued in-process by the driver that journals the split and, on
+resume, are re-derived only from that journal's own split records.  So
+N drivers on N journals (each started from the same snapshot, so they
+skip the same finished cubes) never run the same root twice, and the
+union of their journals is a complete campaign journal:
+merge_journals.py concatenates them (one header, records deduplicated,
+last record per cube wins) for a single `--audit`.  Every record carries
+its `shard`.  `--shard` cannot be combined with --cubes / --sample /
+--dryrun, which name their cubes explicitly.
+
 Single driver
 -------------
 One driver per journal: the driver takes an exclusive, non-blocking
@@ -121,6 +136,8 @@ Usage
   python3 cube_campaign.py --dryrun --workers 8 --time 90 --journal dryrun.jsonl
   python3 cube_campaign.py --workers 8 --time 600 --journal campaign.jsonl
   python3 cube_campaign.py --solver cadical --workers 12 --time 600 --journal campaign.jsonl
+  python3 cube_campaign.py --solver cadical --shard 3/8 --journal campaign/shards/shard_3_of_8.jsonl
+  python3 merge_journals.py -o campaign/merged.jsonl campaign/shards/*.jsonl.gz && python3 cube_campaign.py --audit --journal campaign/merged.jsonl
   python3 cube_campaign.py --retry-status check_timeout,drattrim_fail --check-timeout 14400 ...
   python3 cube_campaign.py --cubes "0,1;2,3" --force --journal campaign.jsonl
   python3 cube_campaign.py --audit [--expect-cnf-dir DIR] --journal campaign.jsonl
@@ -136,6 +153,7 @@ import json
 import multiprocessing as mp
 import os
 import random
+import re
 import shutil
 import statistics
 import subprocess
@@ -300,6 +318,24 @@ def sha256_bytes(*parts):
     for p in parts:
         h.update(p)
     return h.hexdigest()
+
+
+def parse_shard(spec):
+    """'I/N' -> (I, N) with 0 <= I < N, or None."""
+    if not spec:
+        return None
+    m = re.fullmatch(r"(\d+)/(\d+)", spec.strip())
+    if not m:
+        sys.exit(f"--shard: expected I/N, got {spec!r}")
+    i, n = int(m.group(1)), int(m.group(2))
+    if n < 1 or i >= n:
+        sys.exit(f"--shard: need 0 <= I < N, got {i}/{n}")
+    return i, n
+
+
+def shard_of(cid, n):
+    """Stable across machines and Python processes (hash() is salted)."""
+    return int(hashlib.sha256(cid.encode()).hexdigest(), 16) % n
 
 
 def is_sha256(s):
@@ -560,7 +596,7 @@ def run_cube(task):
            "time_limit": cfg["time"], "check_timeout": cfg["check_timeout"],
            "base_sha256": _G["base_sha256"],
            "solver": solver, "solver_path": solver_path(solver),
-           "solver_version": cfg.get("solver_version")}
+           "solver_version": cfg.get("solver_version"), "shard": cfg.get("shard")}
     units = cube_units(_G["hooks"], prefix, closed)
     rec["n_units"] = len(units)
     rec["units"] = units
@@ -950,7 +986,15 @@ def main():
     ap.add_argument("--summary", action="store_true")
     ap.add_argument("--shuffle", action="store_true",
                     help="randomize the root order (better load balance)")
+    ap.add_argument("--shard", default=None,
+                    help="I/N: run only the roots with sha256(id) mod N == I, each with "
+                         "its whole split subtree; one journal per shard, merged with "
+                         "merge_journals.py (see Sharding)")
     args = ap.parse_args()
+    shard = parse_shard(args.shard)
+    if shard and (args.cubes or args.sample or args.dryrun):
+        sys.exit("--shard partitions the root set; it cannot be combined with "
+                 "--cubes / --sample / --dryrun")
     if args.force and not args.cubes:
         sys.exit("--force only applies to explicit --cubes")
     retry = parse_retry(args.retry_status)
@@ -999,6 +1043,11 @@ def main():
         todo = [cube_id(p, c) for p, c in rng.sample(roots, args.sample)]
     else:
         todo = [cube_id(p, c) for p, c in roots]
+        if shard:
+            i, n = shard
+            todo = [cid for cid in todo if shard_of(cid, n) == i]
+            print(f"shard {i}/{n}: {len(todo)} of {len(roots)} roots "
+                  f"(partition by root; split subtrees follow their root)", flush=True)
         if args.shuffle:
             random.Random(args.seed).shuffle(todo)
     # resume: re-derive children of journaled splits, skip finished cubes
@@ -1038,7 +1087,7 @@ def main():
     cfg = {"time": args.time, "check_timeout": args.check_timeout,
            "lrat_split_bytes": args.lrat_split_mb * 1000000,
            "keep_dir": args.keep_dir, "keep_failures": args.keep_failures,
-           "max_depth": args.max_depth,
+           "max_depth": args.max_depth, "shard": args.shard,
            "solver": args.solver, "solver_version": solver_version(args.solver)}
     print(f"solver: {args.solver} {solver_path(args.solver)} "
           f"({cfg['solver_version']})", flush=True)
