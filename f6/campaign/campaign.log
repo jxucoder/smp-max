@@ -14207,3 +14207,27 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [669/88539  7320.8s] 0,1,3,4,2,5;0,2,5,4: verified [cadical] solve=9.01s lrat=115.8MB cake=10.51s cnf_sha=9de9b06e3be1
 [670/88539  7337.4s] 0,4,3,2,1;0,3,5,4,1: verified [cadical] solve=12.51s lrat=200.2MB cake=13.01s cnf_sha=ee48dcd52f5a
 [671/88539  7350.0s] 0,3,4,2,1;0,2,1,3,5,4: verified [cadical] solve=3.01s lrat=70.0MB cake=9.0s cnf_sha=842ec1c8e3f7
+=== RESUME (supervisor) Sat Sep  5 18:39:56 UTC 2026 ===
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+shard 0/8: 3296 of 25493 roots (partition by root; split subtrees follow their root)
+to run: 11706 cubes (14097 already journaled; skipped {'verified': 1740}; retry=['cake_fail', 'check_timeout', 'error'])
+solver: cadical /home/user/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 3.6s
+[1/11706     9.8s] 0,1,5,3,2,4;0,2,1,5,4,3: verified [cadical] solve=1.5s lrat=36.6MB cake=8.0s cnf_sha=525b4f299ed9
+[2/11706    13.2s] 0,3,1,2,4;0,2,3,1,4,5: verified [cadical] solve=3.01s lrat=66.0MB cake=10.01s cnf_sha=b9dfbd6bf881
+[3/11706    26.9s] 0,5,2,1,4,3;1,3,5,2: verified [cadical] solve=6.5s lrat=126.7MB cake=10.01s cnf_sha=78e2f89912f6
+[4/11706    31.3s] 0,3,2,5,1,4;0,5,4,3,2: verified [cadical] solve=6.0s lrat=108.2MB cake=11.51s cnf_sha=9e7076e11ca8
+[5/11706    46.8s] 0,3,1,2;1,5,2,3,4: verified [cadical] solve=23.52s lrat=372.8MB cake=22.52s cnf_sha=12a9533b6b9c
+[6/11706    48.0s] 0,2,1,3,4;1,5,3,4,2: verified [cadical] solve=8.01s lrat=154.8MB cake=12.51s cnf_sha=621e5c0ce7a4
+[7/11706    58.5s] 0,3,1,4,2;1,4,5,3,2: verified [cadical] solve=10.51s lrat=176.0MB cake=16.01s cnf_sha=250dc6593a9e
+[8/11706    60.5s] 0,4,3,1,5,2;0,5,3,1,2: verified [cadical] solve=3.5s lrat=76.3MB cake=8.51s cnf_sha=3e194201315f
+[9/11706    73.6s] 0,4,1,2,3,5;0,1,2,4,3: verified [cadical] solve=3.5s lrat=71.1MB cake=9.0s cnf_sha=051e5785cd63
+[10/11706    89.3s] 0,3,2,1;0,4,3,1,5: verified [cadical] solve=22.51s lrat=356.3MB cake=19.01s cnf_sha=0f145cc6090a
+[11/11706    98.6s] 0,1,4,2,5,3;0,4,5,1,3,2: verified [cadical] solve=2.0s lrat=41.8MB cake=6.5s cnf_sha=429adc02ccef
+[12/11706   123.0s] 0,5,4,3,2,1;3,5,4: verified [cadical] solve=25.01s lrat=427.0MB cake=23.53s cnf_sha=3542c1d09152
+[13/11706   132.6s] 0,2,3,1,4;0,3,4,2,5: verified [cadical] solve=12.51s lrat=210.1MB cake=20.51s cnf_sha=3ea1c6c743ea
+[14/11706   134.4s] 0,1,2,4,5,3;0,1,3,2,5: verified [cadical] solve=3.0s lrat=80.6MB cake=8.01s cnf_sha=abbcb5a7f704
+[15/11706   145.0s] 0,4,3,1,2,5;1,5,4,2,3: verified [cadical] solve=3.0s lrat=70.9MB cake=9.01s cnf_sha=08b7034f4de3
+[16/11706   155.4s] 0,3,4,2,1;1,4,2,3,5: verified [cadical] solve=9.01s lrat=144.3MB cake=11.51s cnf_sha=85872f077809
+[17/11706   161.6s] 0,2,1,4,3,5;0,2,5,1,4: verified [cadical] solve=3.01s lrat=74.8MB cake=13.01s cnf_sha=12026f1f097d
+[18/11706   166.4s] 0,3,1,4,2,5;0,2,5,3,1,4: verified [cadical] solve=1.5s lrat=43.3MB cake=9.0s cnf_sha=6a77684b20f8
