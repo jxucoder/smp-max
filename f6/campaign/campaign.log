@@ -13445,3 +13445,10 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [2600/84572  5468.0s] 0,4,3,5,2,1;0,2,4,1,5: verified [cadical] solve=1.0s lrat=56.6MB cake=2.51s cnf_sha=388be4fb8d60
 [2601/84678  5468.6s] 0,1,3,4,2;1,3,5: split lrat_growth after 41.66s -> 106 children (enqueued 106)
 [2602/84678  5470.4s] 0,2,1,4,3;1,4,3: verified [cadical] solve=37.58s lrat=1271.1MB cake=31.06s cnf_sha=183ac95efa3f
+=== RESUME (remote container, 3 workers) Sat Sep  5 15:30:52 UTC 2026 ===
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 82076 cubes (13355 already journaled; skipped {'verified': 12727}; retry=['error'])
+solver: cadical /home/user/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 4.1s
+[1/82187    83.3s] 0,1,3,4,5,2;2,3: split lrat_growth after 82.6s -> 111 children (enqueued 111)
+[2/82309    88.8s] 0,4,3,2,1;1,4,5: split lrat_growth after 88.11s -> 122 children (enqueued 122)

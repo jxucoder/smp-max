@@ -307,3 +307,40 @@ Full campaign with cadical:
     nohup python3 cube_campaign.py --solver cadical --workers 12 --time 600 \
         --max-depth 4 --shuffle --journal campaign/campaign.jsonl \
         --scratch campaign/scratch > campaign/campaign.log 2>&1 &
+
+## Toolchain reproduction on Linux/x86-64 (2026-09-05)
+
+The campaign was built and driven on an Apple M4 Max.  Rebuilt from
+source in a clean Linux/x86-64 container (Ubuntu 24.04, gcc 13.3, 4
+cores) to check that nothing in the chain is machine-specific:
+
+- `cadical-src` at the pinned commit `c60730422e758ef1cebe7aeddf2dda31c996bf04`
+  (`./configure && make`) reports `Version 3.0.1 c6073042…`, i.e. the exact
+  `solver_version` string in the journal header;
+- `cake_lpr-src` built with the repo's default x64 target
+  (`gcc -O2 basis_ffi.c cake_lpr.S`); `cake_lpr example.cnf example.lpr`
+  gives `s VERIFIED UNSAT`.  Note that upstream's own `cake_lpr.sha256` is
+  stale for `basis_ffi.c` (commit `a36874a`, 2026-07-22, replaced the
+  heap/stack environment variables with `--CML_HEAP_SIZE=` /
+  `--CML_STACK_SIZE=` flags without refreshing the checksum file); the
+  CakeML-generated `cake_lpr.S` still matches its published hash
+  `2f3af32d…`, and the FFI shim is outside the trust base in any case;
+- the base formula rebuilds to sha256 `28421fb6…` (84,882 vars /
+  2,709,212 clauses), matching the journal header, so `--audit` passes its
+  header checks off the original machine;
+- two cubes already `verified` on the M4 Max, re-run here with `--force`
+  into a throwaway journal, reproduced their journaled `cnf_sha256`
+  byte for byte (`0,5,4,3,2,1;0,3,5,1,4,2` -> `e1efd2e120f6`,
+  `0,2,5,1,3,4;0,1,2,4,5` -> `cc0edf551f57`), with identical LRAT sizes
+  (39.1 MB / 55.8 MB) and `s VERIFIED UNSAT` both times.
+
+Relative speed on this container: solve ~1.6x slower than the M4 Max,
+cake_lpr ~2.2x slower (22.5 s vs 10.3 s on the same cube).
+
+**Journal forking.**  A resume in a second location starts from the same
+committed snapshot, so the two journals are additive, not conflicting:
+merging is a concatenation (the loader keeps the last record per cube,
+and every record here is terminal and independently checkable).  Parallel
+drivers will re-derive the same split children and may duplicate some
+work; nothing is invalidated.  The `flock` guard is per-filesystem, so it
+does not prevent this - only one driver per journal *file*.
