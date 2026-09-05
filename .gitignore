@@ -24,3 +24,4 @@ cadical-src/
 f6/campaign/scratch*/
 f6/campaign/*.lock
 f6/campaign/expect*/
+f6/campaign/campaign.jsonl
