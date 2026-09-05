@@ -15496,3 +15496,109 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [1211/23845 14381.8s] 0,2,5,1,3,4;0,3,5,4: verified [cadical] solve=12.51s lrat=185.1MB cake=22.51s cnf_sha=0b994135a9da
 [1212/23845 14383.8s] 0,2,5,3,4,1;0,4,5: verified [cadical] solve=58.53s lrat=1110.5MB cake=66.03s cnf_sha=250708678fd1
 [1213/23845 14395.8s] 0,2,4,3,5,1;1,2,4,3,5: verified [cadical] solve=3.0s lrat=71.3MB cake=10.5s cnf_sha=72c48d606db2
+[1214/23845 14402.8s] 0,1,5,3,4,2;0,3,4,2: verified [cadical] solve=7.51s lrat=106.5MB cake=11.01s cnf_sha=75a8a4d78f45
+[1215/23845 14414.3s] 0,1,3,4,2;0,1,2,3,4: verified [cadical] solve=7.51s lrat=130.8MB cake=10.0s cnf_sha=c0cd6d4e09e3
+[1216/23845 14421.9s] 0,1,5,4,2,3;0,1,5,3: verified [cadical] solve=8.5s lrat=115.1MB cake=10.01s cnf_sha=05682fb29096
+[1217/23845 14448.5s] 0,3,2,1,4,5;0,1,3,4: verified [cadical] solve=12.51s lrat=203.3MB cake=13.01s cnf_sha=d5f857940435
+[1218/23956 14463.7s] 0,2,1,4,3,5;1,5: split lrat_growth after 89.59s -> 111 children (enqueued 111)
+[1219/23956 14483.2s] 0,5,2,3,4,1;0,5,3,1: verified [cadical] solve=8.0s lrat=142.7MB cake=10.51s cnf_sha=ba36e5823d51
+[1220/23956 14499.5s] 0,2,4,3,1,5;0,2,3,1,5: verified [cadical] solve=2.5s lrat=59.0MB cake=13.01s cnf_sha=0b453f5cc2b3
+[1221/24072 14501.9s] 0,3,2,1;2,4,5,3: split lrat_growth after 87.11s -> 116 children (enqueued 116)
+[1222/24072 14506.9s] 0,2,4,1,3;0,1,2,4: verified [cadical] solve=29.51s lrat=465.0MB cake=28.01s cnf_sha=7df6e6cc56c9
+[1223/24072 14514.3s] 0,1,5,2,3,4;1,3,5,4,2: verified [cadical] solve=3.0s lrat=60.2MB cake=9.01s cnf_sha=f85eba9b7d01
+[1224/24072 14521.5s] 0,2,3,4,1,5;0,2,3,5: verified [cadical] solve=9.01s lrat=152.3MB cake=12.51s cnf_sha=71715a7c4073
+[1225/24072 14527.9s] 0,5,4,3,2,1;1,5,3,2: verified [cadical] solve=9.51s lrat=145.5MB cake=11.0s cnf_sha=322319ffa9f4
+[1226/24072 14575.6s] 0,4,1,2,3;0,1,3,5: verified [cadical] solve=31.02s lrat=531.4MB cake=29.01s cnf_sha=341e6c3ea2ed
+[1227/24072 14587.7s] 0,2,3,4,5,1;0,2,3,1,4: verified [cadical] solve=3.0s lrat=72.0MB cake=8.01s cnf_sha=f9fa9db57d53
+[1228/24072 14600.7s] 0,2,1,4,3,5;0,1,4,2,5: verified [cadical] solve=4.5s lrat=74.5MB cake=8.0s cnf_sha=525ff950c887
+[1229/24183 14615.6s] 0,1,4,3,5,2;0,3: split lrat_growth after 93.09s -> 111 children (enqueued 111)
+[1230/24183 14620.6s] 0,1,4,3,5,2;0,3,2,4: verified [cadical] solve=9.0s lrat=137.4MB cake=10.5s cnf_sha=aec958d8da00
+[1231/24288 14621.0s] 0,3,1,2;2,3: split lrat_growth after 92.61s -> 105 children (enqueued 105)
+[1232/24394 14703.4s] 0,3,4,1,2;1,2,5: split lrat_growth after 87.1s -> 106 children (enqueued 106)
+[1233/24516 14706.8s] 0,1,2;1,2,4,3: split lrat_growth after 85.09s -> 122 children (enqueued 122)
+[1234/24516 14727.4s] 0,4,2,1,3;0,2,3,5,4,1: verified [cadical] solve=4.0s lrat=86.0MB cake=16.01s cnf_sha=632786679860
+[1235/24516 14766.6s] 0,3,5,1,2,4;2,3,4,5: verified [cadical] solve=14.01s lrat=215.4MB cake=24.51s cnf_sha=740b81e17784
+[1236/24516 14767.8s] 0,5,4,2,1,3;1,3,4: verified [cadical] solve=30.51s lrat=494.4MB cake=33.02s cnf_sha=ff9fa54a36d5
+[1237/24516 14779.6s] 0,4,3,2,5,1;0,4,5,1,3,2: verified [cadical] solve=1.5s lrat=38.2MB cake=10.0s cnf_sha=a19eaac34efd
+[1238/24516 14782.4s] 0,3,2,1,4;2,4,3: verified [cadical] solve=80.53s lrat=1397.7MB cake=79.55s cnf_sha=4071d2c5dedf
+[1239/24516 14786.0s] 0,2,5,4,1,3;0,4,1,2,5: verified [cadical] solve=4.5s lrat=98.6MB cake=14.51s cnf_sha=a513a3e46a0d
+[1240/24516 14791.6s] 0,4,3,5,1,2;1,2,4,3,5: verified [cadical] solve=2.5s lrat=56.9MB cake=9.02s cnf_sha=69303adfb438
+[1241/24516 14798.7s] 0,5,2,3,4,1;0,2,1,5,3: verified [cadical] solve=5.0s lrat=89.0MB cake=10.5s cnf_sha=16cf683b4113
+[1242/24516 14799.5s] 0,4,2,3,5,1;0,5,2,1,3: verified [cadical] solve=3.0s lrat=68.9MB cake=10.01s cnf_sha=f65bd7117635
+[1243/24627 14890.1s] 0,5,1,4,2,3;2,5: split lrat_growth after 97.09s -> 111 children (enqueued 111)
+[1244/24738 14893.5s] 0,5,1,2,3,4;3,5: split lrat_growth after 93.59s -> 111 children (enqueued 111)
+[1245/24850 14893.7s] 0,3,1,2;0,4,1,5: split lrat_growth after 94.6s -> 112 children (enqueued 112)
+[1246/24850 14905.8s] 0,1,4,5,2,3;0,1,2,3,4: verified [cadical] solve=3.0s lrat=55.7MB cake=8.5s cnf_sha=56b9a1cc0a39
+[1247/24850 14928.3s] 0,3,4,1,2;1,3,2,5,4: verified [cadical] solve=10.01s lrat=163.7MB cake=11.5s cnf_sha=42ea3794bf55
+[1248/24850 14951.6s] 0,2,1;0,3,4,5,2,1: verified [cadical] solve=27.02s lrat=466.3MB cake=30.01s cnf_sha=17787959b050
+[1249/24850 14968.1s] 0,2,4,1,3;0,2,4,1: verified [cadical] solve=20.01s lrat=324.8MB cake=19.01s cnf_sha=9ee3132894bf
+[1250/24953 14975.4s] 0,3,1,2;0,4,5,1: split lrat_growth after 84.6s -> 103 children (enqueued 103)
+[1251/24953 14985.6s] 0,5,2,4,3,1;0,2,3,1: verified [cadical] solve=7.0s lrat=115.4MB cake=10.01s cnf_sha=66b223740126
+[1252/24953 14989.4s] 0,4,5,1,2,3;0,4,1,2,3: verified [cadical] solve=2.5s lrat=51.3MB cake=11.01s cnf_sha=35d7dc8228eb
+[1253/24953 15000.0s] 0,3,1,2,5,4;0,1,2,5,3,4: verified [cadical] solve=2.0s lrat=43.9MB cake=8.01s cnf_sha=70d11634d1a6
+[1254/24953 15009.8s] 0,1,4,3,5,2;0,1,3,2,4,5: verified [cadical] solve=2.0s lrat=41.9MB cake=7.0s cnf_sha=1a9012f0ec2d
+[1255/25050 15041.9s] 0,2,1,5,4,3;3,5: split lrat_growth after 89.59s -> 97 children (enqueued 97)
+[1256/25050 15043.7s] 0,3,1,4,2;0,4,2,1: verified [cadical] solve=29.51s lrat=535.2MB cake=27.51s cnf_sha=a795f2fc667a
+[1257/25050 15055.1s] 0,1,4,2,3;0,2,5,1,3,4: verified [cadical] solve=4.0s lrat=76.5MB cake=8.51s cnf_sha=c23d43302d20
+[1258/25050 15060.7s] 0,3,1,5,4,2;0,4,3,1,5: verified [cadical] solve=4.5s lrat=101.0MB cake=12.01s cnf_sha=c15c25145c4f
+[1259/25050 15066.6s] 0,5,1,2,4,3;0,1,4,5,3: verified [cadical] solve=3.0s lrat=61.3MB cake=8.0s cnf_sha=71d757223727
+[1260/25050 15070.7s] 0,1,2,3,4,5;0,4,1,2,5,3: verified [cadical] solve=1.5s lrat=38.9MB cake=8.0s cnf_sha=ad18aa9ff14c
+[1261/25050 15078.6s] 0,4,3,5,2,1;1,5,2,4,3: verified [cadical] solve=3.0s lrat=61.6MB cake=8.51s cnf_sha=23ef7269e4f4
+[1262/25050 15084.1s] 0,4,2,3,5,1;0,4,3,5,2: verified [cadical] solve=3.0s lrat=71.8MB cake=10.01s cnf_sha=f83db8e1c264
+[1263/25050 15097.2s] 0,4,2,5,1,3;0,4,2,5,3: verified [cadical] solve=2.5s lrat=60.4MB cake=10.0s cnf_sha=8946f1dc28c2
+[1264/25166 15098.6s] 0,1,2,3;2,3,5,4: split lrat_growth after 88.11s -> 116 children (enqueued 116)
+[1265/25166 15105.8s] 0,2,1,4,3;0,5,3,2,1: verified [cadical] solve=9.51s lrat=157.4MB cake=17.01s cnf_sha=6efd3ab2c88c
+[1266/25166 15110.6s] 0,5,2,1,4,3;1,5,2,4,3: verified [cadical] solve=3.01s lrat=66.9MB cake=8.5s cnf_sha=4ef4b56a76dc
+[1267/25166 15120.4s] 0,1,2,4,5,3;0,4,3,1,5,2: verified [cadical] solve=1.5s lrat=37.6MB cake=8.01s cnf_sha=88ec17958b91
+[1268/25166 15137.4s] 0,5,4,3,1,2;0,5,4,2: verified [cadical] solve=7.0s lrat=103.0MB cake=9.51s cnf_sha=67501c8169c8
+[1269/25166 15163.5s] 0,4,5,3,2,1;1,4,2: verified [cadical] solve=33.52s lrat=543.9MB cake=31.52s cnf_sha=4300357f2d6b
+[1270/25166 15165.7s] 0,1,2;0,5,2,3,1,4: verified [cadical] solve=29.51s lrat=433.4MB cake=29.51s cnf_sha=868fd67d8879
+[1271/25166 15177.2s] 0,3,1,2,4;0,1,4,3,2,5: verified [cadical] solve=3.01s lrat=61.7MB cake=10.0s cnf_sha=b82052cfd2dd
+[1272/25166 15177.6s] 0,2,5,1,4,3;0,5,1,3: verified [cadical] solve=15.51s lrat=268.2MB cake=24.01s cnf_sha=d7209b3fedef
+[1273/25166 15180.8s] 0,3,5,2,1,4;0,2,4,3,1,5: verified [cadical] solve=2.0s lrat=51.7MB cake=12.51s cnf_sha=33ffc5317cc5
+[1274/25166 15193.8s] 0,2,1,3,5,4;0,3,5,2,4: verified [cadical] solve=2.5s lrat=54.2MB cake=10.0s cnf_sha=4eb97355a6ac
+[1275/25166 15203.2s] 0,3,2,1;0,2,5,1,3,4: verified [cadical] solve=10.51s lrat=180.7MB cake=15.01s cnf_sha=b2497ddfcd01
+[1276/25166 15211.3s] 0,1,3,4,2;stop: verified [cadical] solve=1.0s lrat=15.1MB cake=6.51s cnf_sha=4043c798a308
+[1277/25166 15220.3s] 0,4,2,3,1,5;0,1,4,5,2,3: verified [cadical] solve=2.0s lrat=38.9MB cake=6.5s cnf_sha=f381193e980e
+[1278/25166 15236.7s] 0,3,4,5,1,2;0,3,4,2,5: verified [cadical] solve=2.0s lrat=61.4MB cake=14.01s cnf_sha=e8a176d76d2a
+[1279/25166 15239.1s] 0,2,3,1;0,5,3,4,1: verified [cadical] solve=23.51s lrat=380.8MB cake=21.01s cnf_sha=d59a85aa7aa1
+[1280/25263 15261.7s] 0,1,5,4,3,2;0,3: split lrat_growth after 83.6s -> 97 children (enqueued 97)
+[1281/25263 15310.0s] 0,1,3,2,4;0,1,2,4: verified [cadical] solve=19.51s lrat=325.1MB cake=28.01s cnf_sha=11dc88329720
+[1282/25263 15329.7s] 0,5,1,4,2,3;0,5,1: verified [cadical] solve=41.52s lrat=796.3MB cake=50.03s cnf_sha=ba30f543a2c1
+[1283/25374 15330.4s] 0,1,4,2,5,3;0,2: split lrat_growth after 90.62s -> 111 children (enqueued 111)
+[1284/25374 15343.4s] 0,5,1,4,3,2;0,1,3,5,2: verified [cadical] solve=3.0s lrat=58.7MB cake=9.5s cnf_sha=9123bb0e6eec
+[1285/25374 15361.8s] 0,5,4,2,1,3;1,5,2,3,4: verified [cadical] solve=3.5s lrat=74.6MB cake=14.01s cnf_sha=d83cd31aedc3
+[1286/25374 15377.1s] 0,4,1,2,3;2,4,3,5: verified [cadical] solve=35.02s lrat=547.2MB cake=31.01s cnf_sha=c4d170f5874e
+[1287/25374 15391.1s] 0,5,2,4,3,1;0,3,2,1: verified [cadical] solve=13.01s lrat=240.6MB cake=15.51s cnf_sha=f6945a2d6be9
+[1288/25374 15400.2s] 0,1,3,4,2,5;0,4,1,2,5,3: verified [cadical] solve=1.5s lrat=40.8MB cake=7.0s cnf_sha=f82b0152661c
+[1289/25374 15410.6s] 0,5,1,3,4,2;0,5,1,2,3: verified [cadical] solve=2.5s lrat=60.1MB cake=7.5s cnf_sha=c46ed669f387
+[1290/25472 15419.9s] 0,3,2,1;0,3,1: split lrat_growth after 89.59s -> 98 children (enqueued 98)
+[1291/25472 15434.8s] 0,2,5,1,3,4;0,3,4,5: verified [cadical] solve=11.01s lrat=154.7MB cake=12.51s cnf_sha=99d7b397ab5c
+[1292/25472 15436.4s] 0,5,2,1,4,3;0,1,4,3,2: verified [cadical] solve=3.0s lrat=52.6MB cake=13.01s cnf_sha=eb22b9901fe3
+[1293/25472 15447.2s] 0,4,3,1,2,5;0,3,1,4,2: verified [cadical] solve=3.0s lrat=71.6MB cake=9.0s cnf_sha=335f9cced47b
+[1294/25472 15456.8s] 0,2,3,1,5,4;0,2,1,4,3,5: verified [cadical] solve=2.0s lrat=44.0MB cake=7.0s cnf_sha=75611d2b16f2
+[1295/25569 15466.4s] 0,3,1,2,5,4;3,4: split lrat_growth after 88.6s -> 97 children (enqueued 97)
+[1296/25569 15473.9s] 0,3,1,4,2;0,4,2,3,1: verified [cadical] solve=6.5s lrat=128.3MB cake=10.0s cnf_sha=11d6bc7fe0e7
+[1297/25569 15477.3s] 0,1,4,5,2,3;0,2,1,4,3,5: verified [cadical] solve=2.0s lrat=41.3MB cake=8.5s cnf_sha=5ee39cf986f0
+[1298/25569 15495.2s] 0,3,1,2;0,3,2,4,1,5: verified [cadical] solve=8.51s lrat=174.1MB cake=12.01s cnf_sha=464b56dd7ee8
+[1299/25666 15525.2s] 0,4,2,1,3,5;4,5: split lrat_growth after 87.6s -> 97 children (enqueued 97)
+[1300/25666 15548.9s] 0,2,1,4,5,3;1,5,3: verified [cadical] solve=36.52s lrat=644.7MB cake=34.02s cnf_sha=13db5ebaefdc
+[1301/25666 15570.1s] 0,5,3,1,2,4;0,1,4: verified [cadical] solve=34.52s lrat=600.4MB cake=39.01s cnf_sha=31a8ecbb9547
+[1302/25666 15590.7s] 0,1,2;0,1,2,5,3,4: verified [cadical] solve=31.52s lrat=530.2MB cake=33.01s cnf_sha=c66d3979ca00
+[1303/25666 15601.8s] 0,4,5,1,3,2;0,5,1,3,2: verified [cadical] solve=3.0s lrat=63.1MB cake=7.5s cnf_sha=c03b84a427f6
+[1304/25666 15611.1s] 0,5,1,3,2,4;0,1,4: verified [cadical] solve=29.02s lrat=484.0MB cake=32.02s cnf_sha=552340469391
+[1305/25666 15613.3s] 0,2,4,1,5,3;0,2,4,3,1: verified [cadical] solve=3.0s lrat=72.5MB cake=8.0s cnf_sha=9ab17294a326
+[1306/25666 15623.7s] 0,4,3,5,2,1;1,4,5,2,3: verified [cadical] solve=3.0s lrat=62.6MB cake=9.0s cnf_sha=aaf0e23dc413
+[1307/25666 15625.3s] 0,1,5,4,2,3;0,1,4,2,5,3: verified [cadical] solve=2.0s lrat=40.7MB cake=9.51s cnf_sha=641686c802f0
+[1308/25666 15635.3s] 0,1,2,3,5,4;0,2,4,3,1,5: verified [cadical] solve=2.0s lrat=39.8MB cake=7.5s cnf_sha=2a70ce1eb80c
+[1309/25777 15654.8s] 0,1,3,5,4,2;0,5: split lrat_growth after 84.13s -> 111 children (enqueued 111)
+[1310/25777 15663.5s] 0,4,1,2,5,3;1,5,3,4: verified [cadical] solve=11.01s lrat=176.6MB cake=16.52s cnf_sha=ec2b26a807ee
+[1311/25777 15671.9s] 0,3,1,5,2,4;0,5,2,4,1: verified [cadical] solve=5.0s lrat=114.8MB cake=11.51s cnf_sha=b873369e39c3
+[1312/25777 15672.9s] 0,1,2;0,3,5,4,1,2: verified [cadical] solve=22.51s lrat=354.3MB cake=26.01s cnf_sha=084442e4a698
+[1313/25777 15733.6s] 0,4,2,1,5,3;3,4,5: verified [cadical] solve=32.02s lrat=504.8MB cake=27.51s cnf_sha=33a9fad99f9a
+[1314/25874 15757.4s] 0,1,2,3,5,4;0,2: split lrat_growth after 93.11s -> 97 children (enqueued 97)
+[1315/25997 15765.0s] 0,2,3,1,4;4,5: split lrat_growth after 92.59s -> 123 children (enqueued 123)
+[1316/25997 15780.4s] 0,2,1,5,4,3;0,1,4,2,3,5: verified [cadical] solve=1.5s lrat=38.2MB cake=13.51s cnf_sha=3745561883cf
+[1317/25997 15789.0s] 0,2,3,1;1,2,5,3,4: verified [cadical] solve=28.02s lrat=472.8MB cake=26.51s cnf_sha=e3db26b591b9
+[1318/25997 15790.4s] 0,3,2,5,4,1;0,3,5,4: verified [cadical] solve=10.51s lrat=199.0MB cake=22.01s cnf_sha=52b159cb2a25
+[1319/25997 15794.4s] 0,4,3,5,2,1;0,2,4,3,1: verified [cadical] solve=3.0s lrat=78.5MB cake=10.5s cnf_sha=4d955d59b67b
