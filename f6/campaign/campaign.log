@@ -13500,3 +13500,14 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [12/82557   161.5s] 0,3,1,2,4;0,1,5,2,3,4: verified [cadical] solve=3.0s lrat=84.3MB cake=10.5s cnf_sha=ba9d275ffedc
 [13/82557   167.0s] 0,2,1,3,4;0,1,4,5,2,3: verified [cadical] solve=3.0s lrat=64.1MB cake=8.0s cnf_sha=acf1198ce191
 [14/82557   174.6s] 0,2,1,3,5,4;0,1,5,2,3: verified [cadical] solve=3.5s lrat=85.1MB cake=9.0s cnf_sha=d68283d0cd69
+[15/82663   177.3s] 0,4,3,2,1;0,4,5: split lrat_growth after 76.58s -> 106 children (enqueued 106)
+[16/82663   180.9s] 0,5,2,1,3,4;0,2,3,5,1: verified [cadical] solve=3.51s lrat=85.3MB cake=10.0s cnf_sha=21b4a826ddeb
+[17/82663   184.9s] 0,4,1,2,3,5;0,3,4,2,5,1: verified [cadical] solve=1.5s lrat=39.2MB cake=8.51s cnf_sha=bcc88202f3a9
+[18/82663   193.3s] 0,3,4,1,2;0,3,4,1,2,5: verified [cadical] solve=3.5s lrat=81.3MB cake=8.5s cnf_sha=71e47ab517df
+[19/82663   197.9s] 0,4,5,1,3,2;0,1,3,2,4,5: verified [cadical] solve=2.0s lrat=42.4MB cake=10.51s cnf_sha=06dba3483c87
+[20/82663   206.8s] 0,2,1,3,4,5;0,4,2,5,1,3: verified [cadical] solve=1.5s lrat=38.5MB cake=7.0s cnf_sha=aa5b952b8e96
+=== RESUME (live log) Sat Sep  5 15:55:48 UTC 2026 ===
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 82643 cubes (13406 already journaled; skipped {'verified': 12773}; retry=['error'])
+solver: cadical /home/user/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 3.5s
