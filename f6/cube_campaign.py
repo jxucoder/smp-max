@@ -116,10 +116,12 @@ are enqueued in-process by the driver that journals the split and, on
 resume, are re-derived only from that journal's own split records.  So
 N drivers on N journals (each started from the same snapshot, so they
 skip the same finished cubes) never run the same root twice, and the
-union of their journals is a complete campaign journal:
-merge_journals.py concatenates them (one header, records deduplicated,
-last record per cube wins) for a single `--audit`.  Every record carries
-its `shard`.  `--shard` cannot be combined with --cubes / --sample /
+union of their journals is a complete campaign journal: merge_journals.py
+merges them, in any order, for a single `--audit` (one header; per cube
+the best record by SAT > verified > split > non-terminal, then latest
+ts, so a root the pre-shard driver split by a wall-clock timeout can
+never shadow the owner shard's certificate; torn lines skipped).  Every
+record carries its `shard`.  `--shard` cannot be combined with --cubes / --sample /
 --dryrun, which name their cubes explicitly.
 
 Single driver
@@ -137,7 +139,8 @@ Usage
   python3 cube_campaign.py --workers 8 --time 600 --journal campaign.jsonl
   python3 cube_campaign.py --solver cadical --workers 12 --time 600 --journal campaign.jsonl
   python3 cube_campaign.py --solver cadical --shard 3/8 --journal campaign/shards/shard_3_of_8.jsonl
-  python3 merge_journals.py -o campaign/merged.jsonl campaign/shards/*.jsonl.gz && python3 cube_campaign.py --audit --journal campaign/merged.jsonl
+  python3 merge_journals.py -o campaign/merged.jsonl campaign/campaign.jsonl campaign/shards/*.jsonl.gz
+  python3 cube_campaign.py --audit --journal campaign/merged.jsonl
   python3 cube_campaign.py --retry-status check_timeout,drattrim_fail --check-timeout 14400 ...
   python3 cube_campaign.py --cubes "0,1;2,3" --force --journal campaign.jsonl
   python3 cube_campaign.py --audit [--expect-cnf-dir DIR] --journal campaign.jsonl

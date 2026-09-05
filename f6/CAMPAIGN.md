@@ -386,3 +386,50 @@ a day across eight such containers, and a depth-4 layer that on present
 evidence may not exist at all.  The earlier ~460k-node worry is
 unsupported: it assumed the depth-2 split rate recurred at depth 3, and
 0/150 rules that rate out at better than 95% confidence.
+
+## Sharding across containers (2026-09-05)
+
+The laptop is out; the campaign runs in ephemeral Linux containers (4
+cores, ~190-300 nodes/h each at 3 workers).  `cube_campaign.py --shard
+I/N` restricts a driver to the roots with sha256(id) mod N == I.  The
+partition is by **root**: a root's whole adaptive split subtree is run by
+the shard that owns the root (children are enqueued in-process by the
+driver that journals the split and, on resume, re-derived only from that
+journal's own split records), so N drivers on N journals seeded from the
+same snapshot never run the same root, and the union of their journals is
+a complete campaign journal.  Every record carries its `shard`.
+
+`merge_journals.py -o merged.jsonl campaign.jsonl shards/*.jsonl.gz`
+merges any number of journals, **in any order**: one header (mixed
+`base_sha256` refused); per cube exactly one record, the best by
+SAT > verified > split > non-terminal and then latest `ts`.  Order
+independence matters: a root this container split by a wall-clock
+timeout (40 of the first 665 splits are `-t 300` timeouts) can be
+verified outright by a faster shard, and a `split` must never shadow a
+certificate - the audit would demand children nobody ran.  Torn trailing
+lines (a checkpoint taken mid-append) are skipped and counted.  The
+merged file is the audit's input; shard journals keep full history.
+
+`campaign/bootstrap.sh I N [WORKERS] [BRANCH]` takes a fresh container
+from a bare checkout to a running shard and is idempotent (re-run it
+hourly from a Routine): toolchain at the pinned commits with self-tests;
+resume from origin's shard branch if it exists, else create it; seed the
+shard journal from the live journal, the branch's last checkpoint, or
+the base snapshot (complete lines only); push once *before* any work so
+a container without push access aborts immediately; hourly checkpoint
+(gzip under the journal's flock, commit, push with rebase retry), a
+checkpoint on exit, a trap for TERM/INT/HUP; if the driver is already
+running, checkpoint only.  `campaign/supervise.sh` + `driver.cmd` do the
+same for this container's unsharded journal (an hourly Routine runs it;
+the container rebooted once and lost every process while the disk
+survived).
+
+Review: the sharding path was adversarially reviewed (4 lenses, 3
+skeptics per finding, critic pass) before any container was spawned; the
+14 confirmed findings - order-dependent merge, torn lines, replacement
+container re-seeding and failing to push, missing push preflight /
+trap / checkpoint mutual exclusion, no relaunch after a shard reboot -
+are all addressed above.  Non-terminal `cake_fail` / `check_timeout`
+records (e.g. a cake_lpr killed for memory) are re-attempted on every
+resume (`--retry-status error,cake_fail,check_timeout`); the final
+merged `--audit` reports any survivor as `bad`.
