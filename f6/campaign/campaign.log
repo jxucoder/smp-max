@@ -13487,3 +13487,16 @@ to run: 82389 cubes (13386 already journaled; skipped {'verified': 12755}; retry
 solver: cadical /home/user/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
 base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 3.1s
 [1/82389    18.8s] 0,5,2,4,3,1;0,3,5,4,1,2: verified [cadical] solve=2.0s lrat=42.9MB cake=16.51s cnf_sha=82368d93b198
+[2/82389    26.5s] 0,4,1,3,2,5;1,5,3,4: verified [cadical] solve=7.51s lrat=143.4MB cake=18.52s cnf_sha=486398b6c2ab
+[3/82389    27.5s] 0,3,4,1,2,5;0,2,3,1: verified [cadical] solve=9.01s lrat=176.2MB cake=18.01s cnf_sha=9ec4e23526ca
+[4/82389    49.0s] 0,3,1,5,4,2;1,5,3,2: verified [cadical] solve=12.51s lrat=212.4MB cake=17.01s cnf_sha=75e5ebe94232
+[5/82389    54.0s] 0,1,2,3,4;0,1,4,2,3: verified [cadical] solve=6.51s lrat=116.0MB cake=19.51s cnf_sha=e51430f2a3f9
+[6/82389   100.0s] 0,1,3,2;1,3,5,2,4: verified [cadical] solve=36.53s lrat=652.2MB cake=35.52s cnf_sha=6ab254355aac
+[7/82389   121.0s] 0,3,5,2,4,1;2,4,5: verified [cadical] solve=28.51s lrat=445.4MB cake=37.51s cnf_sha=3081a3f320b0
+[8/82557   132.4s] 0,2,1;3,4,5: split lrat_growth after 82.59s -> 168 children (enqueued 168)
+[9/82557   136.0s] 0,1,4,5,2,3;0,4,5,2,3: verified [cadical] solve=2.5s lrat=49.0MB cake=12.01s cnf_sha=9e5445d98b9d
+[10/82557   147.4s] 0,2,4,1,3;0,5,2,3,4,1: verified [cadical] solve=2.5s lrat=56.7MB cake=8.5s cnf_sha=76542e3ddcf2
+[11/82557   155.5s] 0,5,1,4,3,2;0,1,3,2: verified [cadical] solve=10.51s lrat=151.0MB cake=12.0s cnf_sha=3be3531845c5
+[12/82557   161.5s] 0,3,1,2,4;0,1,5,2,3,4: verified [cadical] solve=3.0s lrat=84.3MB cake=10.5s cnf_sha=ba9d275ffedc
+[13/82557   167.0s] 0,2,1,3,4;0,1,4,5,2,3: verified [cadical] solve=3.0s lrat=64.1MB cake=8.0s cnf_sha=acf1198ce191
+[14/82557   174.6s] 0,2,1,3,5,4;0,1,5,2,3: verified [cadical] solve=3.5s lrat=85.1MB cake=9.0s cnf_sha=d68283d0cd69
