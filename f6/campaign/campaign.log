@@ -13481,3 +13481,9 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [29/82420   439.9s] 0,5,1,3,2,4;0,5,2: verified [cadical] solve=38.03s lrat=733.1MB cake=41.51s cnf_sha=027862aa8e13
 [30/82420   451.3s] 0,4,3,5,2,1;0,5,1: verified [cadical] solve=31.01s lrat=621.8MB cake=46.02s cnf_sha=35a50152c343
 [31/82420   458.3s] 0,5,3,4,1,2;2,5,3,4: verified [cadical] solve=7.01s lrat=121.2MB cake=11.51s cnf_sha=4ed245c34ac7
+=== RESUME after depth-3 probe Sat Sep  5 15:51:15 UTC 2026 ===
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+to run: 82389 cubes (13386 already journaled; skipped {'verified': 12755}; retry=['error'])
+solver: cadical /home/user/smp-max/cadical-src/build/cadical (Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04)
+base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., built in 3.1s
+[1/82389    18.8s] 0,5,2,4,3,1;0,3,5,4,1,2: verified [cadical] solve=2.0s lrat=42.9MB cake=16.51s cnf_sha=82368d93b198
