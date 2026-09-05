@@ -13928,3 +13928,4 @@ base formula: 84882 vars, 2709212 clauses, 48.7 MB, sha256 28421fb68b0f494b..., 
 [390/85895  4402.0s] 0,3,1,2,5,4;0,3,2,4,1: verified [cadical] solve=3.5s lrat=96.0MB cake=16.01s cnf_sha=a6c262df63c3
 [391/85895  4413.0s] 0,5,3,1,2,4;0,3,4,1,5,2: verified [cadical] solve=2.0s lrat=45.9MB cake=8.5s cnf_sha=1e9b3f340375
 [392/85895  4424.5s] 0,5,4,2,3,1;0,3,4,2: verified [cadical] solve=12.51s lrat=193.6MB cake=14.01s cnf_sha=8950094b53a6
+[393/85895  4449.2s] 0,1,3,2;0,4,3,2,1,5: verified [cadical] solve=12.01s lrat=163.4MB cake=12.02s cnf_sha=2413ac9825e4
