@@ -13,3 +13,8 @@ journal header written: base_sha256=28421fb68b0f494b99d1918aa64cff248443161dc7a6
 [8/150    47.3s] 0,1,4,2,3;3,4;1,3,5: verified [cadical] solve=4.5s lrat=98.8MB cake=13.51s cnf_sha=fdbd7f3ed206
 [9/150    48.3s] 0,1,2,3;2,3,4,5;0,4,5,1,2,3: verified [cadical] solve=1.0s lrat=15.4MB cake=12.01s cnf_sha=61e830a4f8c7
 [10/150    55.2s] 0,3,2,1,4;3,4;1,5,2,3: verified [cadical] solve=2.0s lrat=53.1MB cake=8.0s cnf_sha=f48284296313
+[11/150    58.2s] 0,5,3,2,1,4;0,3;0,5,1,3,2,4: verified [cadical] solve=1.0s lrat=15.3MB cake=9.51s cnf_sha=fda16a98d119
+[12/150    59.2s] 0,3,2,1;3,4,5;0,5,2,4,1: verified [cadical] solve=2.0s lrat=45.5MB cake=8.51s cnf_sha=513415413504
+[13/150    62.6s] 0,4,2,1,3;1,3,5;0,2,3,4,5,1: verified [cadical] solve=1.0s lrat=15.3MB cake=6.0s cnf_sha=4aad470d9a15
+[14/150    67.0s] 0,1,2,3;1,4;0,2,1,3,5,4: verified [cadical] solve=1.5s lrat=34.2MB cake=7.0s cnf_sha=fef7f2f61bbd
+[15/150    75.8s] 0,3,1,2;2,4;0,5,1,2: verified [cadical] solve=6.51s lrat=115.3MB cake=9.51s cnf_sha=48706eb33b63
