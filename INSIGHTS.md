@@ -60,11 +60,22 @@ below for the day that changes.
   rotations are trajectory-intrinsic. The size>=3 regime had to be
   enumerated, not reduced away (local 3-cycle refinement fails in ~1/1000
   cases).
-- **f(7) is now a budget question, not a wall**: schedule tree ~1e14-1e15
-  (budget 42), i.e. cloud-scale compute (this is where Modal finally
-  becomes the right answer) plus stronger canonicalization. Lower bound
-  71; notably Eilers conjectured exactness only for even orders — f(7)'s
-  true value is genuinely uncertain.
+- **f(7): the lower bound is cheap, the upper bound is not.** The
+  schedule tree is ~1e14-1e15 (budget 42), and the *certified* cube
+  route is 3-4 orders of magnitude out of reach there (`f7/README.md`),
+  so cloud sizing was the wrong question. Meanwhile the same schedule
+  space is an excellent lower-bound engine: ~20 laptop-minutes of
+  hill climbing over size-2 schedules took f(7) from the best known 81
+  (Ong et al. 2024) to **85** (`f7/`). Searching only full-budget
+  schedules caps at 80 — odd orders live below full budget, exactly as
+  Conjecture 1 predicts, so the schedule *length* must be a search
+  variable.
+- **Conjecture 1 gets external support.** The published record
+  instances at n=7 (81 SM, 18 of 21 rotations) and n=9 (365 SM, 32 of
+  36) are BOTH all-size-2 and both sub-budget, as are our 85-instances
+  (20 of 21). Four independent confirmations of the all-size-2 half,
+  and of the odd-order sub-budget pattern, from data this project did
+  not generate.
 
 ## Methodological insights
 
@@ -113,8 +124,12 @@ below for the day that changes.
    SAT/CP).
 3. The general-n conjecture (full-budget size-2 extremality) — state
    formally, attempt small-n-generic proof, or publish as open problem.
-4. f(7) feasibility study if ever desired: canonicalization gains, C
-   counting-kernel speedups, cloud sizing.
+4. f(7) lower bounds (`f7/`): extend the size-2 schedule search to
+   n=9,11,13,15, where the Ong et al. bounds look equally soft. Needs
+   an O(n^2) rotation extractor so counting goes through the rotation
+   poset's downsets instead of brute force over n! matchings —
+   `rotation_poset.extract_rotations` enumerates the lattice and dies
+   past n=9.
 
 ## Publication checklist (for the day the owner says go)
 
