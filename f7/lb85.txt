@@ -1,0 +1,36 @@
+# f(7) >= 85  (2026-09-06)
+#
+# Two independent size-2 schedules of length 20 (20 of 21 rotations,
+# 40 of the 42 move budget), found by f7/sched_hunt.py in ~5 min/seed.
+# Verified three ways: smp.stable_matchings, a naive all-blocking-pairs
+# recount, and Birkhoff downset-count of the extracted rotation poset.
+# All three give 85 for both instances.
+#
+# Previous best known: 81 (Ong, Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024;
+# https://oeis.org/A357271/a357271_1.txt). Our counter reproduces their
+# 81 instance exactly. Thurber's 2002 bound, still quoted in this repo's
+# README/INSIGHTS, was 71.
+
+schedule A (seed 9): [(0,6),(0,3),(4,5),(1,2),(1,5),(2,3),(4,6),(0,1),(1,2),(4,5),(3,4),(1,5),(0,6),(0,3),(2,6),(2,3),(4,6),(0,6),(4,5),(1,2)]
+schedule B (seed 5): [(5,6),(0,3),(1,2),(0,5),(1,4),(0,4),(2,3),(1,6),(0,3),(2,5),(5,6),(1,4),(1,2),(3,5),(0,4),(4,6),(5,6),(0,3),(2,3),(1,4)]
+
+# Ranking tables, A351413/Ong convention: entry "a,b" in row i col j =
+# man i ranks woman j his a-th choice, woman j ranks man i her b-th.
+
+instance A (85 stable matchings)
+ 1,6  7,1  6,2  3,6  4,4  5,4  2,6
+ 6,2  1,6  2,6  4,5  3,5  7,1  5,3
+ 7,1  2,5  1,7  4,4  5,2  6,2  3,4
+ 7,7  3,4  4,3  1,7  6,1  5,3  2,5
+ 3,4  5,3  4,4  6,2  1,7  2,6  7,1
+ 4,3  7,7  3,5  6,1  2,6  1,7  5,2
+ 2,5  6,2  7,1  5,3  4,3  3,5  1,7
+
+instance B (85 stable matchings)
+ 1,7  5,4  4,4  2,5  7,1  6,3  3,5
+ 7,1  1,7  2,6  6,2  3,5  4,5  5,3
+ 3,5  2,6  1,7  4,3  7,7  6,1  5,2
+ 2,6  3,5  4,3  1,6  5,2  6,2  7,1
+ 6,2  5,3  2,5  7,1  1,6  4,4  3,4
+ 4,4  7,1  6,2  3,4  5,3  1,7  2,6
+ 4,3  5,2  6,1  7,7  3,4  2,6  1,7
