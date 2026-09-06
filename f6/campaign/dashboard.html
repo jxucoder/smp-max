@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>f(6) 战役看板</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>f(6) Campaign Dashboard</title>
 <style>
 :root{color-scheme:dark;
  --bg:#111110;--surface:#1a1a19;--surface2:#232322;--line:#2e2e2c;--text:#f2f1ea;--text2:#c3c2b7;--muted:#8a897f;
  --verified:#199e70;--covered:#3987e5;--partial:#c98500;--pending:#2c2c2a;--running:#d95926;--failed:#e66767;--sat:#ff2d55;
- --seq:#3987e5;--font:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
+ --seq:#3987e5;--font:-apple-system,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#f6f5f1;--surface:#fcfcfb;--surface2:#f0efec;--line:#e2e1dc;--text:#0b0b0b;--text2:#52514e;--muted:#8a897f;--verified:#1baf7a;--covered:#2a78d6;--partial:#eda100;--pending:#dcdbd5;--running:#eb6834;--failed:#e34948;--seq:#2a78d6}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
 header{display:flex;align-items:baseline;gap:18px;padding:18px 28px 6px;flex-wrap:wrap}
@@ -48,29 +48,29 @@ td.mono,th.mono{font-family:var(--mono);font-size:12px}
 footer{color:var(--muted);font-size:12px;padding:0 28px 30px;font-family:var(--mono)}
 @media (max-width:1000px){.map,.side,.half{grid-column:span 12}}
 </style></head><body>
-<header><h1>f(6) = 48 证书战役 <small>order-6 cube campaign · cadical → cake_lpr</small></h1>
- <span id="satBadge" class="badge ok">SAT = 0</span><span id="driverBadge" class="badge">驱动程序</span><span id="updBadge" class="badge">—</span></header>
+<header><h1>f(6) = 48 certificate campaign <small>order-6 cube campaign · cadical → cake_lpr</small></h1>
+ <span id="satBadge" class="badge ok">SAT = 0</span><span id="driverBadge" class="badge">driver</span><span id="updBadge" class="badge">—</span></header>
 <main>
  <div class="tiles">
-  <div class="tile"><div class="k">已验证 cube</div><div class="v" id="tVerified">—</div><div class="s" id="tVerifiedS"></div></div>
-  <div class="tile"><div class="k">剩余(已入队)</div><div class="v" id="tRemain">—</div><div class="s" id="tRemainS"></div></div>
-  <div class="tile"><div class="k">吞吐 / 小时</div><div class="v" id="tRate">—</div><div class="s" id="tRateS"></div></div>
-  <div class="tile"><div class="k">预计剩余</div><div class="v" id="tEta">—</div><div class="s" id="tEtaS"></div></div>
-  <div class="tile"><div class="k">根 cube 覆盖</div><div class="v" id="tRoots">—</div><div class="s" id="tRootsS"></div></div>
-  <div class="tile"><div class="k">证书总量(已删)</div><div class="v" id="tLrat">—</div><div class="s" id="tLratS"></div></div>
+  <div class="tile"><div class="k">Verified cubes</div><div class="v" id="tVerified">—</div><div class="s" id="tVerifiedS"></div></div>
+  <div class="tile"><div class="k">Remaining (queued)</div><div class="v" id="tRemain">—</div><div class="s" id="tRemainS"></div></div>
+  <div class="tile"><div class="k">Cubes per hour</div><div class="v" id="tRate">—</div><div class="s" id="tRateS"></div></div>
+  <div class="tile"><div class="k">Estimated time left</div><div class="v" id="tEta">—</div><div class="s" id="tEtaS"></div></div>
+  <div class="tile"><div class="k">Root cubes covered</div><div class="v" id="tRoots">—</div><div class="s" id="tRootsS"></div></div>
+  <div class="tile"><div class="k">Certificates checked (deleted)</div><div class="v" id="tLrat">—</div><div class="s" id="tLratS"></div></div>
  </div>
- <div class="card map"><h2>25,493 个根 cube 的地图 <span id="mapHint" style="font-weight:400">· 每格一个根 cube,鼠标悬停看详情</span></h2>
+ <div class="card map"><h2>Map of the 25,493 root cubes <span id="mapHint" style="font-weight:400">· one cell per root cube, hover for details</span></h2>
   <canvas id="map"></canvas>
-  <div class="legend"><span><i style="background:var(--verified)"></i>已验证 UNSAT</span><span><i style="background:var(--covered)"></i>已分裂,子树全部验证</span><span><i style="background:var(--partial)"></i>已分裂,子树进行中</span><span><i style="background:var(--running)"></i>正在求解</span><span><i style="background:var(--failed)"></i>待重试</span><span><i style="background:var(--pending);border:1px solid var(--line)"></i>未开始</span></div>
+  <div class="legend"><span><i style="background:var(--verified)"></i>verified UNSAT</span><span><i style="background:var(--covered)"></i>split, subtree fully verified</span><span><i style="background:var(--partial)"></i>split, subtree in progress</span><span><i style="background:var(--running)"></i>solving now</span><span><i style="background:var(--failed)"></i>to retry</span><span><i style="background:var(--pending);border:1px solid var(--line)"></i>not started</span></div>
  </div>
  <div class="side">
-  <div class="card bars"><h2>按深度</h2><div id="depthBars"></div></div>
-  <div class="card"><h2>10 个 worker 正在做什么</h2><table id="workers"><thead><tr><th>worker</th><th>cube</th><th>阶段</th><th style="text-align:right">秒</th><th style="text-align:right">LRAT MB</th></tr></thead><tbody></tbody></table></div>
+  <div class="card bars"><h2>By depth</h2><div id="depthBars"></div></div>
+  <div class="card"><h2>What the workers are doing</h2><table id="workers"><thead><tr><th>worker</th><th>cube</th><th>phase</th><th style="text-align:right">sec</th><th style="text-align:right">LRAT MB</th></tr></thead><tbody></tbody></table></div>
  </div>
- <div class="card full"><h2>吞吐:每 10 分钟完成的 cube(最近 24 小时)</h2><div id="tput"></div></div>
- <div class="card half"><h2>最新事件</h2><ul class="feed" id="feed"></ul></div>
- <div class="card half"><h2>最难的 cube(求解 + 校验秒数)</h2><table id="hardest"><thead><tr><th>cube</th><th style="text-align:right">求解 s</th><th style="text-align:right">cake_lpr s</th><th style="text-align:right">LRAT MB</th></tr></thead><tbody></tbody></table>
-  <h2 style="margin-top:16px">LRAT 大小分布(已验证 cube)</h2><div id="hist"></div></div>
+ <div class="card full"><h2>Throughput: cubes finished per 10 minutes (last 24 hours)</h2><div id="tput"></div></div>
+ <div class="card half"><h2>Latest events</h2><ul class="feed" id="feed"></ul></div>
+ <div class="card half"><h2>Hardest cubes (solve + check seconds)</h2><table id="hardest"><thead><tr><th>cube</th><th style="text-align:right">solve s</th><th style="text-align:right">cake_lpr s</th><th style="text-align:right">LRAT MB</th></tr></thead><tbody></tbody></table>
+  <h2 style="margin-top:16px">LRAT size distribution (verified cubes)</h2><div id="hist"></div></div>
 </main>
 <footer id="foot"></footer>
 <div class="tip" id="tip"></div>
@@ -91,25 +91,25 @@ function drawMap(){
 const tip=$('#tip');
 $('#map').addEventListener('mousemove',e=>{ if(!D||!cell)return; const r=e.target.getBoundingClientRect(); const x=Math.floor((e.clientX-r.left)/cell), y=Math.floor((e.clientY-r.top)/cell); const i=y*cols+x; if(x<0||x>=cols||i>=D.roots){tip.style.display='none';return;}
  const ch=D.root_map[i], d=D.root_detail[i], id=D.root_ids[i];
- const name={v:'已验证 UNSAT',c:'已分裂,子树全部验证',s:'已分裂,子树进行中',r:'正在求解',f:'待重试',p:'未开始','!':'SAT ⚠️'}[ch];
- let x2=`<b>${id}</b><br>${name}`; if(d&&d[3]>1)x2+=`<br>子 cube ${fmt(d[2])} / ${fmt(d[3])}`; if(d&&d[0])x2+=`<br>求解 ${d[0]} s`; if(d&&d[1])x2+=` · LRAT ${d[1]} MB`;
+ const name={v:'verified UNSAT',c:'split, subtree fully verified',s:'split, subtree in progress',r:'solving now',f:'to retry',p:'not started','!':'SAT ⚠️'}[ch];
+ let x2=`<b>${id}</b><br>${name}`; if(d&&d[3]>1)x2+=`<br>children ${fmt(d[2])} / ${fmt(d[3])}`; if(d&&d[0])x2+=`<br>solve ${d[0]} s`; if(d&&d[1])x2+=` · LRAT ${d[1]} MB`;
  tip.innerHTML=x2; tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';});
 $('#map').addEventListener('mouseleave',()=>tip.style.display='none');
 function depthBars(){
- const names={1:'深度 1',2:'深度 2',3:'深度 3',4:'深度 4'}; let h='';
+ const names={1:'depth 1',2:'depth 2',3:'depth 3',4:'depth 4'}; let h='';
  const tot={2:D.roots}; // depth 2 total = roots
  for(const d of [1,2,3,4]){const c=D.by_depth[d]||{}; const v=c.verified||0,s=c.split||0,f=Object.entries(c).filter(([k])=>!['verified','split','SAT'].includes(k)).reduce((a,[,n])=>a+n,0);
   let total=v+s+f; if(d===2)total=D.roots; if(d===3)total=v+s+f+D.pending_children-(D.by_depth[4]?0:0);
   if(d===3)total=v+s+f+Math.max(0,D.pending_children-(D.by_depth['4']?0:0)); if(!total&&!v)continue;
   const pct=x=>Math.max(0,100*x/total)+'%';
-  h+=`<div class="row"><div>${names[d]||('深度 '+d)}</div><div class="bar"><span style="width:${pct(v)};background:var(--verified)"></span><span style="width:${pct(s)};background:var(--covered)"></span><span style="width:${pct(f)};background:var(--failed)"></span></div><div class="n">${fmt(v)} / ${fmt(total)}</div></div>`;}
+  h+=`<div class="row"><div>${names[d]||('depth '+d)}</div><div class="bar"><span style="width:${pct(v)};background:var(--verified)"></span><span style="width:${pct(s)};background:var(--covered)"></span><span style="width:${pct(f)};background:var(--failed)"></span></div><div class="n">${fmt(v)} / ${fmt(total)}</div></div>`;}
  $('#depthBars').innerHTML=h;
 }
 function tput(){
  const s=D.series_10min, W=1100,H=160,pl=40,pb=22; const max=Math.max(5,...s); const bw=(W-pl)/s.length;
  let bars='',grid=''; for(const q of [0,.5,1]){const y=H-pb-(H-pb-8)*q; grid+=`<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pl-6}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(max*q)}</text>`;}
- s.forEach((v,i)=>{const h=(H-pb-8)*v/max, x=pl+i*bw; bars+=`<rect x="${x+0.5}" y="${H-pb-h}" width="${Math.max(1,bw-1.5)}" height="${h}" rx="1.5" fill="var(--seq)" opacity="${i===s.length-1?.45:.9}"><title>${v} cubes · ${Math.round((s.length-1-i)*10/60*10)/10} h 前</title></rect>`;});
- let ax=''; for(let k=0;k<=24;k+=4){const x=pl+(W-pl)*k/24; ax+=`<text x="${x}" y="${H-4}" font-size="10" fill="var(--muted)" text-anchor="middle">${k===24?'现在':(-24+k)+'h'}</text>`;}
+ s.forEach((v,i)=>{const h=(H-pb-8)*v/max, x=pl+i*bw; bars+=`<rect x="${x+0.5}" y="${H-pb-h}" width="${Math.max(1,bw-1.5)}" height="${h}" rx="1.5" fill="var(--seq)" opacity="${i===s.length-1?.45:.9}"><title>${v} cubes · ${Math.round((s.length-1-i)*10/60*10)/10} h ago</title></rect>`;});
+ let ax=''; for(let k=0;k<=24;k+=4){const x=pl+(W-pl)*k/24; ax+=`<text x="${x}" y="${H-4}" font-size="10" fill="var(--muted)" text-anchor="middle">${k===24?'now':(-24+k)+'h'}</text>`;}
  $('#tput').innerHTML=`<svg viewBox="0 0 ${W} ${H}">${grid}${bars}${ax}</svg>`;
  const h2=D.lrat_hist, W2=520,H2=90,m2=Math.max(1,...h2), lab=['<1','1','2','4','8','16','32','64','128','256','512','1G','2G+']; let b2='';
  h2.forEach((v,i)=>{const bw2=(W2-10)/h2.length, h=(H2-26)*v/m2, x=5+i*bw2; b2+=`<rect x="${x+2}" y="${H2-20-h}" width="${bw2-4}" height="${h}" rx="2" fill="var(--seq)"><title>${fmt(v)} cubes ≈ ${lab[i]} MB</title></rect><text x="${x+bw2/2}" y="${H2-6}" font-size="9.5" text-anchor="middle" fill="var(--muted)">${lab[i]}</text>`;});
@@ -117,23 +117,23 @@ function tput(){
 }
 function render(){
  const v=D.by_status.verified||0, sp=D.by_status.split||0, nt=Object.entries(D.by_status).filter(([k])=>!['verified','split','SAT'].includes(k)).reduce((a,[,n])=>a+n,0);
- $('#tVerified').textContent=fmt(v); $('#tVerifiedS').textContent=`最近 1 小时 +${fmt(D.last_hour)} · 分裂 ${fmt(sp)} · 待重试 ${nt}`;
- $('#tRemain').textContent=fmt(D.remaining); $('#tRemainS').textContent=`未开始根 ${fmt(D.untouched_roots)} + 子 cube ${fmt(D.pending_children)};预计再分裂 +${fmt(D.expected_growth)}`;
- $('#tRate').textContent=fmt(Math.round(D.rate_per_h)); $('#tRateS').textContent=D.progress?`本次运行 ${fmt(D.progress[0])} / ${fmt(D.progress[1])},${(D.progress[2]/3600).toFixed(1)} h`:'';
- $('#tEta').textContent=D.eta_h==null?'—':(D.eta_h>=48?(D.eta_h/24).toFixed(1)+' 天':D.eta_h.toFixed(1)+' 小时'); $('#tEtaS').textContent=D.eta_h==null?'':'按最近 1 小时速度,含分裂增量';
+ $('#tVerified').textContent=fmt(v); $('#tVerifiedS').textContent=`+${fmt(D.last_hour)} in the last hour · ${fmt(sp)} splits · ${nt} to retry`;
+ $('#tRemain').textContent=fmt(D.remaining); $('#tRemainS').textContent=`${fmt(D.untouched_roots)} untouched roots + ${fmt(D.pending_children)} children; ~+${fmt(D.expected_growth)} from future splits`;
+ $('#tRate').textContent=fmt(Math.round(D.rate_per_h)); $('#tRateS').textContent=D.progress?`this run: ${fmt(D.progress[0])} / ${fmt(D.progress[1])} in ${(D.progress[2]/3600).toFixed(1)} h`:'';
+ $('#tEta').textContent=D.eta_h==null?'—':(D.eta_h>=48?(D.eta_h/24).toFixed(1)+' days':D.eta_h.toFixed(1)+' hours'); $('#tEtaS').textContent=D.eta_h==null?'':'at the current rate, incl. expected splits';
  const m=D.root_map; let cv=0,cc=0,cs=0; for(const ch of m){if(ch==='v')cv++;else if(ch==='c')cc++;else if(ch==='s'||ch==='r')cs++;}
- $('#tRoots').textContent=((cv+cc)/D.roots*100).toFixed(1)+'%'; $('#tRootsS').textContent=`${fmt(cv+cc)} / ${fmt(D.roots)} 完全覆盖 · ${fmt(cs)} 进行中`;
- $('#tLrat').textContent=D.lrat_total_tb.toFixed(2)+' TB'; $('#tLratS').textContent=`临时文件 ${D.scratch_gb} GB · 磁盘空闲 ${fmt(D.disk_free_gb)} GB`;
+ $('#tRoots').textContent=((cv+cc)/D.roots*100).toFixed(1)+'%'; $('#tRootsS').textContent=`${fmt(cv+cc)} / ${fmt(D.roots)} fully covered · ${fmt(cs)} in progress`;
+ $('#tLrat').textContent=D.lrat_total_tb.toFixed(2)+' TB'; $('#tLratS').textContent=`scratch ${D.scratch_gb} GB · disk free ${fmt(D.disk_free_gb)} GB`;
  const sb=$('#satBadge'); sb.textContent='SAT = '+D.sat; sb.className='badge '+(D.sat?'bad':'ok');
- const db=$('#driverBadge'); db.textContent=D.driver_alive?`驱动程序运行中 · ${D.running.length} worker 活跃`:'驱动程序未运行'; db.className='badge '+(D.driver_alive?'ok':'dead');
- $('#updBadge').textContent='更新于 '+new Date(D.now*1000).toLocaleTimeString('zh-CN');
+ const db=$('#driverBadge'); db.textContent=D.driver_alive?`driver running · ${D.running.length} workers active`:'driver not running'; db.className='badge '+(D.driver_alive?'ok':'dead');
+ $('#updBadge').textContent='updated '+new Date(D.now*1000).toLocaleTimeString('en-US');
  drawMap(); depthBars(); tput();
- $('#workers tbody').innerHTML=D.running.sort((a,b)=>a.worker.localeCompare(b.worker)).map(w=>`<tr><td class="mono"><span class="st pulse" style="background:var(--running)"></span>${w.worker}</td><td class="mono">${w.cube}</td><td><span class="phase ${w.phase}">${w.phase==='checking'?'cake_lpr 校验':'cadical 求解'}</span></td><td style="text-align:right">${w.elapsed.toFixed(0)}</td><td style="text-align:right">${fmt(Math.round(w.lrat_mb))}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted)">没有正在运行的 worker</td></tr>';
+ $('#workers tbody').innerHTML=D.running.sort((a,b)=>a.worker.localeCompare(b.worker)).map(w=>`<tr><td class="mono"><span class="st pulse" style="background:var(--running)"></span>${w.worker}</td><td class="mono">${w.cube}</td><td><span class="phase ${w.phase}">${w.phase==='checking'?'cake_lpr check':'cadical solve'}</span></td><td style="text-align:right">${w.elapsed.toFixed(0)}</td><td style="text-align:right">${fmt(Math.round(w.lrat_mb))}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted)">no workers running</td></tr>';
  const colr={verified:'var(--verified)',split:'var(--partial)',SAT:'var(--sat)'};
- $('#feed').innerHTML=D.recent.map(e=>`<li><span class="t">${new Date(e.ts*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><span class="st" style="background:${colr[e.status]||'var(--failed)'}"></span><span class="c">${e.cube}</span><span class="x">${e.status==='verified'?`${e.solve_s}s + ${e.cake_s}s · ${e.lrat_mb} MB`:e.status==='split'?`分裂 → ${e.n_children} 子 cube`:e.status}</span></li>`).join('');
+ $('#feed').innerHTML=D.recent.map(e=>`<li><span class="t">${new Date(e.ts*1000).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><span class="st" style="background:${colr[e.status]||'var(--failed)'}"></span><span class="c">${e.cube}</span><span class="x">${e.status==='verified'?`${e.solve_s}s + ${e.cake_s}s · ${e.lrat_mb} MB`:e.status==='split'?`split → ${e.n_children} children`:e.status}</span></li>`).join('');
  $('#hardest tbody').innerHTML=D.hardest.map(h=>`<tr><td class="mono">${h.cube}</td><td style="text-align:right">${fmt(Math.round(h.solve_s))}</td><td style="text-align:right">${fmt(Math.round(h.cake_s))}</td><td style="text-align:right">${fmt(h.lrat_mb)}</td></tr>`).join('');
  if(D.header)$('#foot').textContent=`base formula sha256 ${D.header.base_sha256.slice(0,16)}… · ${fmt(D.header.num_vars)} vars / ${fmt(D.header.num_clauses)} clauses · ${D.header.solver_version} · ${fmt(D.records)} journal records`;
 }
-async function tick(){ try{ const r=await fetch('/data.json',{cache:'no-store'}); D=await r.json(); render(); }catch(e){ $('#updBadge').textContent='连接失败'; } }
+async function tick(){ try{ const r=await fetch('/data.json',{cache:'no-store'}); D=await r.json(); render(); }catch(e){ $('#updBadge').textContent='connection lost'; } }
 tick(); setInterval(tick,10000); setInterval(()=>{if(D)drawMap();},120); window.addEventListener('resize',()=>{if(D)drawMap();});
 </script></body></html>
