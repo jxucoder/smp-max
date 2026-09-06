@@ -37,3 +37,27 @@ journal is `f6/campaign/shards/shard_I_of_8.jsonl.gz` on its branch.
 
 Any `bad`/`missing` in the audit names the cubes to re-run (`--cubes ... --force`
 on any journal, then merge again).
+
+## Outcome (2026-09-06 03:00 UTC): cloud fan-out retired, handoff to the laptop
+
+The seven cloud shards never got past their preflight push: an
+Anthropic-hosted container is reclaimed minutes after its session goes
+idle (uptime resets, processes die, disk survives), so a shard session
+that finished its setup turn lost its driver. Their Routines are
+disabled and the sessions archived; the `claude/campaign-shard-*-of-8`
+branches carry nothing beyond the seed commit and can be deleted. This
+container kept certifying under a keep-alive Monitor (no reboot for the
+last 7.5 h); its journal is the snapshot in this commit and is the
+resume point.
+
+Resume on the laptop (same journal, same driver):
+
+    gunzip -c f6/campaign/campaign.jsonl.gz > f6/campaign/campaign.jsonl
+    cd f6 && python3 cube_campaign.py --solver cadical --workers 10 --time 300 \
+        --max-depth 4 --shuffle --retry-status error,cake_fail,check_timeout \
+        --journal campaign/campaign.jsonl --scratch campaign/scratch
+
+or hand the remaining ~130k cubes to Modal from the laptop (the client
+needs no proxy there): `pip install modal && modal token new && modal run
+f6/modal_campaign.py --sample 50`, then without `--sample`; it appends to
+the same journal. Either way `cube_campaign.py --audit` is the finish line.
