@@ -22,9 +22,9 @@ if ! pgrep -f "cube_campaign.py .*--journal $C/campaign.jsonl" >/dev/null; then
   rm -f "$C/campaign.jsonl.lock"; rm -rf "$C"/scratch/w*
   echo "=== RESUME (supervisor) $(date -u) ===" >> "$C/campaign.live.log"
   setsid -f nohup bash -c "$(cat "$C/driver.cmd")" >> "$C/campaign.live.log" 2>&1 < /dev/null
-  echo "driver relaunched (pid $!): $(cat "$C/driver.cmd")"
+  sleep 1; echo "driver relaunched (pid $(pgrep -f "^python3 cube_campaign.py" | head -1)): $(cat "$C/driver.cmd")"
 fi
 if ! pgrep -f "campaign/snapshot.sh" >/dev/null; then
   setsid -f nohup "$C/snapshot.sh" 3600 > /dev/null 2>&1 < /dev/null
-  echo "checkpoint loop relaunched (pid $!)"
+  sleep 1; echo "checkpoint loop relaunched (pid $(pgrep -f "campaign/snapshot.sh" | head -1))"
 fi
