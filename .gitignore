@@ -25,3 +25,6 @@ f6/campaign/scratch*/
 f6/campaign/*.lock
 f6/campaign/expect*/
 f6/campaign/campaign.jsonl
+f6/campaign/campaign.base.log
+f6/campaign/campaign.live.log
+f6/campaign/shards/*.jsonl

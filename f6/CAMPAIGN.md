@@ -307,3 +307,129 @@ Full campaign with cadical:
     nohup python3 cube_campaign.py --solver cadical --workers 12 --time 600 \
         --max-depth 4 --shuffle --journal campaign/campaign.jsonl \
         --scratch campaign/scratch > campaign/campaign.log 2>&1 &
+
+## Toolchain reproduction on Linux/x86-64 (2026-09-05)
+
+The campaign was built and driven on an Apple M4 Max.  Rebuilt from
+source in a clean Linux/x86-64 container (Ubuntu 24.04, gcc 13.3, 4
+cores) to check that nothing in the chain is machine-specific:
+
+- `cadical-src` at the pinned commit `c60730422e758ef1cebe7aeddf2dda31c996bf04`
+  (`./configure && make`) reports `Version 3.0.1 c6073042…`, i.e. the exact
+  `solver_version` string in the journal header;
+- `cake_lpr-src` built with the repo's default x64 target
+  (`gcc -O2 basis_ffi.c cake_lpr.S`); `cake_lpr example.cnf example.lpr`
+  gives `s VERIFIED UNSAT`.  Note that upstream's own `cake_lpr.sha256` is
+  stale for `basis_ffi.c` (commit `a36874a`, 2026-07-22, replaced the
+  heap/stack environment variables with `--CML_HEAP_SIZE=` /
+  `--CML_STACK_SIZE=` flags without refreshing the checksum file); the
+  CakeML-generated `cake_lpr.S` still matches its published hash
+  `2f3af32d…`, and the FFI shim is outside the trust base in any case;
+- the base formula rebuilds to sha256 `28421fb6…` (84,882 vars /
+  2,709,212 clauses), matching the journal header, so `--audit` passes its
+  header checks off the original machine;
+- two cubes already `verified` on the M4 Max, re-run here with `--force`
+  into a throwaway journal, reproduced their journaled `cnf_sha256`
+  byte for byte (`0,5,4,3,2,1;0,3,5,1,4,2` -> `e1efd2e120f6`,
+  `0,2,5,1,3,4;0,1,2,4,5` -> `cc0edf551f57`), with identical LRAT sizes
+  (39.1 MB / 55.8 MB) and `s VERIFIED UNSAT` both times.
+
+Relative speed on this container: solve ~1.6x slower than the M4 Max,
+cake_lpr ~2.2x slower (22.5 s vs 10.3 s on the same cube).
+
+**Journal forking.**  A resume in a second location starts from the same
+committed snapshot, so the two journals are additive, not conflicting:
+merging is a concatenation (the loader keeps the last record per cube,
+and every record here is terminal and independently checkable).  Parallel
+drivers will re-derive the same split children and may duplicate some
+work; nothing is invalidated.  The `flock` guard is per-filesystem, so it
+does not prevent this - only one driver per journal *file*.
+
+## Depth-3 pricing probe (2026-09-05, `campaign/depth3_probe.jsonl`)
+
+The depth-2 layer splits at 4.7%, and each split replaces one cube with
+~110 children, so the campaign's total size is set by the split rate one
+level down - which had never been measured: at the depth-2 rate the tree
+grows to ~460k nodes with a depth-4 layer `--max-depth` forbids from
+splitting; if depth-3 cubes simply close, it is ~145k.
+
+150 cubes drawn uniformly (seed 20260905) from the 70,282 children of the
+631 journaled split parents, campaign knobs (`--time 300`, 1.5 GB LRAT
+watchdog), `--max-depth 3` so a cube that would split is journaled
+`timeout_maxdepth` instead of enqueuing children.  Linux/x86-64
+container, 3 workers, 633 s wall:
+
+| metric | depth-3 probe | depth-2 layer (for comparison) |
+|---|---|---|
+| verified | **150 / 150** | 12,727 |
+| **split** | **0** (95% CI upper bound 2.0%, rule of three) | 4.7% |
+| solve | median 1.5 s, mean 2.7 s, max 18.5 s | median 2.7 s, mean 14.8 s |
+| cake_lpr | median 8.5 s, mean 9.4 s, max 20.5 s | median 4.9 s, mean 20.5 s |
+| solve+cake | median 10.0 s, **mean 12.2 s** | mean 35.3 s |
+| LRAT | median 36.6 MB, max 338 MB | median 107 MB, max 9.8 GB |
+
+Every record carries `cadical_rc 20`, `cake_verified`, `cnf_sha256` and
+`lrat_sha256`; no killed flags.  (Two of the 150 are the depth-2 `stop`
+children of split parents, which is what a uniform draw over the child
+population gives.)
+
+**Fixing one step more makes a cube roughly three times cheaper and, on
+this evidence, closes it.**  Restricting the schedule prefix cuts the
+proof rather than merely displacing it: LRAT drops 3x and cake_lpr - not
+the solver - becomes the dominant term (77% of per-cube cost at depth 3).
+
+Projection with these numbers: 12,107 roots left, plus ~133,600 depth-3
+cubes (the 70,282 children already enqueued, plus ~571 further splits
+among the remaining roots at the observed 4.7%), so **~146k cubes and
+~584 core-hours** on this container's cores - 8 days at 3 workers, about
+a day across eight such containers, and a depth-4 layer that on present
+evidence may not exist at all.  The earlier ~460k-node worry is
+unsupported: it assumed the depth-2 split rate recurred at depth 3, and
+0/150 rules that rate out at better than 95% confidence.
+
+## Sharding across containers (2026-09-05)
+
+The laptop is out; the campaign runs in ephemeral Linux containers (4
+cores, ~190-300 nodes/h each at 3 workers).  `cube_campaign.py --shard
+I/N` restricts a driver to the roots with sha256(id) mod N == I.  The
+partition is by **root**: a root's whole adaptive split subtree is run by
+the shard that owns the root (children are enqueued in-process by the
+driver that journals the split and, on resume, re-derived only from that
+journal's own split records), so N drivers on N journals seeded from the
+same snapshot never run the same root, and the union of their journals is
+a complete campaign journal.  Every record carries its `shard`.
+
+`merge_journals.py -o merged.jsonl campaign.jsonl shards/*.jsonl.gz`
+merges any number of journals, **in any order**: one header (mixed
+`base_sha256` refused); per cube exactly one record, the best by
+SAT > verified > split > non-terminal and then latest `ts`.  Order
+independence matters: a root this container split by a wall-clock
+timeout (40 of the first 665 splits are `-t 300` timeouts) can be
+verified outright by a faster shard, and a `split` must never shadow a
+certificate - the audit would demand children nobody ran.  Torn trailing
+lines (a checkpoint taken mid-append) are skipped and counted.  The
+merged file is the audit's input; shard journals keep full history.
+
+`campaign/bootstrap.sh I N [WORKERS] [BRANCH]` takes a fresh container
+from a bare checkout to a running shard and is idempotent (re-run it
+hourly from a Routine): toolchain at the pinned commits with self-tests;
+resume from origin's shard branch if it exists, else create it; seed the
+shard journal from the live journal, the branch's last checkpoint, or
+the base snapshot (complete lines only); push once *before* any work so
+a container without push access aborts immediately; hourly checkpoint
+(gzip under the journal's flock, commit, push with rebase retry), a
+checkpoint on exit, a trap for TERM/INT/HUP; if the driver is already
+running, checkpoint only.  `campaign/supervise.sh` + `driver.cmd` do the
+same for this container's unsharded journal (an hourly Routine runs it;
+the container rebooted once and lost every process while the disk
+survived).
+
+Review: the sharding path was adversarially reviewed (4 lenses, 3
+skeptics per finding, critic pass) before any container was spawned; the
+14 confirmed findings - order-dependent merge, torn lines, replacement
+container re-seeding and failing to push, missing push preflight /
+trap / checkpoint mutual exclusion, no relaunch after a shard reboot -
+are all addressed above.  Non-terminal `cake_fail` / `check_timeout`
+records (e.g. a cake_lpr killed for memory) are re-attempted on every
+resume (`--retry-status error,cake_fail,check_timeout`); the final
+merged `--audit` reports any survivor as `bad`.
