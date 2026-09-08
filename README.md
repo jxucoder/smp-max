@@ -1,177 +1,159 @@
 # smp-max: certified maximum numbers of stable matchings
 
-Machine-checkable proofs for f(n) = max number of stable matchings of an
-n x n stable-marriage instance (Knuth 1976, Research Problem #5;
-Gusfield-Irving 1989, Open Problem #1).
+Let f(n) be the maximum number of stable matchings of an n × n
+stable-marriage instance (Knuth 1976, Research Problem 5; Gusfield and
+Irving 1989, Open Problem 1). This repository contains
 
-- **[f5/](f5/)** — DONE: first machine-checkable proof of f(5)=16.
-  Single Lean theorem `f5_eq_16_of_unsat` (zero sorries, standard
-  axioms), 120 Lean-defined CNFs refuted with certificates checked by
-  the formally verified cake_lpr, 120/120. Paper: `f5/paper/f5.pdf`.
-- **[f6/](f6/)** — RESOLVED: f(6)=48 (previously open, conjectured in
-  OEIS A357271). Schedule reduction + exhaustive evaluation of all
-  26,574,282,886 schedule read-off instances; the reduction lemmas
-  (bridge + validity) are formalized in Lean with zero sorries. Paper:
-  `f6/paper/f6.pdf`; theory notes: `f6/theory.pdf`. **Certificate
-  campaign complete (2026-09-08):** the schedule-space formula was
-  refuted cube by cube, 318,736 cake_lpr-checked UNSAT certificates over
-  25,493 root cubes and their splits, 0 SAT, `--audit` exit 0
-  (`f6/CAMPAIGN.md` "Result"). The Lean faithfulness proof tying the
-  formula to `stableCount6` is in progress (`f6/FAITHFULNESS_PLAN.md`).
+- the first **machine-checked proof of f(5) = 16** — one Lean 4 theorem
+  whose only hypothesis is discharged by 120 SAT certificates checked by
+  the formally verified checker cake_lpr;
+- the **determination of f(6) = 48**, previously open (conjectured in
+  OEIS [A357271](https://oeis.org/A357271)) — a schedule reduction
+  formalized in Lean plus a complete, audited SAT certificate campaign
+  over the reduced space (318,736 cake_lpr-checked certificates);
+- a new **lower bound f(7) ≥ 85**, improving the best published bound
+  of 81, with instances checked three independent ways.
 
-**Status: PRIVATE.** Not yet published; OEIS not yet notified. See
-`INSIGHTS.md` for the retrospective and the publication checklist.
+## Results
 
-## Layout
+| n | f(n) | what this repository establishes | where |
+|---|---|---|---|
+| 1–4 | 1, 2, 3, 10 | classical; f(4) = 10 re-proved as a sanity check of the tooling | `f5/` |
+| 5 | **16** | machine-checked, end to end: Lean theorem `f5_eq_16_of_unsat` (zero sorries, standard axioms) + 120 Lean-printed cube formulas, each refuted and each certificate accepted by cake_lpr | `f5/`, `VERIFYING.md` |
+| 6 | **48** | resolved: reduction lemmas proved in Lean (zero sorries), the reduced space refuted cube by cube (25,493 root cubes, 318,736 certificates, `--audit` exit 0), lower bound from the dihedral instance; the faithfulness theorem tying the formula to the Lean statement is in progress | `f6/`, `f6/CAMPAIGN.md` |
+| 7 | **≥ 85** | new lower bound (previous: 81, Ong et al. 2024); two length-20 transposition schedules, verified by brute force, by an independent recount, and via the rotation poset | `f7/` |
 
-- `smp.py` — brute-force stable-matching counter. Validated against the
-  OEIS A351413 extremal Latin instances (n=3,4,5,6 → 3/10/9/48).
-- `encode.py` — SAT encoding of "exists an n x n instance with >= k stable
-  matchings": pairwise-preference variables + transitivity (no-3-cycle),
-  one indicator per perfect matching with S → stability clauses (one
-  direction suffices), sequential-counter cardinality. `--fix-man0` pins
-  man 0's list to identity (sound by woman-relabeling). `--dimacs` exports
-  CNF for external solvers.
-- `f5/` — CNF, run logs, paper draft. Proof artifacts (1.0GB DRAT / 4.0GB
-  LRAT and their zstd compressions, 294MB / 825MB) are gitignored for
-  now; they will be attached to a release or archived on Zenodo.
-- `f6/` — known instance, why n=6 is harder, attack plan.
+## What exactly is machine-checked
 
-External tool: [drat-trim](https://github.com/marijnheule/drat-trim)
-(clone into `dt-src/`, gitignored).
+**f(5) = 16.** The trust base is the Lean 4 kernel, the axioms
+`propext`, `Classical.choice`, `Quot.sound`, about forty lines of
+definitions stating what a 5 × 5 instance and a stable matching are,
+one LRAT checker (we used cake_lpr, verified down to machine code; any
+checker can be substituted), and a 30-line DIMACS printer. The solver
+runs are not trusted: their output is what the checker checks. Anyone
+can regenerate the 120 formulas from the Lean definitions and re-check
+them in two to three hours; `VERIFYING.md` is the recipe.
 
-## State of the art (due diligence, 2026-08)
+**f(6) = 48.** Three layers, with different trust levels, stated plainly:
+
+1. *Reduction (Lean theorems, zero sorries).* Every well-formed order-6
+   instance has at most as many stable matchings as the read-off
+   instance of some *legal schedule* — a sequence of cyclic partner
+   swaps from the identity matching obeying the rotation-theory budgets
+   (`validity_unconditional`, `bridge`, `chain_complete`, … in
+   `f5/lean/SmpF5/SmpF5/*6.lean`). This shrinks the search space from
+   about 10^28 instances to about 2.7 × 10^10 schedules.
+2. *Refutation of "some legal schedule has ≥ 49" (certificates).* The
+   statement is a CNF formula defined in Lean (`SchedCNF6`) and printed
+   byte-identically to DIMACS. Its 25,493 canonical root cubes, and the
+   children of every cube that had to be split, were all refuted by
+   CaDiCaL and every certificate was accepted by cake_lpr: 321,492 cubes,
+   318,736 certificates, 0 satisfiable, and the journal audit reports
+   every root covered with no bad record. The cube list is also defined
+   in Lean and prints byte-identically to the one the campaign ran. The
+   certificates (about 20 TB) were deleted after checking; each record
+   keeps the SHA-256 of its formula and of its certificate, so any cube
+   can be re-derived from Lean and re-checked. An exhaustive direct
+   enumeration of all 26,574,282,886 schedules, run earlier, also gives
+   a maximum of 48; the certificate campaign supersedes it as evidence.
+3. *Faithfulness (in progress).* What is not yet a theorem is that the
+   formula encodes "the read-off count is at least 49" — the analogue of
+   the f(5) faithfulness proof. About half of it is done
+   (`f6/FAITHFULNESS_PLAN.md`, progress log). Until it lands, f(6) = 48
+   rests on the Lean reduction, a validated encoding (a positive control
+   at 48 is satisfiable and decodes to the extremal schedule), and the
+   audited certificates — not on a single Lean theorem as f(5) does.
+
+**f(7) ≥ 85.** A computation, not a proof object: two explicit instances
+in `f7/lb85.txt`, each counted at 85 by three structurally different
+programs. The upper bound is open; `f7/README.md` explains why the
+certified route used at order 6 is three to four orders of magnitude out
+of reach at order 7, and where lower bounds can still be improved.
+
+## Verifying it yourself
+
+`VERIFYING.md` gives the step-by-step recipe. In short:
+
+```bash
+cd f5/lean/SmpF5 && lake exe cache get && lake build     # kernel-checks every theorem (f5 and f6 layers)
+grep -rn sorry SmpF5/                                     # must print nothing
+```
+
+then `#print axioms f5_eq_16_of_unsat` (expect the three standard
+axioms), regenerate and refute the 120 f(5) cubes with any
+DRAT/LRAT-producing solver and any checker you trust, and for f(6):
+
+```bash
+gunzip -k f6/campaign/campaign.jsonl.gz
+python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl   # exit 0 iff every root cube is certified
+```
+
+Any cube can be re-derived from the Lean definitions
+(`export_sched_cnf OUT --prefix=<cube id> [--stop]`), re-solved, and
+re-checked; its SHA-256 must match the journal. The lower bounds are
+checkable in seconds: `python3 smp.py` (validates the counter on the
+OEIS extremal instances) and the instances in `f5/paper/f5.tex`,
+`f6/README.md`, `f7/lb85.txt`.
+
+## Repository layout
+
+| path | contents |
+|---|---|
+| `smp.py` | brute-force stable-matching counter, validated on the OEIS A351413 extremal instances |
+| `encode.py` | the direct SAT encoding of "some n × n instance has ≥ k stable matchings" used for f(4) and f(5) |
+| `f5/` | f(5) = 16: `lean/SmpF5/` (the Lean development — it also hosts the order-6 files), cube runs and checker logs (`cubesL/`), paper (`paper/f5.pdf`) |
+| `f6/` | f(6) = 48: `sched_sat.py` (the schedule CNF), `cube_campaign.py` (driver, audit), `campaign/` (final journal, audit outputs, live dashboard), `gen_enum.c` (the direct enumeration), papers (`paper/f6.pdf`, `theory.pdf`), design notes |
+| `f7/` | f(7) ≥ 85: `sched_hunt.py`, `lb85.txt`, `README.md` |
+| `VERIFYING.md` | third-party verification guide |
+| `INSIGHTS.md` | retrospective, open questions, publication checklist |
+| `NOTES.md` | the chronological lab notebook |
+
+Toolchain: Lean 4 `v4.33.1` with Mathlib (`lake exe cache get`), Python 3,
+and, for regenerating certificates, CaDiCaL at commit `c6073042`
+(`cadical-src/`), cake_lpr from
+[tanyongkiam/cake_lpr](https://github.com/tanyongkiam/cake_lpr)
+(`cake_lpr-src/`), kissat 4.0.4 and
+[drat-trim](https://github.com/marijnheule/drat-trim) (`dt-src/`, f(5)
+only). The three source directories are gitignored; `f6/CAMPAIGN.md`
+records the exact commits and hashes used.
+
+## Background and prior work
 
 - f(1..5) = 1, 2, 3, 10, 16 — OEIS [A357269](https://oeis.org/A357269).
-- f(5)=16: announced by Dan Eilers (Sep 2022, MiniZinc); his paper is
-  still "in preparation", and no proof object of any kind existed before
-  this project.
-- f(6): was open with best lower bound 48 (dihedral Latin instance,
-  [A351413](https://oeis.org/A351413)), conjectured exact
-  ([A357271](https://oeis.org/A357271)) — **resolved here: f(6)=48**.
-- f(7): open. [A357271](https://oeis.org/A357271) tabulates Thurber's
-  2002 composition bounds (a(7)=71), but its linked
-  [Ong et al. 2024 file](https://oeis.org/A357271/a357271_1.txt)
-  (Ong, Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024) improves every ODD
-  order by hill climbing: lb(7)=81, lb(9)=365, lb(11)=1690,
-  lb(13)=7123, lb(15)=27059. Even orders are unimproved, so f(6)=48
-  remains the best lower bound at 6 and this repo's result stands.
-  **Improved here: f(7) >= 85** (`f7/`, checked 2026-09-06 against the
-  OEIS entry as last edited May 2025).
-- General bounds: 2.28^n <= f(n) (Thurber 2002), f(n) <= 3.55^n
-  (Palmer-Pálvölgyi), first exponential bound Karlin-Oveis Gharan-Weber
-  STOC 2018.
+  f(5) = 16 was announced by Dan Eilers (2022, MiniZinc, paper in
+  preparation); no proof object existed before this project.
+- f(6): open with lower bound 48 (dihedral Latin instance,
+  [A351413](https://oeis.org/A351413)), conjectured exact in
+  [A357271](https://oeis.org/A357271); resolved here.
+- f(7): [A357271](https://oeis.org/A357271) tabulates Thurber's 2002
+  composition bounds (71 at order 7); its linked
+  [Ong et al. 2024 file](https://oeis.org/A357271/a357271_1.txt) (Ong,
+  Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024) improves every odd order by
+  hill climbing (81, 365, 1690, 7123, 27059 at orders 7, 9, 11, 13, 15).
+  Improved here to 85 at order 7 (checked 2026-09-06 against the entry
+  as last edited May 2025).
+- General bounds: 2.28^n ≤ f(n) (Thurber 2002), f(n) ≤ 3.55^n
+  (Palmer–Pálvölgyi); the first exponential upper bound is Karlin,
+  Oveis Gharan and Weber, STOC 2018.
+- Certified SAT: cake_lpr (Tan, Heule, Myreen), the verified checker;
+  LRAT/DRAT proof formats (Heule et al.).
 
-## Results log (f5, all on Apple M4 Max, single core)
+## Status and roadmap
 
-- n=4 sanity: k=10 SAT (0.0s, recount 10), k=11 UNSAT (0.1s) — reproves
-  f(4)=10.
-- n=5, k=16: SAT in 0.1s; decoded witness independently recounted at
-  exactly 16 stable matchings (instance in `f5/paper/f5.tex`).
-- n=5, k=17 (with --fix-man0): UNSAT.
-  - CaDiCaL 1.9.5 (PySAT), no proof logging: 389.6s.
-  - kissat 4.0.4 with proof logging: binary DRAT, 1,093,088,497 bytes.
-- Proof verified by drat-trim (backward check, 530.0s): 10,398,816
-  lemmas (6,686,848 in core), 462,936,491 resolution steps, 2,490 RAT
-  lemmas in core, verdict `s VERIFIED`; LRAT certificate emitted
-  (4,327,129,882 bytes).
+Not yet published: neither paper is on arXiv and OEIS has not been
+notified. The publication checklist is in `INSIGHTS.md`. Planned:
 
-- RUP-only re-solves (for Mathlib's RUP-only `lrat_proof`):
-  - kissat with `--eliminate=false --ands=false --equivalences=false
-    --extract=false --substitute=false`: UNSAT, 961MB DRAT, but core still
-    had 2,564 RAT lemmas — elimination was not the RAT source.
-  - kissat `--plain` (all inprocessing off): UNSAT, 2.12GB DRAT, verified
-    in 1276.5s with **0 RAT lemmas in core** — pure-RUP proof achieved;
-    Lean import path unblocked. LRAT emission from this proof: see log.
+1. Finish the Lean faithfulness proof for the order-6 formula, so that
+   f(6) = 48 becomes a single theorem with the certificates as its only
+   hypothesis.
+2. Archive the f(5) certificates and the f(6) journal (Zenodo DOI, GitHub
+   release); make the repository public; submit both papers.
+3. The general-n conjecture (extremal instances come from all-size-2
+   schedules, at full budget for even n) — Conjecture 1 in
+   `f6/paper/f6.pdf`.
+4. Lower bounds at odd orders 9 to 15 with the schedule search of `f7/`.
 
-Together: **f(5) = 16, now with a certificate** (three independent
-refutations; the plain-mode proof is pure RUP).
+## Citing and license
 
-
-## Cube-and-conquer (n=5 Lean import, in progress)
-
-Cubing on man 1's full preference order (120 cubes, orthogonal to the
-fix-man0 symmetry): probe of 4 samples showed all UNSAT, pure RUP,
-solve 2.9-19.1s each, LRAT 72-428MB per cube. Full 120-cube production
-COMPLETE: all 120 cubes UNSAT, pure RUP, each drat-trim-verified; 34GB
-total, mean solve 10.5s (`f5/cube_run.py` -> `f5/cubes/`, regenerable,
-gitignored). This is a fourth, structurally different refutation of
-">=17" (covering split over man 1's preference order).
-
-Architecture B chosen (verified external checker): cake_lpr built
-natively for ARM64 from tanyongkiam/cake_lpr (`cake_lpr-src/`, gitignored
-build), self-test and n=4 pilot passed, then ALL 120 cube certificates
-verified: 120/120 `s VERIFIED UNSAT` (10-way parallel; results in
-`f5/cakelpr_results.txt`). Machine side of the f(5)<=16 evidence chain is
-complete. Lean math side progress: the covering lemma (cube_covering)
-and the ENTIRE symmetry reduction (relabel machinery, isStable_relabel,
-stableCount_relabel, reduce_man0') are fully proved, axioms = standard
-Mathlib trio only. Sole remaining sorry: f5_upper via the per-cube
-encoding-faithfulness bridge.
-
-## Evidence chain status: CLOSED (2026-08-31)
-
-The f(5)=16 proof is complete end-to-end:
-1. `f5_upper_of_unsat` (Lean, zero sorries, axioms = propext +
-   Classical.choice + Quot.sound): if the 120 Lean-defined cube CNFs are
-   unsatisfiable then every well-formed 5x5 instance has <= 16 stable
-   matchings. Chain: faithfulness (Faithfulness.lean) + symmetry
-   (Symmetry.lean) + covering (Faithful.lean) + assembly (Bridge.lean).
-2. The 120 CNFs are printed verbatim from the Lean definitions by
-   `export_cnf` (selector encoding; 2,140 vars, 157,197 clauses each);
-   a 16-slot positive control was SAT on the witness cube.
-3. kissat refuted each cube, drat-trim verified each proof, and the
-   formally verified checker cake_lpr certified each LRAT end-to-end:
-   **120/120 `s VERIFIED UNSAT`** (`f5/cubesL/cubesL_results.txt`).
-4. Lower bound: the 16-matching witness instance is a kernel-only Lean
-   theorem (`f5/lean/Witness.lean`, axioms = [propext]).
-
-Outside the Lean kernel, the trust base is: cake_lpr (formally verified),
-the 30-line DIMACS printer, and the solver toolchain (whose output is
-independently checked, not trusted).
-
-## Independent verification of A344669 (2026-08-31)
-
-Eilers' counts of maximal profiles, previously unreplicated, all confirmed
-with our toolchain: a(3)=1092 (full brute force over 46,656 profiles),
-a(4)=144 (SAT enumeration: 6 canonical solutions x 4!), and
-**a(5)=507,254,400** (incremental-SAT enumeration of all 4,227,120
-canonical man0=id solutions across 120 cubes, ~5 min on 8 cores;
-`f5/cube_enum.py`, `f5/enum_results.txt`). The quotient 4,227,120/24 =
-176,130 also confirms his reduced-instance count in OEIS A357269.
-
-## f(6) = 48 (2026-08-31 .. 09-01)
-
-The schedule reduction (see `f6/theory.pdf` and `f6/paper/f6.pdf`):
-every instance is dominated in stable-matching count by the read-off
-instance of its own rotation schedule, so exhausting the schedule space
-(26,574,282,886 nodes, every node's read-off count computed exactly,
-~10 h on 8 cores) proves the upper bound; the dihedral instance gives
-the lower. Validation: the same machinery reproduces f(3)/f(4)/f(5) =
-3/10/16 (the last certified by this repo's own Lean theorem),
-canonicalization on/off agrees at 4.5x/14x/48x tree blowups, and an
-independent Python implementation agrees throughout.
-
-**Lean formalization of the reduction (complete, 2026-09-01):**
-`f5/lean/SmpF5/SmpF5/{SixBridge,Lattice6,Chain6}.lean` — 1,849 lines,
-105 theorems, zero sorries, axioms = the standard trio. Highlights:
-`bridge` (sc(I) <= sc(readoff I)), `chain_complete` (a maximal cover
-chain from man-optimal to woman-optimal realizes every stable pair),
-the trajectory budget theorems (`traj_*`, `wtraj_*`,
-`total_moves_le_30`), and the step cycle-structure lemmas
-(`prevOwner_*`). The only unformalized link is a verified replay of the
-enumeration itself.
-
-## Next steps
-
-1. (When owner says go) publication sequence: see `INSIGHTS.md`
-   checklist — repo public, Zenodo DOI, arXiv both papers, OEIS.
-2. Verified replay / certified reimplementation of the f(6)
-   enumeration — architectures + pilot plan in `f6/REPLAY_DESIGN.md`.
-3. The general-n conjecture (all-size-2 schedules; full budget at even
-   orders) — stated as Conjecture 1 in `f6/paper/f6.pdf`.
-4. f(7): lower bounds are the live opportunity — see `f7/`, which
-   already improves the best known from 81 to 85. The upper bound is
-   not: the certified cube route is 3-4 orders of magnitude out of
-   reach at order 7 (`f7/README.md`), and the schedule tree is
-   ~1e14-1e15 at budget 42.
+A `CITATION.cff` and a license file will be added before the repository
+is made public. Until then, please contact the author before citing.
