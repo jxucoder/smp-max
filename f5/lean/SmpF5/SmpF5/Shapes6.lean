@@ -219,3 +219,231 @@ theorem Legal_map_minFirst {S : List (List Nat)} (hL : Legal S) : Legal (S.map m
 
 theorem length_map_minFirst (S : List (List Nat)) : (S.map minFirst).length = S.length :=
   List.length_map ..
+
+/-! ## Enumerations (plan §4.2 part 2, §4.3): `combos`, `permsOf`, `cyclicShapes`, `permsN` -/
+
+open SchedCNF6
+
+theorem mem_combos : ∀ (xs : List Nat) (k : Nat) (l : List Nat),
+    l ∈ combos xs k ↔ l.Sublist xs ∧ l.length = k := by
+  intro xs
+  induction xs with
+  | nil =>
+    intro k l
+    cases k with
+    | zero => simp [combos, List.sublist_nil]
+    | succ k =>
+      simp only [combos, List.not_mem_nil, false_iff, not_and]
+      intro h
+      rw [List.sublist_nil.1 h]; simp
+  | cons x xs ih =>
+    intro k l
+    cases k with
+    | zero =>
+      simp only [combos, List.mem_singleton, List.length_eq_zero_iff]
+      constructor
+      · rintro rfl; exact ⟨List.nil_sublist _, rfl⟩
+      · rintro ⟨_, rfl⟩; rfl
+    | succ k =>
+      simp only [combos, List.mem_append, List.mem_map, ih]
+      constructor
+      · rintro (⟨l', ⟨hs, hl⟩, rfl⟩ | ⟨hs, hl⟩)
+        · exact ⟨List.Sublist.cons_cons x hs, by simp [hl]⟩
+        · exact ⟨List.Sublist.cons x hs, hl⟩
+      · rintro ⟨hs, hl⟩
+        rcases List.sublist_cons_iff.1 hs with h | ⟨r, rfl, hr⟩
+        · right; exact ⟨h, hl⟩
+        · left; exact ⟨r, ⟨hr, by simpa using hl⟩, rfl⟩
+
+theorem picks_perm : ∀ (xs : List Nat) (y : Nat) (ys : List Nat),
+    (y, ys) ∈ picks xs → (y :: ys).Perm xs := by
+  intro xs
+  induction xs with
+  | nil => intro y ys h; simp [picks] at h
+  | cons x xs ih =>
+    intro y ys h
+    simp only [picks, List.mem_cons, List.mem_map] at h
+    rcases h with h | ⟨p, hm, hp⟩
+    · rw [Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      exact List.Perm.refl _
+    · obtain ⟨y', ys'⟩ := p
+      simp only [Prod.mk.injEq] at hp
+      obtain ⟨rfl, rfl⟩ := hp
+      exact (List.Perm.swap x y' ys').trans ((ih y' ys' hm).cons x)
+
+theorem picks_map_fst : ∀ (xs : List Nat), (picks xs).map Prod.fst = xs := by
+  intro xs
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [picks, List.map_cons, List.map_map]
+    congr 1
+    first
+    | done
+    | (rw [← ih]; apply List.map_congr_left; intro p _; cases p; rfl)
+
+theorem picks_mem_erase : ∀ (xs : List Nat) (y : Nat), y ∈ xs → (y, xs.erase y) ∈ picks xs := by
+  intro xs
+  induction xs with
+  | nil => intro y h; exact absurd h List.not_mem_nil
+  | cons x xs ih =>
+    intro y hy
+    simp only [picks, List.mem_cons, List.mem_map]
+    by_cases hxy : x = y
+    · subst hxy; left; simp
+    · right
+      have hy' : y ∈ xs := by
+        rcases List.mem_cons.1 hy with h | h
+        · exact absurd h.symm hxy
+        · exact h
+      refine ⟨(y, xs.erase y), ih y hy', ?_⟩
+      show (y, x :: xs.erase y) = (y, (x :: xs).erase y)
+      rw [List.erase_cons_tail (by simpa using hxy)]
+
+theorem picks_length_eq {xs : List Nat} {y : Nat} {ys : List Nat} (h : (y, ys) ∈ picks xs) :
+    ys.length + 1 = xs.length := by
+  have := (picks_perm xs y ys h).length_eq
+  simpa using this
+
+theorem mem_permsAux : ∀ (n : Nat) (xs : List Nat), xs.length = n → xs.Nodup →
+    ∀ (l : List Nat), l ∈ permsAux n xs ↔ l.Perm xs := by
+  intro n
+  induction n with
+  | zero =>
+    intro xs hlen _ l
+    have hxs : xs = [] := List.length_eq_zero_iff.1 hlen
+    subst hxs
+    simp [permsAux, List.perm_nil]
+  | succ n ih =>
+    intro xs hlen hnd l
+    simp only [permsAux, List.mem_flatMap, List.mem_map, Prod.exists]
+    constructor
+    · rintro ⟨y, ys, hp, l', hl', rfl⟩
+      have hperm := picks_perm xs y ys hp
+      have hys_len : ys.length = n := by have := picks_length_eq hp; omega
+      have hys_nd : ys.Nodup := (List.nodup_cons.1 (hperm.nodup_iff.2 hnd)).2
+      have := (ih ys hys_len hys_nd l').1 hl'
+      exact (this.cons y).trans hperm
+    · intro hl
+      cases l with
+      | nil => have := hl.length_eq; simp at this; omega
+      | cons y l' =>
+        have hy : y ∈ xs := hl.subset List.mem_cons_self
+        refine ⟨y, xs.erase y, picks_mem_erase xs y hy, l', ?_, rfl⟩
+        have hlen' : (xs.erase y).length = n := by
+          rw [List.length_erase_of_mem hy]; omega
+        have hnd' : (xs.erase y).Nodup := hnd.erase y
+        rw [ih _ hlen' hnd']
+        exact (List.cons_perm_iff_perm_erase.1 hl).2
+
+theorem mem_permsOf {xs : List Nat} (hnd : xs.Nodup) {l : List Nat} :
+    l ∈ permsOf xs ↔ l.Perm xs :=
+  mem_permsAux xs.length xs rfl hnd l
+
+theorem picks_nodup {xs : List Nat} (hnd : xs.Nodup) : (picks xs).Nodup := by
+  have : ((picks xs).map Prod.fst).Nodup := by rw [picks_map_fst]; exact hnd
+  exact this.of_map _
+
+theorem permsAux_nodup : ∀ (n : Nat) (xs : List Nat), xs.length = n → xs.Nodup →
+    (permsAux n xs).Nodup := by
+  intro n
+  induction n with
+  | zero => intro xs _ _; simp [permsAux]
+  | succ n ih =>
+    intro xs hlen hnd
+    simp only [permsAux]
+    rw [List.nodup_flatMap]
+    constructor
+    · rintro ⟨y, ys⟩ hp
+      have hperm := picks_perm xs y ys hp
+      have hys_len : ys.length = n := by have := picks_length_eq hp; omega
+      have hys_nd : ys.Nodup := (List.nodup_cons.1 (hperm.nodup_iff.2 hnd)).2
+      exact List.Nodup.map List.cons_injective (ih ys hys_len hys_nd)
+    · have hfst : ((picks xs).map Prod.fst).Nodup := by rw [picks_map_fst]; exact hnd
+      have hpw : (picks xs).Pairwise (fun a b => a.1 ≠ b.1) := List.pairwise_map.1 hfst
+      refine hpw.imp ?_
+      rintro ⟨y, ys⟩ ⟨y', ys'⟩ hne
+      simp only at hne
+      unfold Function.onFun
+      rw [List.disjoint_left]
+      intro l hl hl'
+      obtain ⟨l1, _, rfl⟩ := List.mem_map.1 hl
+      obtain ⟨l2, _, heq⟩ := List.mem_map.1 hl'
+      exact hne (List.cons.inj heq).1.symm
+
+theorem permsOf_nodup {xs : List Nat} (hnd : xs.Nodup) : (permsOf xs).Nodup :=
+  permsAux_nodup xs.length xs rfl hnd
+
+/-- Every min-first step is an entry of the campaign's shape table. -/
+theorem minFirst_mem_cyclicShapes {st : List Nat} (hst : WFStep st) :
+    minFirst st ∈ cyclicShapes 6 := by
+  have hcons : ∀ (l : List Nat), l ≠ [] → l = l.headD 0 :: l.tail := by
+    intro l hl
+    cases l with
+    | nil => exact absurd rfl hl
+    | cons a t => rfl
+  obtain ⟨s, hs⟩ : ∃ s, s = minFirst st := ⟨_, rfl⟩
+  rw [← hs]
+  have hsWF : WFStep s := by rw [hs]; exact minFirst_WFStep hst
+  obtain ⟨h2, hnd, hlt⟩ := hsWF
+  obtain ⟨men, hmen⟩ : ∃ men, men = (List.range 6).filter (fun x => decide (x ∈ s)) := ⟨_, rfl⟩
+  have hmen_sub : men.Sublist (List.range 6) := by rw [hmen]; exact List.filter_sublist
+  have hmen_nd : men.Nodup := by rw [hmen]; exact List.nodup_range.filter _
+  have hmen_perm : men.Perm s := by
+    rw [List.perm_ext_iff_of_nodup hmen_nd hnd]
+    intro x
+    simp only [hmen, List.mem_filter, List.mem_range, decide_eq_true_eq]
+    exact ⟨fun h => h.2, fun h => ⟨hlt x h, h⟩⟩
+  have hmen_len : men.length = s.length := hmen_perm.length_eq
+  have hmen_le : men.length ≤ 6 := by
+    have := hmen_sub.length_le; simpa using this
+  have hs_ne : s ≠ [] := by intro h; rw [h] at h2; simp at h2
+  have hmen_ne : men ≠ [] := by
+    intro h; have := hmen_len; rw [h, List.length_nil] at this; omega
+  -- the head of `men` is the minimum of `st`
+  have hmin_s : st.foldl min 6 ∈ s := by rw [hs]; exact mem_rotateTo.2 (stepMin_mem hst)
+  have hm0 : st.foldl min 6 ∈ men := hmen_perm.mem_iff.2 hmin_s
+  have hsorted : men.Pairwise (· < ·) := by rw [hmen]; exact (List.pairwise_lt_range).filter _
+  have hhead : men.headD 0 = st.foldl min 6 := by
+    have hmc := hcons men hmen_ne
+    rw [hmc] at hm0 hsorted
+    rcases List.mem_cons.1 hm0 with h | h
+    · exact h.symm
+    · have h1 := (List.pairwise_cons.1 hsorted).1 _ h
+      have hh0s : men.headD 0 ∈ s := hmen_perm.subset (by rw [hmc]; exact List.mem_cons_self)
+      have hh0st : men.headD 0 ∈ st := by rw [hs] at hh0s; exact mem_rotateTo.1 hh0s
+      have h2' := foldl_min_le (l := st) 6 _ hh0st
+      omega
+  have hshead : s.headD 0 = st.foldl min 6 := by rw [hs]; exact minFirst_head hst
+  -- assemble the membership
+  unfold cyclicShapes
+  rw [List.mem_flatMap]
+  refine ⟨men.length - 2, ?_, ?_⟩
+  · simp only [List.mem_range]; omega
+  · rw [List.mem_flatMap]
+    refine ⟨men, ?_, ?_⟩
+    · rw [mem_combos]; exact ⟨hmen_sub, by omega⟩
+    · rw [List.mem_map]
+      refine ⟨s.tail, ?_, ?_⟩
+      · have hnd_tail : men.tail.Nodup := hmen_nd.tail
+        rw [mem_permsOf hnd_tail]
+        have h1 : (men.headD 0 :: men.tail).Perm (s.headD 0 :: s.tail) := by
+          rw [← hcons men hmen_ne, ← hcons s hs_ne]; exact hmen_perm
+        rw [hhead, hshead] at h1
+        exact h1.cons_inv.symm
+      · show men.headD 0 :: s.tail = s
+        rw [hhead, ← hshead]; exact (hcons s hs_ne).symm
+
+/-! ### `permsN 6` -/
+
+theorem mem_permsN6 {mu : List Nat} : mu ∈ permsN 6 ↔ mu.Perm idRow6 := by
+  unfold permsN
+  rw [mem_permsOf List.nodup_range, idRow6_eq_range]
+
+theorem permsN6_nodup : (permsN 6).Nodup := permsOf_nodup List.nodup_range
+
+theorem permsN6_perm_permutations : (permsN 6).Perm idRow6.permutations := by
+  rw [List.perm_ext_iff_of_nodup permsN6_nodup (List.nodup_permutations _ (by decide))]
+  intro mu
+  rw [mem_permsN6, List.mem_permutations]
