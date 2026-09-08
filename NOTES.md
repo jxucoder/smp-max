@@ -152,3 +152,34 @@ core-hours for the whole tree). The enumeration (`gen_enum.c`,
 theorem: faithfulness - every well-formed order-6 instance with >= 49
 stable matchings satisfies some certified cube's formula; see
 `STATUS.md` for its status.
+
+## f(6) = 48 as one Lean theorem (2026-09-08, evening)
+
+The faithfulness proof planned in `f6/FAITHFULNESS_PLAN.md` is complete.
+`f6_eq_48_of_unsat` (`f5/lean/SmpF5/SmpF5/Bridge6.lean`): if every cube
+of `Cubes6.finalCubes` (the 318,736 certified cubes, `SplitList6.lean`)
+has an unsatisfiable `cubeFormula 49`, then every well-formed order-6
+instance has at most 48 stable matchings and the dihedral instance has
+exactly 48 (`dihedral6_count`, kernel `decide` over the 720
+permutations). `#print axioms`: propext, Classical.choice, Quot.sound;
+`lake build` 893 jobs, no errors; no `sorry`. Chain: `49 <= sc I` ->
+`J := wrelabel6 (invMatch (manOpt I)) I` -> `S := chainSched J` ->
+`S' := relabelSched (sigmaOf S) S` (`Legal_relabel`, `firstApp_relabel`)
+-> `49 <= sc I = sc J = sc (relabel6 σ J) <= sc (readoffS S')`
+(`sc_le_readoffS_relabelSched`; the read-off is not relabel-equivariant,
+so the bridge is re-instantiated at the relabeled instance) ->
+`fits_final` (Coverage6: S' fits a cube of `finalCubes`) ->
+`cube_faithful6` (Faithfulness6: `tau6 49 S' (idxsOf (readoffS S'))`
+satisfies the cube's formula via the twelve family lemmas of FamState6 /
+FamTrans6 / FamGates6 / FamSelect6 and the unit lemmas of Units6).
+Files added today: RelabelSched6 (391 lines), FirstApp6 (502),
+PrefixLegal6 (193), FamState6 (209), FamGates6 (363), FamTrans6 (337),
+FamSelect6 (308), Units6 (110), Lower6 (77), Coverage6, Faithfulness6,
+Bridge6, and the data file SplitList6 (2,808). Faithfulness layer total:
+19 files, 4,761 lines, 333 theorems; reduction layer unchanged (5,230 /
+243); whole development 37 imported modules, 15,785 lines, 647 theorems.
+The twelve proof files were written by parallel proof agents in about
+two hours, each checked with `lake env lean` and then with the full
+build; the layer-0 definitions (`CubeWF`, `Fits`, `cubeFormula`,
+`relabelSched`, `finalCubes`) were fixed before any proof was written and
+were not changed afterwards. CI now axiom-checks 1 + 25 theorems.

@@ -133,9 +133,11 @@ id lists extracted from its last record per cube):
 This closes the file-identity claim (every formula cake_lpr checked is,
 by hash, the one Lean defines) and the cube-set identity claim (the set
 of cube formulas `finalCubes` ranges over is exactly the set of
-`verified` records).  What remains on the Lean side is the faithfulness
-theorem itself, which makes the certificates the hypothesis of a Lean
-theorem; see `STATUS.md` for its status.
+`verified` records).  The faithfulness theorem that makes the certificates the hypothesis of
+a Lean theorem is proved (2026-09-08, evening): `f6_eq_48_of_unsat` in
+`../f5/lean/SmpF5/SmpF5/Bridge6.lean` - if every cube of `finalCubes` has
+an unsatisfiable `cubeFormula 49`, then f(6) = 48 - with zero sorries and
+axioms `propext`, `Classical.choice`, `Quot.sound` (`STATUS.md`).
 
 ## Case split (root cubes)
 
@@ -188,15 +190,19 @@ lemma: relabel men by their first-participation order (women
 correspondingly); legality is preserved and the read-off stable count
 is invariant.  That lemma exists at the *instance* level (`Sym6.lean`:
 `relabel6` / `mapMu6`, count invariance); its schedule-level form is
-part of the faithfulness proof (see `STATUS.md`).  The theorem that turns
+`Legal_relabel` + `firstApp_relabel` + `sc_le_readoffS_relabelSched`
+(`RelabelSched6.lean`, `FirstApp6.lean`; the read-off itself is not
+relabel-equivariant, so the count bridge is re-instantiated at the
+relabeled instance).  The theorem that turns
 the certificates into the bound - the analogue of f(5)'s `cube_faithful`
 - runs from instance to model: every well-formed order-6 instance with
 >= 49 stable matchings yields a satisfying assignment of `cubeFormula 49
 c` for some `c` in `finalCubes` (`f6_upper_of_unsat`, `PLAN.md` §A),
 so that UNSAT of all 318,736 certified cubes gives sc <= 48.  It is not
 the converse (that a satisfying assignment yields an instance), which
-would only matter for decoding a SAT hit.  For its status see
-`STATUS.md`.  `--audit` checks the journal against the exact root set.
+would only matter for decoding a SAT hit.  It is proved:
+`f6_upper_of_unsat` / `f6_eq_48_of_unsat` (`Bridge6.lean`, zero
+sorries, standard axioms).  `--audit` checks the journal against the exact root set.
 
 ## Per-cube pipeline (worker)
 

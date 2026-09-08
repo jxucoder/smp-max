@@ -32,3 +32,11 @@ journal's last record per cube):
    .lake/build/bin/export_cubes6 final.txt --final          # sort | cmp with verified ids
    .lake/build/bin/export_cubes6 units.tsv --units=all_ids.txt
    python3 ../../../f6/lean_rehash.py base.cnf units.tsv campaign.jsonl   # exit 0 iff all match
+
+6. Theorem (2026-09-08, evening).  f6_eq_48_of_unsat (f5/lean/SmpF5/SmpF5/Bridge6.lean):
+   (∀ c ∈ Cubes6.finalCubes, ¬ Satisfiable (Cubes6.cubeFormula 49 c)) →
+   (∀ I : Inst6, WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I, WF6 I = true ∧ stableCount6 I = 48.
+   #print axioms: [propext, Classical.choice, Quot.sound] (also for f6_upper_of_unsat, cube_faithful6,
+   fits_final, exists_canonical_schedule, firstApp_relabel, Legal_relabel, sc_le_readoffS_relabelSched,
+   dihedral6_count).  lake build: 893 jobs, no errors; grep -rn sorry SmpF5/: nothing.  With items 4 and 5,
+   the hypothesis is exactly "the 318,736 formulas the campaign certified are unsatisfiable".

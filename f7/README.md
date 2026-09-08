@@ -34,22 +34,34 @@ change that turns out to be the whole point: **the schedule length is a
 search variable**, not fixed at the full budget of n(n-1)/2
 transpositions.
 
-- Restricted to full-budget schedules (all 21 transpositions of K7), the
-  search plateaus at exactly **80** — 4 of 10 seeds converge there.
-- With the length free: **24 of 24 seeds reached >= 81** and **6 reached
-  85**, over two batches (12 seeds x 300 s, 12 seeds x 900 s, one core
-  each). Every 85 was found at schedule length 20. No seed ever exceeded
-  85, so 85 is plausibly the size-2 optimum at order 7 — and, if
-  Conjecture 1 holds, f(7) itself.
+- Restricted to full-budget schedules (`--full`: the length is pinned at
+  21 transposition steps, pairs may repeat), 9 of 10 seeds ended at **80**
+  and one at 78 after 300 s each; none exceeded 80
+  (`logs/full_s0..9_300s.log`).
+- With the length free (`logs/free_s*_{300,900}s.log`, 2026-09-08 rerun of
+  the unlogged 2026-09-06 runs, one core each): at 300 s, **12 of 12 seeds
+  reached >= 81** (81, six at 82, two at 83, and **85** for seeds 2, 5
+  and 9); at 900 s, 12 of 12 reached >= 83 and **9 reached 85**. Every 85
+  was found at schedule length 20; no run exceeded 85. The 12 runs that
+  reached 85 produced 9 distinct read-off instances (A from seed 9, B from
+  seed 5, and seven others), each recounted at 85 by brute force. So 85
+  is plausibly the size-2 optimum at order 7 — and, if Conjecture 1 holds,
+  f(7) itself.
 
 Both 85-instances are all-size-2 with **20 of 21 rotations** (40 of the
-42 move budget) — sub-budget, exactly as Conjecture 1 predicts for odd
-orders, which is why the full-budget search could not see them.
+42 move budget; the schedules repeat pairs — A uses 10 distinct pairs,
+B 11) — sub-budget, exactly as Conjecture 1 predicts for odd orders,
+which is why the full-budget search could not see them.
 
 Instances and schedules: `lb85.txt`. Reproduce with
 
-    python3 f7/sched_hunt.py 7 <seed> <seconds>
+    python3 f7/sched_hunt.py 7 <seed> <seconds>          # free length
+    python3 f7/sched_hunt.py 7 <seed> <seconds> --full   # full budget (21 steps)
     python3 f7/sched_hunt.py 6 0 25      # sanity: reaches 48 = f(6)
+
+The default mode's random stream is unchanged since 2026-09-06, so
+`7 9 300` and `7 5 300` regenerate schedules A and B byte for byte
+(`logs/free_s9_300s.log`, `logs/free_s5_300s.log`).
 
 **Verification.** Both instances were checked three structurally
 different ways, all agreeing on 85:
@@ -63,9 +75,11 @@ different ways, all agreeing on 85:
 
 Preference lists were checked to be genuine permutations on both sides.
 
-Caveat: "new record" rests on the OEIS entry as fetched 2026-09-06 (last
-edited May 2025), which still lists the 2024 poster as the improvement.
-A literature check is worth doing before claiming it anywhere public.
+Caveat: "new record" rests on OEIS A357271 as fetched 2026-09-06 and
+again 2026-09-08 (last edited 2025-05-26), which still lists the 2024
+poster as the only improvement; arXiv and zbMATH searches on 2026-09-08
+found nothing above 81. A literature check is still worth repeating
+before claiming it anywhere public.
 
 ## 3. Conjecture 1 gets four independent confirmations
 
@@ -117,8 +131,10 @@ formula of this shape is scaled again:
   alone is 58.8M clauses versus ~149k. It cannot be fixed mid-campaign —
   changing a clause changes the base sha256 and invalidates every
   certificate already earned — so encoding choices freeze at launch.
-- **The campaign is certificate-bound, not solver-bound.** 781 of the 863
-  order-6 splits were triggered by the LRAT size watchdog and only 11 by
-  wall-clock; at depth 3 cake_lpr costs 7.5 s median against a 1.5 s
+- **The campaign is certificate-bound, not solver-bound.** 2,692 of the
+  2,756 order-6 splits were triggered by the LRAT size watchdog (journal
+  `reason`: `lrat_growth` 2,666, `lrat_too_large` 26), 11 by the solver
+  being killed at the wall-clock limit, 13 by a cake_lpr check timeout,
+  and 40 carry no reason; at depth 3 cake_lpr costs 7.5 s median against a 1.5 s
   solve, and even the easiest cube pays ~2 s re-parsing the 48.7 MB base.
   That floor is per-cube and no amount of splitting gets below it.

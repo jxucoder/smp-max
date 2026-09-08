@@ -5,11 +5,11 @@ import SmpF5.Faithfulness
 /-!
 # Assembly: from 120 UNSAT cubes to f(5) ≤ 16
 
-`cube_faithful` (the remaining proof obligation) extracts a satisfying
-assignment of `cubeCNF row` from any well-formed instance in that cube
-with ≥ 17 stable matchings. Everything else is proved:
-`f5_upper_of_unsat` combines it with the symmetry reduction
-(`reduce_man0'`) and the covering lemma (`cube_covering`).
+`cube_faithful` (proved as `cube_faithful'` in `Faithfulness.lean`)
+extracts a satisfying assignment of `cubeCNF row` from any well-formed
+instance in that cube with ≥ 17 stable matchings. `f5_upper_of_unsat`
+combines it with the symmetry reduction (`reduce_man0'`) and the
+covering lemma (`cube_covering`); every step is proved in Lean.
 
 The 120 hypotheses `¬ Satisfiable (cubeCNF row)` are discharged outside
 the kernel: the formulas are printed verbatim from these definitions by

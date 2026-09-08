@@ -26,6 +26,13 @@ costs about 300 core-hours.
 5. The ~30-line DIMACS printer `ExportCnf.lean` (read it, or bypass it by
    printing the Lean terms yourself).
 
+For f(6) the list is the same, item for item: in item 3 the definitions
+are `Inst6`, `WF6`, `isStable6`, `sms6`, `stableCount6` at the top of
+`f5/lean/SmpF5/SmpF5/SixBridge.lean` (about 40 lines); in item 5 the
+printers are `ExportSchedCnf.lean` and `ExportCubes6.lean`; and the
+campaign journal enters as described under "What the certificate layer
+does and does not establish" below.
+
 Not on the list: our solver runs, our Python scripts, our honesty.
 
 ## Step 1 — check the Lean development (~20 min machine time)
@@ -136,11 +143,36 @@ f(6) = 48 has three layers with different trust levels (top-level
 theorem (see `STATUS.md`). The lower bound is the dihedral instance
 (`f6/README.md`; `python3 smp.py` recounts it in seconds).
 
-### f(6) reduction layer (Lean, ~5 min on top of Step 1)
+### The theorem (Lean, ~1 min on top of Step 1)
 
-The same `lake build` also kernel-checks the order-6 development
-(`SmpF5/*6.lean`). Check the axiom base of the 16 theorems that CI
-checks (`.github/workflows/lean-verify.yml`):
+The same `lake build` also kernel-checks the order-6 development. Its
+end statement is `f6_eq_48_of_unsat` (`SmpF5/Bridge6.lean`):
+
+```bash
+echo 'import SmpF5.Bridge6
+#print axioms f6_eq_48_of_unsat
+#check @f6_eq_48_of_unsat' > /tmp/ax6main.lean && lake env lean /tmp/ax6main.lean
+```
+
+Expected: `'f6_eq_48_of_unsat' depends on axioms: [propext,
+Classical.choice, Quot.sound]` and the statement
+
+```
+(∀ c ∈ Cubes6.finalCubes, ¬Satisfiable (Cubes6.cubeFormula 49 c)) →
+  (∀ (I : Inst6), WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I, WF6 I = true ∧ stableCount6 I = 48
+```
+
+Read as: IF every cube formula of the certified cube set is
+unsatisfiable THEN f(6) = 48 (upper bound for every well-formed order-6
+instance, and the dihedral witness with exactly 48, `dihedral6_count`,
+kernel-computed in `Lower6.lean`). `Cubes6.finalCubes` and
+`Cubes6.cubeFormula` are Lean definitions; the identity checks below show
+that they are exactly the cubes and formulas the campaign refuted.
+
+### The 25 theorems CI checks (~5 min)
+
+Check the axiom base of the theorems that CI checks
+(`.github/workflows/lean-verify.yml`):
 
 ```bash
 echo 'import SmpF5
@@ -159,10 +191,19 @@ echo 'import SmpF5
 #print axioms minFirst_mem_cyclicShapes
 #print axioms permsN6_perm_permutations
 #print axioms Legal_map_minFirst
-#print axioms SchedCNF6.dec_pwVar3' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
+#print axioms SchedCNF6.dec_pwVar3
+#print axioms firstApp_relabel
+#print axioms Legal_relabel
+#print axioms sc_le_readoffS_relabelSched
+#print axioms exists_canonical_schedule
+#print axioms fits_final
+#print axioms cube_faithful6
+#print axioms dihedral6_count
+#print axioms f6_upper_of_unsat
+#print axioms f6_eq_48_of_unsat' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
 ```
 
-All 16 must report `[propext, Classical.choice, Quot.sound]`. What they
+All 25 must report `[propext, Classical.choice, Quot.sound]`. What they
 say (definitions to read: `Inst6`, `WF6`, `isStable6`, `stableCount6`,
 `stab`, `readoff` at the top of `SixBridge.lean`, same style as the
 order-5 ones; `readoffS`, `Legal` in `Sched6.lean`):
@@ -198,11 +239,28 @@ order-5 ones; `readoffS`, `Legal` in `Sched6.lean`):
   read-off semantics of the encoding;
 - `SchedCNF6.dec_pwVar3` (Decode6.lean): the last of the decode-layer
   lemmas — the decoder `dec6` inverts the variable layout (here on the
-  woman-side gate variables `pwVar … 3`).
+  woman-side gate variables `pwVar … 3`);
+- `Legal_relabel`, `sc_le_readoffS_relabelSched` (RelabelSched6.lean) and
+  `firstApp_relabel` (FirstApp6.lean): relabeling men and women by the
+  first-participation order keeps a schedule legal, makes it canonical
+  (the new men of each step are the next unused labels), and does not
+  lower the read-off count — the count bridge is re-instantiated at the
+  relabeled instance, since the read-off itself is not
+  relabel-equivariant;
+- `exists_canonical_schedule` (Faithfulness6.lean): from an instance with
+  ≥ 49 stable matchings to a legal, canonical schedule whose read-off has
+  ≥ 49;
+- `fits_final` (Coverage6.lean): every legal canonical schedule fits some
+  cube of `finalCubes` (the certified cube set);
+- `cube_faithful6` (Faithfulness6.lean): the schedule's natural
+  assignment satisfies the formula of any well-formed cube it fits, when
+  its read-off has ≥ 49 stable matchings — the faithfulness theorem, the
+  analogue of f(5)'s `cube_faithful`;
+- `dihedral6_count` (Lower6.lean): the witness;
+- `f6_upper_of_unsat`, `f6_eq_48_of_unsat` (Bridge6.lean): the assembly.
 
-The first nine are the reduction layer proper (the f(6) upper bound
-needs only `validity_unconditional`); the other seven belong to the
-faithfulness layer, whose status is in `STATUS.md`.
+The first nine are the reduction layer proper; the other sixteen are the
+faithfulness layer (complete as of 2026-09-08; `STATUS.md`).
 
 ### The certificate campaign: audit and Lean identity checks (~10 min)
 
@@ -312,23 +370,25 @@ follow the same tree or its own.
 Corroboration, not evidence: an earlier exhaustive enumeration of all
 26,574,282,886 schedules (`f6/gen_enum.c`) also gives a maximum of 48.
 
-### What is still not a theorem
+### What is and is not a theorem
 
 For f(5), `f5_eq_16_of_unsat` makes the 120 certificates the only
-hypothesis of a kernel-checked statement. The order-6 analogue — that
-every well-formed order-6 instance with ≥ 49 stable matchings yields a
-satisfying assignment of some certified cube's formula, so that the
-318,736 certificates are the hypothesis of a Lean theorem giving
-f(6) ≤ 48 — is the faithfulness theorem. Its status is recorded in
-`STATUS.md`; do not read it off this file. Until it is in place, f(6) =
-48 rests on the Lean reduction, the audited certificate campaign with
-the identity checks above, and the checks of the encoding described in
-`STATUS.md` — not on a single Lean theorem as f(5) does.
+hypothesis of a kernel-checked statement; for f(6), `f6_eq_48_of_unsat`
+does the same with the 318,736 certified cube formulas (the faithfulness
+theorem — every well-formed order-6 instance with ≥ 49 stable matchings
+yields a satisfying assignment of some certified cube's formula — is
+`cube_faithful6` composed with `exists_canonical_schedule` and
+`fits_final`). Everything from the definitions to that hypothesis is a
+Lean theorem. What is not a theorem is the hypothesis itself: it is
+discharged by the checker verdicts recorded in the self-attested journal,
+as described above, exactly as f(5)'s hypothesis is discharged by the log
+of the 120 cake_lpr runs.
 
-## Known gaps (state of 2026-09-08)
+## Known gaps (state of 2026-09-08, evening)
 
 - f(5): LRAT certificates are not archived (regenerable in ~2 h; a
   Zenodo archive with DOI is planned so verifiers can skip solving and
   only re-check). f(6): the certificates (about 25 TB) were not kept;
   see the trust statement above.
-- f(6): the faithfulness theorem — see `STATUS.md`.
+- `lean4checker` has not been run on the build (an optional extra check
+  of the kernel's verdict); no license or `CITATION.cff` yet.

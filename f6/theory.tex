@@ -159,7 +159,10 @@ formalized in Lean~4 in the accompanying development (ten files in import order 
 \texttt{SixBridge.lean} to \texttt{WRelabel6.lean}, $4{,}646$ lines; $5{,}230$ lines and
 $243$ theorems including \texttt{SchedCNF6.lean}, which defines the order-6 certificate
 formula; no \texttt{sorry}, axioms
-\texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}).
+\texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}). The faithfulness theorem
+that ties the certificate formula to the count is formalized as well (nineteen further files,
+$4{,}761$ lines, $333$ theorems, and a data file of the $2{,}756$ recorded split decisions);
+the end statement \texttt{f6\_eq\_48\_of\_unsat} has the certificates as its only hypothesis.
 The bridge is formalized in a bottom-agnostic form (\texttt{AbsBridge6.lean}): any
 instance that ranks each person's stable partners on top in original order dominates
 the original in stable-matching count, whatever its bottoms. The validity lemma is

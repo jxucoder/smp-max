@@ -38,9 +38,10 @@ formally verified LRAT checker cake\_lpr ($0$ satisfiable; the journal is audite
 formula, the cube lists, the certified cube set and every cube formula were re-derived from the
 Lean definitions and match what the solver saw. The Lean theorem that ties the formula to the
 count --- every well-formed instance with at least $49$ stable matchings satisfies some certified
-cube's formula --- is the remaining link; its status is recorded in the repository's
-\texttt{STATUS.md} at the commit cited in Section~\ref{sec:outlook}.
-%% FINAL-STATUS: <to be filled>
+cube's formula --- is proved as well, so that $f(6)=48$ is a single Lean theorem,
+\texttt{f6\_eq\_48\_of\_unsat}, whose only hypothesis is the unsatisfiability of the certified
+cube formulas (no \texttt{sorry}; axioms \texttt{propext}, \texttt{Classical.choice},
+\texttt{Quot.sound}); the lower bound is a kernel-checked computation.
 An exhaustive enumeration that evaluates the exact stable-matching count of all
 $26{,}574{,}282{,}886$ schedule nodes (maximum $48$, roughly ten hours on a laptop) corroborates the
 result by a method sharing no code with the certificates; run at orders $3,4,5$ it reproduces
@@ -320,16 +321,17 @@ certified cube's formula is unsatisfiable, so $\mathrm{sc}(I)\le 48$.
 \end{proof}
 
 \begin{remark}[What is a Lean theorem]\label{rem:status}
-Of the links in this proof, \texttt{validity\_unconditional} (Section~\ref{sec:lean}) is a Lean
-theorem, the identity checks above tie the certified formulas to the Lean definitions, and the
-certificates are checked by cake\_lpr. The remaining link is the faithfulness theorem: every
-well-formed order-6 instance with at least $49$ stable matchings yields a satisfying assignment of
-some certified cube's formula (the analogue of \texttt{cube\_faithful} in~\cite{f5paper}), which
-packages the schedule-level relabelling of Lemma~\ref{lem:sym}(ii), the coverage of canonical
-schedules by \texttt{finalCubes}, and the satisfaction of every clause family by the natural
-assignment. Its status is recorded in the repository's \texttt{STATUS.md} at the commit cited in
-Section~\ref{sec:outlook}.
-%% FINAL-STATUS: <to be filled>
+Every link in this proof is a Lean theorem except the checker verdicts.
+\texttt{validity\_unconditional} (Section~\ref{sec:lean}) is the reduction; the faithfulness
+theorem --- every well-formed order-6 instance with at least $49$ stable matchings yields a
+satisfying assignment of some certified cube's formula, the analogue of \texttt{cube\_faithful}
+in~\cite{f5paper} --- packages the schedule-level relabelling of Lemma~\ref{lem:sym}(ii)
+(\texttt{Legal\_relabel}, \texttt{firstApp\_relabel}, \texttt{sc\_le\_readoffS\_relabelSched}),
+the coverage of canonical schedules by \texttt{finalCubes} (\texttt{fits\_final}), and the
+satisfaction of every clause family by the natural assignment (\texttt{cube\_faithful6}); the
+assembly is \texttt{f6\_eq\_48\_of\_unsat} (Section~\ref{sec:lean}). The identity checks above
+tie the certified formulas to the Lean definitions, and the certificates are checked by
+cake\_lpr; the journal of verdicts is self-attested (Section~\ref{sec:campaign}).
 \end{remark}
 
 \section{The enumeration (corroboration)}\label{sec:enum}
@@ -444,12 +446,26 @@ full-budget, all-size-2 phenomena.
 
 \section{Formalization in Lean 4}\label{sec:lean}
 
-Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are formalized in Lean~4 with Mathlib in
-the accompanying development. The reduction layer is ten files in import order from
-\texttt{SixBridge.lean} through \texttt{WRelabel6.lean} ($4{,}646$ lines); together with
-\texttt{SchedCNF6.lean}, which defines the campaign formula $\Phi_{49}$ as a Lean value, it is
-$5{,}230$ lines and $243$ theorems --- the figure quoted elsewhere in this paper and in the
-repository --- atop the order-5 infrastructure of~\cite{f5paper}. The end statement is
+Lemmas~\ref{lem:valid} and~\ref{lem:bridge} and the faithfulness theorem are formalized in
+Lean~4 with Mathlib in the accompanying development, atop the order-5 infrastructure
+of~\cite{f5paper}. The reduction layer is eleven files from \texttt{SixBridge.lean} through
+\texttt{SchedCNF6.lean} (the last defines the campaign formula $\Phi_{49}$ as a Lean value):
+$5{,}230$ lines and $243$ theorems. The faithfulness layer is nineteen files ($4{,}761$ lines,
+$333$ theorems) plus a $2{,}808$-line data file, \texttt{SplitList6.lean}, holding the $2{,}756$
+recorded split decisions that define the certified cube set \texttt{finalCubes}. Its end
+statement, \texttt{f6\_eq\_48\_of\_unsat}, reads: if every cube of \texttt{finalCubes} has an
+unsatisfiable formula \texttt{cubeFormula 49 c}, then every well-formed order-6 instance has at
+most $48$ stable matchings and the dihedral instance has exactly $48$
+(\texttt{dihedral6\_count}, a kernel computation over the $720$ permutations). Its proof runs:
+from $\mathrm{sc}(I)\ge 49$ to the chain schedule of the woman-relabelled instance
+(\texttt{validity\_unconditional}'s ingredients), relabelled by first participation
+(\texttt{Legal\_relabel}, \texttt{firstApp\_relabel}; the count is preserved by re-instantiating
+the bridge at the relabelled instance, \texttt{sc\_le\_readoffS\_relabelSched}, since $R$ itself
+is not relabel-equivariant), to a canonical legal schedule with read-off count at least $49$
+(\texttt{exists\_canonical\_schedule}); such a schedule fits a cube of \texttt{finalCubes}
+(\texttt{fits\_final}); and its natural assignment satisfies that cube's formula
+(\texttt{cube\_faithful6}: twelve clause-family lemmas and two unit-clause lemmas), contradicting
+the hypothesis. The end statement is
 unconditional: for every well-formed order-6
 instance $I$ there is a legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(S))$
 (\texttt{validity\_unconditional}), obtained by composing the validity chain with a
@@ -457,11 +473,9 @@ instance $I$ there is a legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(
 $J$ dominates $I$ whenever $J$ ranks each person's $I$-stable partners on top in
 $I$-order, with no condition on the rest of the lists) and a women-only relabelling that
 normalizes the man-optimal matching to the identity
-(\texttt{stableCount6\_wrelabel6}, \texttt{manOpt\_wrelabel6}). Lemma~\ref{lem:sym}
-is not formalized in full: its relabelling half (ii) is proved at the instance level
-(\texttt{Sym6.lean}), and the schedule-level form used by Theorem~\ref{thm:f6} is part of the
-faithfulness theorem whose status is recorded in \texttt{STATUS.md} (Remark~\ref{rem:status});
-its commutation half (i) is validated computationally only (canonicalization on/off agreement) and
+(\texttt{stableCount6\_wrelabel6}, \texttt{manOpt\_wrelabel6}). Lemma~\ref{lem:sym}(ii) is
+formalized at the schedule level as described above; its commutation half (i) is validated
+computationally only (canonicalization on/off agreement) and
 is used by the enumeration alone. The certificate campaign of Section~\ref{sec:campaign} needs
 the relabelling half (ii) --- its root cubes cover only first-appearance canonical schedules ---
 and not the commutation half (i). Every theorem is proved with no \texttt{sorry}, and
@@ -540,17 +554,15 @@ fixed-point-free injective self-map of the moved set --- four short permutation
 lemmas); a multi-cycle step splits into consecutive single-cycle steps with
 identical trajectories.
 
-\paragraph{What remains.} The Lean-side identity checks of Section~\ref{sec:campaign} tie
-the base formula, the cube lists, the certified cube set and every cube formula to the Lean
-definitions. The link not covered by the theorems above is faithfulness, in the direction the
-bound needs: every well-formed order-6 instance with at least $49$ stable matchings yields a
-satisfying assignment of some certified cube's formula (instance to model; the analogue of
-\texttt{cube\_faithful} for $f(5)$). Its proof consists of the schedule-level relabelling of
-Lemma~\ref{lem:sym}(ii), the coverage of first-appearance canonical schedules by
-\texttt{finalCubes}, and satisfaction lemmas for each clause family under the natural assignment.
-Its status is recorded in the repository's \texttt{STATUS.md} at the commit cited in
-Section~\ref{sec:outlook}.
-%% FINAL-STATUS: <to be filled>
+\paragraph{Trust base.} With the Lean-side identity checks of Section~\ref{sec:campaign}, what
+remains outside the kernel is, item for item, the trust base of~\cite{f5paper}: the kernel and
+its three axioms; the forty-line definitions of instances, stability and the count at the top
+of \texttt{SixBridge.lean}; one LRAT checker; the two printers
+(\texttt{ExportSchedCnf.lean}, \texttt{ExportCubes6.lean}) together with the file identity; and
+the campaign journal, which is self-attested (a \texttt{verified} record is the driver's
+transcription of cake\_lpr's verdict, and the certificates were deleted after checking), so that
+independently verifying a verdict means re-solving that cube from the Lean-printed formula.
+Neither the solvers nor any Python or C program is trusted.
 
 \section{Related work and outlook}\label{sec:outlook}
 
@@ -560,8 +572,9 @@ Thurber~\cite{thurber} and Knuth~\cite{knuth}; the asymptotic bounds are \cite{k
 computational values of comparable flavour include $R(4,5)=25$, the empty hexagon number, Keller's
 conjecture and Schur number five; our companion paper~\cite{f5paper} follows that tradition for
 $f(5)$, and Sections~\ref{sec:lean} and~\ref{sec:campaign} carry it to the order-6 bound: the
-reduction is a Lean theorem, the certificates are checked by cake\_lpr, and the status of the
-faithfulness theorem is recorded in \texttt{STATUS.md} (Remark~\ref{rem:status}). The next open
+reduction and the faithfulness theorem are Lean theorems and the certificates are checked by
+cake\_lpr, so that $f(6)=48$ is, like $f(5)=16$, one Lean theorem with checked certificates as
+its only hypothesis (Remark~\ref{rem:status}). The next open
 value, $f(7)$ (budget $42$), had published lower bound $81$ (Ong, Ang, Ho, Eilers, Marks and
 Buzi~\cite{ong24}, improving Thurber's $71$~\cite{thurber}); the accompanying repository raises it
 to $85$ (\texttt{f7/lb85.txt}: two all-transposition schedules of length $20$ found by local
@@ -592,9 +605,9 @@ transpositions --- sorting-network-like objects --- a space of roughly
 $(n(n-1)/2)!^{1/2}$ rather than $n!^{2n}$, and structural insight into it could
 sharpen the $2.28^n$--$3.55^n$ asymptotic band.
 
-\paragraph{Artifact.} All code, logs and verification instructions accompany the repository at
-the release commit cited here:
-%% FINAL-STATUS: <to be filled>  (release commit hash; STATUS.md at that commit records the faithfulness theorem's status)
+\paragraph{Artifact.} All code, logs and verification instructions accompany the repository in
+its 2026-09-08 state (\texttt{STATUS.md} is the evidence ledger, \texttt{VERIFYING.md} the
+recipe):
 the campaign journal (SHA-256 in Section~\ref{sec:campaign}) with its audit, the Lean exporters and
 the re-hash script that reproduce the identity checks, and the enumeration, reproducible in
 $\sim$10 laptop-hours. Re-solving the certificate campaign costs $1{,}076{,}400$ solver-seconds

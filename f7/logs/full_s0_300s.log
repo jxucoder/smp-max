@@ -1,0 +1,8 @@
+[n=7 seed 0] best 56 len=21 evals=172248
+[n=7 seed 0] best 57 len=21 evals=4735328
+[n=7 seed 0] best 61 len=21 evals=4745413
+[n=7 seed 0] best 62 len=21 evals=8754746
+[n=7 seed 0] best 78 len=21 evals=11228439
+[n=7 seed 0] best 80 len=21 evals=44364527
+[n=7 seed 0] DONE best=80 evals=45701901 restarts=6805
+[n=7 seed 0] best_seq=[(0, 5), (1, 4), (3, 4), (1, 6), (0, 3), (3, 6), (2, 5), (1, 4), (2, 6), (2, 4), (1, 5), (0, 5), (1, 6), (1, 4), (0, 6), (2, 3), (2, 5), (0, 3), (3, 4), (2, 6), (0, 5)]

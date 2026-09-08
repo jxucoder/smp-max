@@ -1,5 +1,25 @@
 # Finish plan (2026-09-08)
 
+## Status (2026-09-08, evening)
+
+- **A done.** `f6_eq_48_of_unsat` (`Bridge6.lean`) is proved: zero
+  sorries, axioms `propext`, `Classical.choice`, `Quot.sound`; all 12 new
+  files plus `SplitList6.lean` exist and build (faithfulness layer 19
+  files, 4,761 lines, 333 theorems; reduction layer unchanged). The
+  twelve families live in four files (`FamState6`, `FamTrans6`,
+  `FamGates6`, `FamSelect6`); `block_sat` is named `block_sat6`.
+- **B done.** All 321,492 journaled formula hashes re-hashed from
+  Lean-printed pieces (`f6/lean_rehash.py`); `finalCubes` = the 318,736
+  verified ids; provenance and both checker builds recorded; the
+  self-attested nature of the journal stated in CAMPAIGN.md, VERIFYING.md,
+  STATUS.md, README.md (`f6/campaign/lean_identity.txt`).
+- **C done** except LICENSE and CITATION.cff (owner's choice) and the
+  PDFs of the papers (sources updated, not rebuilt). f(7) claims are
+  backed by `f7/logs/` (34 runs, 2026-09-08).
+- **D done; E resolved** (risks 2 and 3 closed; the lower bound's
+  `decide` ran without reformulation problems; no layer-0 definition
+  changed).
+
 Goal: make **f(6) = 48 a single kernel-checked Lean theorem whose only
 hypothesis is the campaign's certificates**, close the remaining identity
 checks between Lean and the journal, and bring every document and both
