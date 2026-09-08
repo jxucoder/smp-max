@@ -1,0 +1,28 @@
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+   header: solver=cadical path=/Users/jiaruixu/work_space/smp-max/cadical-src/build/cadical version='Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04'
+audit: roots=25493 nodes=321492 verified=318597 missing=0 bad=139 header_problems=0
+   bad 0,2,1;2,3;4,5;1,4: timeout_maxdepth
+   bad 0,2,1;1,3;4,5;2,4: timeout_maxdepth
+   bad 0,2,1;0,3;4,5;1,4: timeout_maxdepth
+   bad 0,1,2;3,4;4,5;2,3: timeout_maxdepth
+   bad 0,1,2;3,4;2,3;4,5: timeout_maxdepth
+   bad 0,1,2;3,4;2,3;1,5: timeout_maxdepth
+   bad 0,1,2;3,4;1,5;2,3: timeout_maxdepth
+   bad 0,1,2;3,4;1,3;4,5: timeout_maxdepth
+   bad 0,1,2;1,3;4,5;2,5: timeout_maxdepth
+   bad 0,1,2;1,3;4,5;2,4: timeout_maxdepth
+   bad 0,1,2;0,3;4,5;2,5: timeout_maxdepth
+   bad 0,1,2;0,3;4,5;2,4: timeout_maxdepth
+   bad 0,1;2,4,3;3,5;1,4: timeout_maxdepth
+   bad 0,1;2,4,3;3,5;0,4: timeout_maxdepth
+   bad 0,1;2,4,3;2,5;1,4: timeout_maxdepth
+   bad 0,1;2,4,3;2,5;0,3: timeout_maxdepth
+   bad 0,1;2,4,3;1,5;0,3: timeout_maxdepth
+   bad 0,1;2,4,3;1,4;3,5: timeout_maxdepth
+   bad 0,1;2,4,3;1,3;2,5: timeout_maxdepth
+   bad 0,1;2,4,3;0,3;4,5: timeout_maxdepth
+== campaign.jsonl: 321492 cubes  {'verified': 318597, 'split': 2756, 'timeout_maxdepth': 139}
+   solve_s: median=1.0 max=10023.8 mean=3.3 sum=1071244.8
+   verified 318597 {'cadical': 318597}: DRAT median=0.0MB max=0.0MB  LRAT median=35.0MB max=9789.2MB  cake_lpr median=3.0s max=10970.3s
+   non-terminal (rerun with --retry-status): {'timeout_maxdepth': 139}
+audit: FAILED
