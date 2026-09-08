@@ -18,10 +18,13 @@ so independent verification of a verdict means re-solving that cube -
 see `../VERIFYING.md`. The lower bound is the dihedral instance below.
 The exhaustive enumeration of all 26,574,282,886 schedules
 (`gen_enum.c`, max 48) described in the log below is corroboration;
-the certificates are the evidence. What is not yet a Lean theorem is
-the faithfulness theorem (every well-formed order-6 instance with >= 49
-stable matchings satisfies some certified cube's formula, the analogue
-of f(5)'s `cube_faithful`); for its status see `../STATUS.md`. Paper:
+the certificates are the evidence. The faithfulness theorem (every
+well-formed order-6 instance with >= 49 stable matchings satisfies some
+certified cube's formula, the analogue of f(5)'s `cube_faithful`) is
+proved as well (2026-09-08, evening): `f6_eq_48_of_unsat` in
+`../f5/lean/SmpF5/SmpF5/Bridge6.lean`, zero sorries, standard axioms, so
+f(6) = 48 is one Lean theorem whose only hypothesis is the certificates
+(`../STATUS.md`). Paper:
 `paper/f6.pdf`; lemma write-up: `theory.pdf`. Below is the campaign
 log, kept as a historical record of how the route was found; its
 "RESULT" section records the state of 2026-09-01 and is superseded by
