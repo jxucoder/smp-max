@@ -1,13 +1,31 @@
-# f(6) = 48: RESOLVED (2026-08-31 .. 09-01)
+# f(6) = 48: order-6 attack log (2026-08-31 .. 09-08)
 
-The conjecture of OEIS A357271 is true. Proof: schedule reduction
-(bridge + validity lemmas, now formalized in Lean —
-`../f5/lean/SmpF5/SmpF5/{SixBridge,Lattice6,Chain6}.lean`, zero
-sorries) + exhaustive evaluation of all 26,574,282,886 schedule
-read-off instances (global max 48) + the dihedral lower bound.
-Paper: `paper/f6.pdf`; lemma write-up: `theory.pdf`; verification
-notes: `../VERIFYING.md`. Below is the campaign log, kept as a
-historical record of how the route was found.
+**Evidence, as of 2026-09-08.** The conjecture of OEIS A357271 holds:
+f(6) = 48. The evidence is the schedule reduction, formalized in Lean
+(`../f5/lean/SmpF5/SmpF5/*6.lean`: `validity_unconditional`, `bridge`,
+`chain_complete`, ...; zero sorries, standard axioms), plus the order-6
+certificate campaign (`CAMPAIGN.md`): the Lean-defined formula
+`SchedCNF6` for "some legal schedule reads off >= 49" was refuted cube
+by cube - 25,493 root cubes, 321,492 cubes in the split tree, 318,736
+cake_lpr-verified certificates, 2,756 splits, 0 SAT; `cube_campaign.py
+--audit` exits 0 (roots=25493 nodes=321492 verified=318736 missing=0
+bad=0). The base formula, the root cubes, all 295,999 split children,
+the certified cube set (`finalCubes`, 318,736 ids) and every one of the
+321,492 journaled formula hashes recompute from the Lean definitions
+(`campaign/lean_identity.txt`). The journal is self-attested (the
+driver's transcription of cake_lpr's verdicts; certificates deleted),
+so independent verification of a verdict means re-solving that cube -
+see `../VERIFYING.md`. The lower bound is the dihedral instance below.
+The exhaustive enumeration of all 26,574,282,886 schedules
+(`gen_enum.c`, max 48) described in the log below is corroboration;
+the certificates are the evidence. What is not yet a Lean theorem is
+the faithfulness theorem (every well-formed order-6 instance with >= 49
+stable matchings satisfies some certified cube's formula, the analogue
+of f(5)'s `cube_faithful`); for its status see `../STATUS.md`. Paper:
+`paper/f6.pdf`; lemma write-up: `theory.pdf`. Below is the campaign
+log, kept as a historical record of how the route was found; its
+"RESULT" section records the state of 2026-09-01 and is superseded by
+this paragraph.
 
 ## What is known
 
@@ -129,9 +147,16 @@ entirely): all 26,574,282,886 schedule nodes exactly counted, GLOBAL
 MAX = 48 (logs: genrun_all_logs.tar.gz). Node count identical to the
 maximal-only traversal — perfect internal consistency.
 
-## RESULT: f(6) = 48
+## RESULT: f(6) = 48 (state of 2026-09-01; superseded as evidence)
 
-Proof structure (see theory.pdf):
+*Note added 2026-09-08:* this section records the enumeration-based
+argument as it stood on 2026-09-01. The evidence for f(6) = 48 is now
+the certificate campaign (`CAMPAIGN.md`: 318,736 cake_lpr-verified
+certificates over 321,492 cubes, audit exit 0, Lean identity checks in
+`campaign/lean_identity.txt`); the enumeration below is corroboration.
+The faithfulness theorem is not yet proved; see `../STATUS.md`.
+
+Proof structure as of 2026-09-01 (see theory.pdf):
 - Validity + Bridge + Symmetry-soundness lemmas: proven (elementary
   over Gusfield-Irving rotation theory);
 - Enumeration: every schedule's read-off instance exactly counted, max
@@ -143,8 +168,11 @@ Proof structure (see theory.pdf):
   independent counters).
 
 Eilers' conjecture (OEIS A357271, a(6)) is TRUE. Remaining for
-paper-grade publication: write-up (theory.tex -> paper), independent
-replication instructions, and eventual formal certification.
+paper-grade publication (as listed on 2026-09-01): write-up (theory.tex
+-> paper), independent replication instructions, and eventual formal
+certification. (2026-09-08: the formal-certification item became the
+certificate campaign plus the pending faithfulness theorem; see the
+header of this file and `../STATUS.md`.)
 
 ## Attack plan
 

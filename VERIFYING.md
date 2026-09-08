@@ -1,8 +1,13 @@
-# Verifying f(5) = 16 from scratch
+# Verifying f(5) = 16 and f(6) = 48 from scratch
 
 This guide lets a third party check every link of the evidence chain on
-their own machine, **without trusting any run we performed**. Total cost:
-about half an hour of reading and 2–3 hours of unattended compute.
+their own machine, **without trusting any run we performed**. For f(5)
+the total cost is about half an hour of reading and 2–3 hours of
+unattended compute (Steps 1–3). For f(6) (sections after the optional
+cross-checks) the Lean build, the journal audit and the Lean identity
+checks take minutes; re-solving the whole certificate campaign, which is
+what "without trusting any run we performed" means for that layer,
+costs about 300 core-hours.
 
 ## What you end up trusting (and nothing else)
 
@@ -78,12 +83,16 @@ mkdir -p /tmp/cubes && cd /tmp/cubes
 <repo>/f5/lean/SmpF5/.lake/build/bin/export_cnf
 ```
 
-This prints the 120 DIMACS files **from the Lean definitions**. For
-reference, our export hashes to
+This writes 240 DIMACS files **from the Lean definitions**: the 120
+production cubes `cubeL000.cnf` .. `cubeL119.cnf` and 120 positive
+controls `cubeL16_000.cnf` .. `cubeL16_119.cnf` (the same cubes at 16
+slots; see the cross-checks below). For reference, our export hashes to
 
 ```
-cat cubeL*.cnf | shasum -a 256
+cat cubeL*.cnf | shasum -a 256            # all 240 files
 a93f5e58cd23976b303e26f5dd2fcd4ab66f91797b0b02bd2bfba13887c6a2ef
+cat cubeL[01][0-9][0-9].cnf | shasum -a 256   # the 120 production files only
+044d0edbd9762166d925038056b3ef9ed762293d3f7637055e1105d1eca30ec6
 ```
 
 but you need not compare — you generated your own copies.
@@ -119,11 +128,19 @@ Together with Step 1 this discharges the hypothesis of
 - Independent earlier refutations of "≥17" with a different encoding and
   solver configs live in the results log of the root `README.md`.
 
-## Verifying the f(6) reduction layer (Lean, ~5 min on top of Step 1)
+## Verifying f(6) = 48
 
-The same `lake build` also kernel-checks the f(6)=48 reduction lemmas
-(`SmpF5/SixBridge.lean`, `SmpF5/Lattice6.lean`, `SmpF5/Chain6.lean`).
-Check their axiom base:
+f(6) = 48 has three layers with different trust levels (top-level
+`README.md`): the Lean reduction (theorems), the certificate campaign
+(an audited journal plus Lean identity checks), and the faithfulness
+theorem (see `STATUS.md`). The lower bound is the dihedral instance
+(`f6/README.md`; `python3 smp.py` recounts it in seconds).
+
+### f(6) reduction layer (Lean, ~5 min on top of Step 1)
+
+The same `lake build` also kernel-checks the order-6 development
+(`SmpF5/*6.lean`). Check the axiom base of the 16 theorems that CI
+checks (`.github/workflows/lean-verify.yml`):
 
 ```bash
 echo 'import SmpF5
@@ -135,52 +152,183 @@ echo 'import SmpF5
 #print axioms count_le_of_orderPreserving
 #print axioms sc_le_readoffS_chainSched
 #print axioms manOpt_wrelabel6
-#print axioms validity_unconditional' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
+#print axioms validity_unconditional
+#print axioms PM_sem
+#print axioms PW_sem
+#print axioms Legal_length_le_15
+#print axioms minFirst_mem_cyclicShapes
+#print axioms permsN6_perm_permutations
+#print axioms Legal_map_minFirst
+#print axioms SchedCNF6.dec_pwVar3' > /tmp/ax6.lean && lake env lean /tmp/ax6.lean
 ```
 
-All must report `[propext, Classical.choice, Quot.sound]`. What these
+All 16 must report `[propext, Classical.choice, Quot.sound]`. What they
 say (definitions to read: `Inst6`, `WF6`, `isStable6`, `stableCount6`,
 `stab`, `readoff` at the top of `SixBridge.lean`, same style as the
-order-5 ones):
+order-5 ones; `readoffS`, `Legal` in `Sched6.lean`):
 
-- `bridge` : for well-formed order-6 `I`,
+- `bridge` (SixBridge.lean): for well-formed order-6 `I`,
   `stableCount6 I <= stableCount6 (readoff I)` — the bridge lemma;
-- `chain_complete`, `traj_*`, `wtraj_*`, `prevOwner_*` : the validity
-  layer — an explicit maximal chain from the man-optimal to the
-  woman-optimal stable matching whose trajectories are exactly the
-  stable partners in preference order, within all schedule budgets,
-  with each step decomposing into disjoint cyclic swaps (the closing
+- `chain_complete`, `traj_mem_iff`, `wtraj_nodup`, `total_moves_le_30`
+  (Lattice6.lean, Chain6.lean): the validity layer — an explicit maximal
+  chain from the man-optimal to the woman-optimal stable matching whose
+  trajectories are exactly the stable partners in preference order,
+  without repetition, within the total budget of 30 moves (the closing
   docstring of `Chain6.lean` maps every clause to its theorem);
 - `count_le_of_orderPreserving` (AbsBridge6.lean): the bridge in
   bottom-agnostic form;
-- `sc_le_readoffS_chainSched` (ValidityBridge6.lean) and, unconditionally,
-  **`validity_unconditional`** (WRelabel6.lean): for every well-formed
-  order-6 instance `I` there is a `Legal` schedule `S` with
-  `stableCount6 I <= stableCount6 (readoffS S)` — the composed Validity +
-  Bridge statement; `readoffS`/`Legal` in `Sched6.lean` are the read-off
-  instance and schedule legality of Definitions 1–2 (bottom completion in
-  ascending label order, women's trajectories reversed, exactly as
-  `gen_enum.c` builds them).
+- `sc_le_readoffS_chainSched` (ValidityBridge6.lean), `manOpt_wrelabel6`
+  (WRelabel6.lean) and, unconditionally, **`validity_unconditional`**
+  (WRelabel6.lean): for every well-formed order-6 instance `I` there is a
+  `Legal` schedule `S` with `stableCount6 I <= stableCount6 (readoffS S)`
+  — the composed Validity + Bridge statement (`readoffS`/`Legal` are the
+  read-off instance and schedule legality of Definitions 1–2: bottom
+  completion in ascending label order, women's trajectories reversed);
+- `Legal_length_le_15` (SchedLen6.lean): a legal schedule has at most 15
+  steps — the frame bound that fixes the size of the formula;
+- `Legal_map_minFirst` and `minFirst_mem_cyclicShapes` (Shapes6.lean):
+  rotating every step to start at its smallest man preserves legality,
+  and every such step is an entry of the campaign's shape table;
+- `permsN6_perm_permutations` (Shapes6.lean): the list of 720
+  permutations over which the formula counts stable matchings is a
+  permutation of Mathlib's `permutations` of the identity row;
+- `PM_sem`, `PW_sem` (ReadoffSem6.lean): for a legal schedule of at most
+  15 steps, the formula's man-side and woman-side preference gates
+  (`PM`, `PW`) agree with the ranks of the read-off instance — the
+  read-off semantics of the encoding;
+- `SchedCNF6.dec_pwVar3` (Decode6.lean): the last of the decode-layer
+  lemmas — the decoder `dec6` inverts the variable layout (here on the
+  woman-side gate variables `pwVar … 3`).
 
-**What is NOT formalized:** the exhaustive enumeration of the schedule
-space (26.6e9 nodes, C program `f6/gen_enum.c`) and the symmetry
-reduction soundness of its canonicalization (validated computationally:
-on/off agreement; see `f6/paper/f6.pdf` Section "Validation"). The
-f(6)=48 claim = these Lean lemmas + the validated enumeration + the
-dihedral lower bound (checkable in seconds: `python3 smp.py`).
+The first nine are the reduction layer proper (the f(6) upper bound
+needs only `validity_unconditional`); the other seven belong to the
+faithfulness layer, whose status is in `STATUS.md`.
 
-## Known gaps (state of 2026-09-01)
+### The certificate campaign: audit and Lean identity checks (~10 min)
 
-- LRAT certificates are not archived (regenerable in ~2 h; a Zenodo
-  archive with DOI is planned so verifiers can skip solving and only
-  re-check).
-- The f(6) enumeration has now been *replaced* by a certificate campaign
-  (2026-09-08, `f6/CAMPAIGN.md` "Result"): every legal canonical
-  schedule prefix is a cube of the Lean-defined formula `SchedCNF6`, all
-  25,493 root cubes are refuted (318,736 cake_lpr-checked certificates
-  over the split tree, journaled with per-cube CNF and LRAT hashes,
-  `--audit` exit 0). What is still not machine-checked is the
-  *faithfulness* theorem (that the formula encodes "read-off count
-  ≥ 49"); until it lands, the f(6) trust base is the Lean reduction +
-  the validated encoding + cake_lpr, not a single Lean theorem as for
-  f(5).
+The upper bound's second layer is the refutation of "some legal
+schedule reads off ≥ 49": the Lean-defined formula
+`SchedCNF6.schedCNFn 6 49` (84,882 variables, 2,709,212 clauses) was
+refuted over a tree of cubes — 25,493 root cubes (`Cubes6.canonicalCubes2`),
+321,492 distinct cubes after splitting, 318,736 of them refuted by
+CaDiCaL 3.0.1 (`--lrat --binary=false`) with the certificate accepted by
+cake_lpr, 2,756 split (1,804 at depth 2, 952 at depth 3), 0 satisfiable
+(`f6/CAMPAIGN.md`). The journal `f6/campaign/campaign.jsonl.gz`
+(40,943,262 bytes) has one record per attempt; the last record per cube
+wins. Reference hash:
+
+```
+shasum -a 256 f6/campaign/campaign.jsonl.gz
+c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e
+```
+
+**Audit** (checks that every root cube is verified or split with all
+children recursively covered, that the header's base formula hash
+equals the recomputed formula, and that every `verified` record has
+solver rc 20, `cake_verified`, no kill flag and well-formed hashes):
+
+```bash
+gunzip -k f6/campaign/campaign.jsonl.gz
+python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl
+# expect: audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0
+#         audit: OK   and exit status 0
+```
+
+**Lean identity checks** (recorded in `f6/campaign/lean_identity.txt`;
+they establish that what the campaign solved is exactly what the Lean
+definitions denote). First extract the id lists from the journal, last
+record per cube:
+
+```python
+import json
+last = {}
+for line in open('f6/campaign/campaign.jsonl'):
+    r = json.loads(line)
+    if 'cube' in r and 'status' in r:
+        last[r['cube']] = r                      # last record per cube wins
+w = lambda name, ids: open(name, 'w').write(''.join(i + '\n' for i in ids))
+w('all_ids.txt', last)                                                  # 321,492
+w('verified.txt', [c for c, r in last.items() if r['status'] == 'verified'])  # 318,736
+w('split_ids.txt', [c for c, r in last.items() if r['status'] == 'split'])    # 2,756
+```
+
+Then, from `f5/lean/SmpF5` (paths to the three files above as needed):
+
+```bash
+lake build export_sched_cnf export_cubes6
+.lake/build/bin/export_sched_cnf base.cnf          # the base formula; sha256 28421fb6…
+.lake/build/bin/export_cubes6 roots.txt            # Cubes6.canonicalCubes2: 25,493 ids
+.lake/build/bin/export_cubes6 children.tsv --parents=split_ids.txt   # extendCanon: 295,999 parent/child lines
+.lake/build/bin/export_cubes6 final.txt --final    # Cubes6.finalCubes: the certified cube set
+sort final.txt > a; sort verified.txt > b; cmp a b && wc -l a         # identical, 318,736 lines
+.lake/build/bin/export_cubes6 units.tsv --units=all_ids.txt          # each cube's unit clauses (~150 s)
+python3 ../../../f6/lean_rehash.py base.cnf units.tsv ../../../f6/campaign/campaign.jsonl
+# expect: lean_rehash: records with cnf_sha256=321492 matched=321492 mismatched=0 missing_units=0
+#         and exit status 0
+```
+
+What each line shows: `base.cnf` is byte-identical to the campaign's
+base formula (sha256 `28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b`,
+the journal header's `base_sha256`); `roots.txt` equals the driver's
+root list; `children.tsv` equals the driver's children of every cube
+that was split; `final.txt` — the Lean-defined `finalCubes`
+(`SplitList6.lean`: `refineCubes` of `canonicalCubes2` by the 1,804 +
+952 recorded split ids) — equals the set of verified ids; and every one
+of the 321,492 journaled `cnf_sha256` values (hashed by the driver
+before solving) recomputes from the Lean-printed header, body and unit
+clauses. Any single cube can also be printed in full: an open cube with
+id `0,1;2,3` is `export_sched_cnf OUT --prefix='0,1;2,3'`; a closed cube
+whose id ends in `;stop`, say `0,4,2,3,5,1;stop`, is
+`export_sched_cnf OUT --prefix='0,4,2,3,5,1' --stop`; the root cube
+`stop` is `export_sched_cnf OUT --stop` alone. Quote the argument — the
+ids contain semicolons. The file's sha256 must equal that cube's
+journaled `cnf_sha256`.
+
+### What the certificate layer does and does not establish
+
+The journal is self-attested. A `verified` record is the driver's
+transcription of cake_lpr's verdict (`s VERIFIED UNSAT`, exit 0) for
+that cube; the certificates (about 25 TB in total) were deleted after
+checking, and the audit checks the records' consistency, not the
+certificates. Three machines produced the records: a Linux/x86-64
+container (3,967 verified + 235 split, checked by the x86-64 cake_lpr
+build, `cake_lpr.S` sha256 `2f3af32d…`), an Apple M4 Max laptop (12,727
++ 628) and a Mac mini M4 Pro (302,042 + 1,893; arm64 build,
+`cake_lpr_arm8.S` sha256 `95b64883…`); one solver build throughout
+(CaDiCaL 3.0.1 c6073042).
+
+To verify a verdict independently, re-solve the cube: print its formula
+from Lean as above (the sha256 must match the record's `cnf_sha256`),
+refute it with any LRAT-producing solver, and check the certificate with
+cake_lpr or any checker you trust. The per-cube `cnf_sha256` and
+`lrat_sha256` let a re-run be compared with the journal record by
+record (the LRAT hash reproduces only with a bit-identical solver; the
+CNF hash always must). Re-solving the whole tree is about 300 core-hours
+of solver time (1,076,400 s in our run, median 1.0 s per cube, a few
+cubes hours) plus checking; `f6/cube_campaign.py` is the driver we used,
+and `f6/CAMPAIGN.md` describes the splitting rules, so a re-run can
+follow the same tree or its own.
+
+Corroboration, not evidence: an earlier exhaustive enumeration of all
+26,574,282,886 schedules (`f6/gen_enum.c`) also gives a maximum of 48.
+
+### What is still not a theorem
+
+For f(5), `f5_eq_16_of_unsat` makes the 120 certificates the only
+hypothesis of a kernel-checked statement. The order-6 analogue — that
+every well-formed order-6 instance with ≥ 49 stable matchings yields a
+satisfying assignment of some certified cube's formula, so that the
+318,736 certificates are the hypothesis of a Lean theorem giving
+f(6) ≤ 48 — is the faithfulness theorem. Its status is recorded in
+`STATUS.md`; do not read it off this file. Until it is in place, f(6) =
+48 rests on the Lean reduction, the audited certificate campaign with
+the identity checks above, and the checks of the encoding described in
+`STATUS.md` — not on a single Lean theorem as f(5) does.
+
+## Known gaps (state of 2026-09-08)
+
+- f(5): LRAT certificates are not archived (regenerable in ~2 h; a
+  Zenodo archive with DOI is planned so verifiers can skip solving and
+  only re-check). f(6): the certificates (about 25 TB) were not kept;
+  see the trust statement above.
+- f(6): the faithfulness theorem — see `STATUS.md`.

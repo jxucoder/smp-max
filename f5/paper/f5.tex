@@ -78,8 +78,9 @@ $n=5$ is $3.55^5 \approx 555$.
 \item \textbf{A complete verification artifact}: a repository with a step-by-step third-party
   verification guide (\texttt{VERIFYING.md}), pinned toolchain versions and hashes, a
   differential-testing harness binding the formal definitions to an independently validated
-  reference implementation, and continuous integration that rebuilds the development and checks
-  the axiom base on every commit.
+  reference implementation, and continuous integration that, on pushes to \texttt{main}, pull
+  requests and manual dispatch, rebuilds the development from source (with the standard Mathlib
+  olean cache) and checks the axiom base.
 \end{enumerate}
 
 \section{The Lean development}
@@ -178,8 +179,9 @@ from first principles using only \texttt{propext}. We deliberately avoid
 
 \paragraph{Main theorem.} \texttt{f5\_eq\_16\_of\_unsat} combines both directions;
 \texttt{\#print axioms} reports exactly \texttt{[propext, Classical.choice, Quot.sound]},
-re-checked --- together with a no-\texttt{sorry} sweep and a rebuild from a clean cache ---
-by continuous integration on every commit.
+re-checked --- together with a no-\texttt{sorry} sweep and a rebuild of the development from
+source with the standard Mathlib olean cache --- by continuous integration on pushes to
+\texttt{main}, pull requests and manual dispatch.
 
 \section{The certificates}\label{sec:cnf}
 
@@ -320,13 +322,19 @@ Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}.
 
 $f(5)=16$ now has a proof whose every step is checked either by the Lean kernel or by a
 formally verified certificate checker, with a forty-line human-review surface. The companion
-paper~\cite{f6paper} takes the next step: it determines the previously open value $f(6)=48$
-by reducing instance space ($\sim\!10^{28}$) to an exhaustively enumerated space of rotation
-schedules ($2.7\times 10^{10}$), with the certified theorem proved here serving as ground
-truth for validating that enumeration machinery. The reduction lemmas of~\cite{f6paper} are
-themselves formalized in Lean (a further $1{,}849$ lines, $105$ theorems, zero
-\texttt{sorry}s, in the same repository); certifying its enumeration end-to-end is the
-natural continuation of the programme begun here.
+paper~\cite{f6paper} takes the next step: it establishes the previously open value $f(6)=48$
+by reducing instance space ($\sim\!10^{28}$) to a space of rotation schedules, covering the
+canonical schedules by cubes of a Lean-defined formula and refuting all $318{,}736$ certified
+cubes with cake\_lpr-checked certificates; an exhaustive enumeration of the
+$2.7\times 10^{10}$ schedule nodes, validated against the certified theorem proved here,
+corroborates the result. The reduction lemmas of~\cite{f6paper} are themselves formalized in
+Lean (a further $5{,}230$ lines and $243$ theorems in the eleven files from
+\texttt{SixBridge.lean} through \texttt{SchedCNF6.lean}, the last defining the order-6
+formula; zero \texttt{sorry}s, in the same repository). The order-6 faithfulness theorem ---
+that every well-formed instance with at least $49$ stable matchings satisfies some certified
+cube's formula --- is the natural continuation of the programme begun here; its status is
+recorded in the repository's \texttt{STATUS.md}.
+%% FINAL-STATUS: <to be filled>
 
 \paragraph{Artifact.} Repository with code, proofs, logs, verification guide
 (\texttt{VERIFYING.md}) and CI; certificate archive with DOI to accompany the final version.

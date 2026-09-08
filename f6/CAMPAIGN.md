@@ -8,30 +8,78 @@ streaming).  See `REPLAY_DESIGN.md` for the architecture and the pilot.
 ## Result (2026-09-08): campaign complete, `--audit` OK
 
 Every one of the 25,493 root cubes is certified, directly or through its
-adaptive split subtree.  Final journal (`campaign/campaign.jsonl.gz`,
-321,701 records; `campaign/audit_final.txt`):
+adaptive split subtree.  Final journal: `campaign/campaign.jsonl.gz`
+(40,943,262 bytes, sha256
+`c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`;
+321,701 records = one header plus one or more records per cube, the last
+record per cube winning; audit transcript in `campaign/audit_final.txt`):
 
 | | |
 |---|---|
-| distinct cubes | 321,492 (roots 25,493; depth-3 children 197,758; depth-4 children 96,242 + the 139 below) |
-| `verified` (cake_lpr `s VERIFIED UNSAT`) | **318,736** |
+| distinct cubes | 321,492 = 25,493 roots (1 `stop` + 153 `s1;stop` + 25,339 open depth-2) + 295,999 split children (198,666 children of the 1,804 depth-2 splits = 1,804 `stop` + 196,862 open; 97,333 children of the 952 depth-3 splits = 952 `stop` + 96,381 open, the latter including the 139 reruns below) |
+| by depth 0 / 1 / 2 / 3 / 4 | 1 / 153 / 27,143 / 197,814 / 96,381 (depth 2 = 25,339 open roots + 1,804 `stop` children; depth 3 = 196,862 open + 952 `stop` children); closed `stop` cubes 2,910 = 1 + 153 + 1,804 + 952 |
+| `verified` (cake_lpr `s VERIFIED UNSAT`) | **318,736** = 1 / 153 / 25,339 / 196,862 / 96,381 by depth |
 | `split` | 2,756 (1,804 at depth 2, 952 at depth 3) |
 | `SAT` | **0** |
 | non-terminal | 0 |
 | `--audit` | `roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0`, **exit 0** |
 
-Solver: cadical 3.0.1 `c60730422e758ef1cebe7aeddf2dda31c996bf04` (`--lrat
---binary=false`), checker: cake_lpr (`cake_lpr_arm8.S` sha256
-`95b64883…`, the published hash), base formula sha256 `28421fb6…` =
-`export_sched_cnf` output; every record carries `cnf_sha256` (hashed
-before solving) and `lrat_sha256` (hashed before checking).  Total solver
-time 1,076,400 s, median 1.0 s; LRAT median 35 MB, max 9.8 GB (the
-certificates were checked and deleted; about 20 TB in total).
+(Correction, 2026-09-08: an earlier version of this table gave "depth-3
+children 197,758; depth-4 children 96,242 + the 139", which does not sum
+to 321,492; the figures above are recounted from the journal.)
 
-Where it ran: container (Linux/x86-64, 4 cores) to 16,694 verified; a
-laptop in parallel (3 workers, journal merged on `main`); then this
-Mac mini M4 Pro (10 workers, 2026-09-05 20:49 to 2026-09-08 04:10 PDT,
-`done: 303935 cubes in 199212.9s`), which alone covers the whole tree.
+Solver: cadical 3.0.1 `c60730422e758ef1cebe7aeddf2dda31c996bf04` (`--lrat
+--binary=false`), built from the pinned commit on each machine; every
+record carries the same `solver_version` string.  Checker: cake_lpr in
+two builds - the x86-64 build (`cake_lpr.S`, published sha256
+`2f3af32d…`, hash-checked by `campaign/bootstrap.sh`) on the Linux
+container, and arm64 builds (`cake_lpr_arm8.S`, published sha256
+`95b64883…`) on the two Macs.  The driver records only the checker's path
+(in the header), not a hash of the binary or of the assembly it was built
+from, so the Mac builds' source hash is asserted here rather than recorded
+at run time.  Base formula sha256 `28421fb6…` = `export_sched_cnf` output;
+every record carries `cnf_sha256` (hashed before solving) and
+`lrat_sha256` (hashed before checking).  Total solver time 1,076,400 s,
+median 1.0 s; LRAT median 35 MB, max 9.8 GB (the certificates were
+checked and deleted; about 25 TB in total, summed from the records'
+`lrat_bytes`).
+
+**What the journal is.**  The journal is self-attested: a `verified`
+record is the driver's transcription of cake_lpr's verdict
+(`cake_verified` = `s VERIFIED UNSAT` in cake_lpr's stdout and not
+killed, plus `cake_rc`), written by the same process that ran the solver
+and the checker, and the certificate was deleted after checking.  Nothing
+in the repository lets a reader re-check a certificate; `--audit` checks
+the self-report for consistency (see "Journal, provenance, resume").
+Independently verifying a verdict means re-solving that cube (`--cubes
+<id> --force` into a fresh journal, or the whole tree: solver time alone
+was 1,076,400 s, about 300 core-hours, plus checking).  The per-cube hashes
+make such a re-run comparable record by record: `cnf_sha256` must match
+(the formula is re-derived from Lean, see "Lean-side identity checks"),
+and `lrat_sha256` is reproduced byte for byte by the same toolchain
+(`campaign/cadical_check.jsonl`, three cubes solved on the laptop, carries
+the same `lrat_sha256` values as the Mac mini's final records for those
+cubes); across architectures only equal LRAT sizes have been compared
+(2026-09-05 below).
+
+Where it ran (last record per cube, grouped by the record's
+`solver_path`): Apple M4 Max laptop (`/Users/jiaruixu`, 2026-09-02 23:56
+to 2026-09-05 01:50 PDT): 12,727 verified + 628 split; Linux/x86-64
+container (`/home/user`, 4 cores, 2026-09-05 08:30 to 19:56 PDT,
+x86-64 cake_lpr): 3,967 verified + 235 split; Mac mini M4 Pro (10
+workers, 2026-09-05 20:49 to 2026-09-08 04:10 PDT, `done: 303935 cubes
+in 199212.9s`, then the 139-cube rerun below, ending 05:17 PDT): 302,042
+verified + 1,893 split = 303,935.  Totals 318,736 verified + 2,756 split.
+The released journal is one append lineage: laptop, then container, then
+Mac mini, three sequential resumes of the same file under its single
+header (which therefore names only the laptop's tool paths).  The
+parallel 3-worker laptop snapshot merged on `main` in commit 8256eef was
+superseded, and none of its records entered the final file.
+(Correction, 2026-09-08: this paragraph used to say the container ran
+"to 16,694 verified" and that the Mac mini "alone covers the whole
+tree"; 16,694 was the journal's verified count when the Mac mini started,
+not the container's own production, and 17,557 of the 321,492 final
+records come from the other two machines.)
 The 139 depth-4 cubes of the `0,1;2,3` family that hit the 1.5 GB LRAT
 cap in the main run (`timeout_maxdepth`) were rerun with
 
@@ -41,18 +89,53 @@ cap in the main run (`timeout_maxdepth`) were rerun with
         --journal campaign/campaign.jsonl --scratch campaign/scratch
 
 and all verified (139/139 in 4,045 s; certificates 1.5 to 9.2 GB, cake_lpr
-up to 257 s).  Observed split rates: depth 2, 7.1% (1,804 of 25,339);
-depth 3, 0.48% (952 of 197,758); depth 4 never split (cap) - the 0/150
+up to 257 s).  Observed split rates: depth 2, 7.1% (1,804 of 25,339 open
+roots); depth 3, 0.48% (952 of 196,862 open cubes); depth 4 never split
+(cap) - the 0/150
 depth-3 probe of 2026-09-05 undercounted because the hard region is
 concentrated in a few families (`0,1;2,3` alone: 61 of the first 128
 depth-3 splits).
 
-Lean side: `Cubes6.canonicalCubes2` and `extendCanon` print the root set
-and every journaled split's children byte-identically
-(`export_cubes6`), and `export_sched_cnf [--stop]` reproduces the
-journaled `cnf_sha256` of open and closed cubes; the faithfulness proof
-that makes the certificates the hypothesis of a Lean theorem is in
-progress (`FAITHFULNESS_PLAN.md`, progress log).
+### Lean-side identity checks (2026-09-08)
+
+Recorded in `campaign/lean_identity.txt` (Lean 4.33.1, commit `ae8e83f`;
+commands run from `f5/lean/SmpF5` after `lake build export_sched_cnf
+export_cubes6`, with the journal decompressed to `campaign.jsonl` and the
+id lists extracted from its last record per cube):
+
+1. **Base formula.**  `.lake/build/bin/export_sched_cnf base.cnf`
+   (`SchedCNF6.schedCNFn 6 49`) is byte-identical to
+   `sched_sat.build(6, 49)`; sha256 `28421fb6…` = the journal header's
+   `base_sha256` (84,882 vars, 2,709,212 clauses).
+2. **Root cubes.**  `.lake/build/bin/export_cubes6 roots.txt`
+   (`Cubes6.canonicalCubes2`) vs `cube_campaign.root_cubes(2)`: 25,493
+   ids, byte-identical, same order.
+3. **Split children.**  `.lake/build/bin/export_cubes6 children.tsv
+   --parents=split_ids.txt` (`Cubes6.extendCanon` on the 2,756 journaled
+   split ids) vs `cube_campaign.split_children`: 295,999 parent/child
+   lines, byte-identical, same order.
+4. **Certified cube set.**  `.lake/build/bin/export_cubes6 final.txt
+   --final` prints `Cubes6.finalCubes = refineCubes (refineCubes
+   canonicalCubes2 isSplitDepth2) isSplitDepth3`, the 1,804 + 952 split
+   ids being literals in `SplitList6.lean`; sorted, it equals the
+   journal's 318,736 `verified` ids as a set (22.5 s).
+5. **Every cube formula.**  `.lake/build/bin/export_cubes6 units.tsv
+   --units=all_ids.txt` prints each cube's unit clauses
+   (`SchedCNF6.prefixUnits ++ Cubes6.stopUnits`), and `python3
+   ../../../f6/lean_rehash.py base.cnf units.tsv campaign.jsonl` composes
+   `p cnf 84882 (2709212 + #units)` ‖ Lean base body ‖ units per cube
+   and compares with the journaled `cnf_sha256`: `records with
+   cnf_sha256=321492 matched=321492 mismatched=0 missing_units=0`, exit
+   0 (units export 150 s, rehash 7.5 s).  Twelve cubes (open and closed,
+   depths 0-4) were also re-exported in full by `export_sched_cnf
+   [--prefix=…] [--stop]` and matched their journaled hashes.
+
+This closes the file-identity claim (every formula cake_lpr checked is,
+by hash, the one Lean defines) and the cube-set identity claim (the set
+of cube formulas `finalCubes` ranges over is exactly the set of
+`verified` records).  What remains on the Lean side is the faithfulness
+theorem itself, which makes the certificates the hypothesis of a Lean
+theorem; see `STATUS.md` for its status.
 
 ## Case split (root cubes)
 
@@ -103,16 +186,17 @@ An *arbitrary* legal
 schedule reduces to one of these through the schedule-level relabeling
 lemma: relabel men by their first-participation order (women
 correspondingly); legality is preserved and the read-off stable count
-is invariant.  That lemma is formalized so far only at the *instance*
-level (`Sym6.lean`: `relabel6` / `mapMu6`, count invariance); the
-schedule-level statement is pending.  The Lean target theorem is
-therefore
-
-    for every canonical Legal S, sc(readoffS S) <= 48
-
-(discharged by the certificates: the cubes cover exactly the canonical
-schedules), plus the relabel reduction from arbitrary to canonical
-schedules.  `--audit` checks the journal against the exact root set.
+is invariant.  That lemma exists at the *instance* level (`Sym6.lean`:
+`relabel6` / `mapMu6`, count invariance); its schedule-level form is
+part of the faithfulness proof (see `STATUS.md`).  The theorem that turns
+the certificates into the bound - the analogue of f(5)'s `cube_faithful`
+- runs from instance to model: every well-formed order-6 instance with
+>= 49 stable matchings yields a satisfying assignment of `cubeFormula 49
+c` for some `c` in `finalCubes` (`f6_upper_of_unsat`, `PLAN.md` §A),
+so that UNSAT of all 318,736 certified cubes gives sc <= 48.  It is not
+the converse (that a satisfying assignment yields an instance), which
+would only matter for decoding a SAT hit.  For its status see
+`STATUS.md`.  `--audit` checks the journal against the exact root set.
 
 ## Per-cube pipeline (worker)
 
@@ -167,23 +251,40 @@ last status is in `--retry-status` (default `error`; e.g.
 even if terminal (last record wins).
 
 `--audit` (exit 0 iff OK) checks: coverage of the exact root set (every
-root `verified`, or `split` with all children recursively covered); the
-header's base sha256 equals the recomputed formula; and, for every
-`verified` record, solver rc == 20 (`kissat_rc` / `cadical_rc` per the
-record's `solver`), `drattrim_verified` (kissat records), `cake_rc == 0`
-and `cake_verified`, no killed flag, and well-formed `cnf_sha256` /
-`lrat_sha256` (defense in depth - the status alone is not trusted).
-With `--expect-cnf-dir DIR` the audit also rewrites `base + units` for
-every verified cube into DIR, compares its sha256 with the journaled
-`cnf_sha256`, and, if `DIR/c_<tag>.cnf` already exists, compares that
-file too.  The Lean exporter
+root `verified`, or `split` with all children - re-derived by the
+driver's own generator, not read from the journal - recursively
+covered); the header's base sha256 equals the recomputed formula; and,
+for every `verified` record, solver rc == 20 (`kissat_rc` / `cadical_rc`
+per the record's `solver`), `drattrim_verified` (kissat records),
+`cake_rc == 0` and `cake_verified`, no killed flag, well-formed
+`cnf_sha256` / `lrat_sha256`, and the record's `prefix` / `closed` /
+`n_units` consistent with its cube id (defense in depth - the status
+field alone is not trusted).  What this is, precisely: `cake_verified` is
+the boolean the driver derived at write time (`s VERIFIED UNSAT` in
+cake_lpr's stdout and not killed) and `cake_rc` is cake_lpr's exit code;
+the audit does not re-parse the stored `cake_out`, never re-runs cake_lpr,
+and accepts a record whose per-record `base_sha256` is absent (a present
+one must equal the header's; the driver always writes it).  It is a
+consistency check of the driver's self-report, not an independent
+verification of any verdict (see "What the journal is").  With
+`--expect-cnf-dir DIR` the audit also rewrites `base + units` for every
+verified cube into DIR with the Python writer, compares its sha256 with
+the journaled `cnf_sha256`, and, if `DIR/c_<tag>.cnf` already exists
+(e.g. printed by the Lean exporter beforehand), compares that file too.
+The Lean exporter (path relative to `f6/`; quote the argument, since `;`
+is a shell separator)
 
-    /Users/jiaruixu/work_space/smp-max/f5/lean/SmpF5/.lake/build/bin/export_sched_cnf OUT --prefix=0,1;2,3
+    ../f5/lean/SmpF5/.lake/build/bin/export_sched_cnf OUT '--prefix=0,1;2,3'
 
 prints DIMACS byte-identical to the driver's CNF for open cubes (same
 header, clause order, unit clauses), so a Lean-printed formula can be
-cross-checked cube by cube against the journaled hashes (closed `stop`
-cubes add the unit `S[len][0]`, not yet in `cubeCNFn`).
+cross-checked cube by cube against the journaled hashes.  Closed cubes
+add the unit `S[len][0]` (`Cubes6.stopUnits`) and are printed with
+`--stop`: the journal id `0,1;stop` is `'--prefix=0,1' --stop`, and the
+root `stop` is `--stop` alone (`Cubes6.cubeCNFc`).  (Note, 2026-09-08:
+this paragraph used to say closed cubes were "not yet in `cubeCNFn`";
+`--stop` and `cubeCNFc` exist, and the hash identity for all 321,492
+cubes, open and closed, is recorded under "Lean-side identity checks".)
 
 **Single driver.**  One driver per journal: the driver holds an
 exclusive non-blocking `flock` on `<journal>.lock` for its lifetime and
@@ -238,9 +339,9 @@ adding a `--solver` switch to the worker is the cheapest large win if
 the budget matters.  (cake_lpr's verdict is unchanged: it checks the
 LRAT against the journaled CNF regardless of who produced it.)
 
-## Full campaign (not launched yet)
+## Full campaign (launch command; launched 2026-09-02 23:56 PDT = 2026-09-03 UTC, with `--solver cadical`, see below)
 
-    cd /Users/jiaruixu/work_space/smp-max/f6
+    cd f6          # in a repository checkout; the driver resolves ../cadical-src, ../cake_lpr-src, ../dt-src
     nohup python3 cube_campaign.py --workers 12 --time 600 --max-depth 4 \
         --shuffle --journal campaign/campaign.jsonl \
         --scratch campaign/scratch > campaign/campaign.log 2>&1 &
@@ -393,6 +494,13 @@ and every record here is terminal and independently checkable).  Parallel
 drivers will re-derive the same split children and may duplicate some
 work; nothing is invalidated.  The `flock` guard is per-filesystem, so it
 does not prevent this - only one driver per journal *file*.
+
+(Note, 2026-09-08: the released `campaign/campaign.jsonl.gz` is not a
+merge output.  It is one append lineage - laptop, then container, then
+Mac mini - under a single header; the parallel-laptop journal merged in
+commit 8256eef was a snapshot that was superseded and whose records never
+entered the final file.  `merge_journals.py` keeps only the first
+header, so a merged file would carry only one machine's tool paths.)
 
 ## Depth-3 pricing probe (2026-09-05, `campaign/depth3_probe.jsonl`)
 
