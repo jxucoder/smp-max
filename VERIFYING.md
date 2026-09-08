@@ -174,5 +174,13 @@ dihedral lower bound (checkable in seconds: `python3 smp.py`).
 - LRAT certificates are not archived (regenerable in ~2 h; a Zenodo
   archive with DOI is planned so verifiers can skip solving and only
   re-check).
-- The f(6) enumeration is validated, not certified (see the section
-  above); a verified replay is future work.
+- The f(6) enumeration has now been *replaced* by a certificate campaign
+  (2026-09-08, `f6/CAMPAIGN.md` "Result"): every legal canonical
+  schedule prefix is a cube of the Lean-defined formula `SchedCNF6`, all
+  25,493 root cubes are refuted (318,736 cake_lpr-checked certificates
+  over the split tree, journaled with per-cube CNF and LRAT hashes,
+  `--audit` exit 0). What is still not machine-checked is the
+  *faithfulness* theorem (that the formula encodes "read-off count
+  ≥ 49"); until it lands, the f(6) trust base is the Lean reduction +
+  the validated encoding + cake_lpr, not a single Lean theorem as for
+  f(5).

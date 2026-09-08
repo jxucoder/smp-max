@@ -12,7 +12,12 @@ Gusfield-Irving 1989, Open Problem #1).
   OEIS A357271). Schedule reduction + exhaustive evaluation of all
   26,574,282,886 schedule read-off instances; the reduction lemmas
   (bridge + validity) are formalized in Lean with zero sorries. Paper:
-  `f6/paper/f6.pdf`; theory notes: `f6/theory.pdf`.
+  `f6/paper/f6.pdf`; theory notes: `f6/theory.pdf`. **Certificate
+  campaign complete (2026-09-08):** the schedule-space formula was
+  refuted cube by cube, 318,736 cake_lpr-checked UNSAT certificates over
+  25,493 root cubes and their splits, 0 SAT, `--audit` exit 0
+  (`f6/CAMPAIGN.md` "Result"). The Lean faithfulness proof tying the
+  formula to `stableCount6` is in progress (`f6/FAITHFULNESS_PLAN.md`).
 
 **Status: PRIVATE.** Not yet published; OEIS not yet notified. See
 `INSIGHTS.md` for the retrospective and the publication checklist.
