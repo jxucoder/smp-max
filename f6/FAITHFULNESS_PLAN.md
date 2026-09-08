@@ -24,6 +24,22 @@ facts precisely; the stopped-cube variable-range bug is fixed (§3.5);
 `minFirst` invariance lemmas are added and used where revision 1 quietly
 discharged legality on un-rotated steps (§4.2, L3.17).
 
+## Progress log
+
+- **2026-09-08 (step 0, 0', 9-def, 12; §11.1 resolved).** `SmpF5/Cubes6.lean`
+  (definitions only: `Cube`, `firstOcc`/`usedBefore`/`newMen`/`canonAtB`,
+  `WFStepB`/`legalPrefixB`/`canonNextB`, `extendCanon`, `canonicalCubes2`,
+  `refineCubes`, `cubeId`, `stopUnits`/`cubeCNFc`) and the printer
+  `ExportCubes6.lean` (`export_cubes6`). **Cube-list identity holds by
+  construction and was checked:** `canonicalCubes2` prints the driver's
+  `root_cubes(2)` ids **byte-identical, same order (25,493)**, and
+  `extendCanon` prints `split_children` of every journaled split parent
+  of the campaign **byte-identical (2,756 parents, 295,999 children)**.
+  `export_sched_cnf --stop` (via `cubeCNFc`) prints the closed cubes:
+  sha256 of `stop`, `0,1;stop`, `0,1,2;stop` and of the open
+  `0,5,4,2,1,3;0,2,5,1,3,4` all equal the journaled `cnf_sha256`
+  (`3de5bab1…`, `bbb84011…`, `c5a479da…`, `f2ea077c…`). Risk 1 retired.
+
 ## 0. Target theorem and what already exists
 
 ```lean
