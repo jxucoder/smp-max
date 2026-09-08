@@ -39,6 +39,18 @@ discharged legality on un-rotated steps (§4.2, L3.17).
   sha256 of `stop`, `0,1;stop`, `0,1,2;stop` and of the open
   `0,5,4,2,1,3;0,2,5,1,3,4` all equal the journaled `cnf_sha256`
   (`3de5bab1…`, `bbb84011…`, `c5a479da…`, `f2ea077c…`). Risk 1 retired.
+- **2026-09-08 (positive control, §8).** The dihedral 48-schedule in
+  rule-(a) canonical form,
+  `0,1;2,3;4,5;1,2;0,5;3,4;0,1;2,3;4,5;1,2;0,5;3,4;0,1;2,3;4,5` (15
+  transpositions, full budget; `apply_step`-legal), pinned as a 15-unit
+  `--prefix` (no `--stop`: a 15-step cube has no frame to stop in, cf. the
+  `sVar L 15 0` alias): `export_sched_cnf --k=48` is **SAT** (cadical,
+  < 1 s); the model decodes (`sched_sat.decode`) to exactly the pinned
+  schedule with 48 distinct selected matchings, and `readoff_counts`
+  recounts the read-off at 48. The same prefix at `--k=49` is UNSAT. So
+  the formula is not vacuously unsatisfiable and the selector block does
+  count what it should on the extremal instance.
+
 
 ## 0. Target theorem and what already exists
 
