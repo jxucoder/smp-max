@@ -4,11 +4,18 @@ hunt7.py searched only FULL-budget schedules (all C(n,2) transpositions).
 The published 81-instance has 18 of 21 rotations, so full budget excludes it
 -- exactly the odd-order pattern seen at n=5 (8 of 10).  Here the schedule
 length is itself a search variable.
+
+Usage: python3 sched_hunt.py N SEED SECONDS [--full]
+  --full   pin the length at C(N,2) and disable grow/shrink moves (the
+           full-budget regime of the retired hunt7.py; caps at 80 at n=7)
+Without --full the random stream is unchanged from the 2026-09-06 runs
+(seeds 9 and 5 regenerate schedules A and B of lb85.txt byte for byte).
 """
 import random, sys, time
 from itertools import permutations, combinations
 
 N = int(sys.argv[1]); SEED = int(sys.argv[2]); SECS = float(sys.argv[3])
+FULL = "--full" in sys.argv[4:]   # full-budget mode: length pinned at C(N,2) (hunt7.py regime)
 RMAX = N * (N - 1) // 2
 PAIRS = [tuple(p) for p in combinations(range(N), 2)]
 
@@ -72,7 +79,7 @@ def score(seq):
 
 def mutate(seq, rng):
     s = list(seq)
-    op = rng.randrange(5)
+    op = rng.randrange(3) if FULL else rng.randrange(5)
     if op == 0 and len(s) > 1:
         i, j = rng.sample(range(len(s)), 2); s[i], s[j] = s[j], s[i]
     elif op == 1 and len(s) > 1:
@@ -91,7 +98,7 @@ def main():
     t_end = time.time() + SECS
     best, best_seq, evals, restarts = 0, None, 0, 0
     while time.time() < t_end:
-        r = rng.randrange(max(3, RMAX - 8), RMAX + 1)
+        r = RMAX if FULL else rng.randrange(max(3, RMAX - 8), RMAX + 1)
         seq = [rng.choice(PAIRS) for _ in range(r)]
         cur = score(seq); stale = 0
         while stale < 4000 and time.time() < t_end:
