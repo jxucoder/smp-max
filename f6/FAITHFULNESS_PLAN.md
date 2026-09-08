@@ -51,6 +51,23 @@ discharged legality on un-rotated steps (§4.2, L3.17).
   the formula is not vacuously unsatisfiable and the selector block does
   count what it should on the extremal instance.
 
+- **2026-09-08 03:00 (files 1–6 of §8 done, zero sorries).** `Decode6.lean`
+  (L4.1–L4.3: layout `⟨6,15,409,720⟩` by kernel evaluation, pair tables,
+  twelve decode lemmas), `DestutterPrefix6.lean` (§5.1, restated around
+  first-occurrence positions: `mem_destutter_ne_iff`,
+  `idxOf_destutter_lt_iff`, `mem_take_iff_idxOf_lt`, `idxOf_reverse_lt_iff`,
+  `idxOf_filter_range_lt`), `Shapes6.lean` (L4.5–L4.13, L4.15–L4.17:
+  `rotateTo`/`minFirst`, `applyStep_rotate`, `Legal_map_minFirst`,
+  `mem_combos`, `mem_permsOf`, `permsOf_nodup`,
+  `minFirst_mem_cyclicShapes`, `permsN6_perm_permutations`), `Frames6.lean`
+  (§4.4: `frame`/`colM`/`vis`/`stepIdx`/`befB`/`befWB`, `τV`, `tau6`,
+  L4.19–L4.27, `evalLit_pos6/neg6`), `ReadoffSem6.lean` (**L5.13 `PM_sem`,
+  L5.15 `PW_sem` proved**, via `befB_iff`/`befWB_iff`/`rowOrder_lt_iff`),
+  `SchedLen6.lean` (L2.1–L2.6: `movesOf`, `strajM_length`, `moves_le_30`,
+  `Legal_length_le_15`). `lake build` passes with all files imported.
+  Remaining: Cubes6 proofs (L3.17–L3.21, L5.10–L5.12), RelabelSched6 +
+  FirstApp6 (§3), Faithfulness6 (§6 families + §7 assembly), Bridge6.
+
 
 ## 0. Target theorem and what already exists
 
