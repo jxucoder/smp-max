@@ -25,6 +25,10 @@ Irving 1989, Open Problem 1). This repository contains
 
 ## What exactly is machine-checked
 
+(`STATUS.md` is the maintained evidence ledger: each claim, the kind of
+evidence behind it, the cross-checks, and the ordered list of what
+remains.)
+
 **f(5) = 16.** The trust base is the Lean 4 kernel, the axioms
 `propext`, `Classical.choice`, `Quot.sound`, about forty lines of
 definitions stating what a 5 × 5 instance and a stable matching are,
@@ -104,6 +108,7 @@ OEIS extremal instances) and the instances in `f5/paper/f5.tex`,
 | `f5/` | f(5) = 16: `lean/SmpF5/` (the Lean development — it also hosts the order-6 files), cube runs and checker logs (`cubesL/`), paper (`paper/f5.pdf`) |
 | `f6/` | f(6) = 48: `sched_sat.py` (the schedule CNF), `cube_campaign.py` (driver, audit), `campaign/` (final journal, audit outputs, live dashboard), `gen_enum.c` (the direct enumeration), papers (`paper/f6.pdf`, `theory.pdf`), design notes |
 | `f7/` | f(7) ≥ 85: `sched_hunt.py`, `lb85.txt`, `README.md` |
+| `STATUS.md` | evidence ledger: what is established, by what kind of evidence, and what is next |
 | `VERIFYING.md` | third-party verification guide |
 | `INSIGHTS.md` | retrospective, open questions, publication checklist |
 | `NOTES.md` | the chronological lab notebook |
@@ -141,7 +146,8 @@ records the exact commits and hashes used.
 ## Status and roadmap
 
 Not yet published: neither paper is on arXiv and OEIS has not been
-notified. The publication checklist is in `INSIGHTS.md`. Planned:
+notified. The publication checklist is in `INSIGHTS.md`; the detailed,
+dated roadmap with estimates is in `STATUS.md`. Planned:
 
 1. Finish the Lean faithfulness proof for the order-6 formula, so that
    f(6) = 48 becomes a single theorem with the certificates as its only
