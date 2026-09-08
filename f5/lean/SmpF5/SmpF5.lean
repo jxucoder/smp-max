@@ -32,3 +32,4 @@ import SmpF5.FamSelect6
 import SmpF5.Units6
 import SmpF5.Lower6
 import SmpF5.FirstApp6
+import SmpF5.Faithfulness6
