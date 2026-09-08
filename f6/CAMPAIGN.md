@@ -5,6 +5,55 @@ by cube-and-conquer over canonical schedule prefixes.  Every cube emits
 its own certificate chain, checked by cake_lpr, then deleted (f5-style
 streaming).  See `REPLAY_DESIGN.md` for the architecture and the pilot.
 
+## Result (2026-09-08): campaign complete, `--audit` OK
+
+Every one of the 25,493 root cubes is certified, directly or through its
+adaptive split subtree.  Final journal (`campaign/campaign.jsonl.gz`,
+321,701 records; `campaign/audit_final.txt`):
+
+| | |
+|---|---|
+| distinct cubes | 321,492 (roots 25,493; depth-3 children 197,758; depth-4 children 96,242 + the 139 below) |
+| `verified` (cake_lpr `s VERIFIED UNSAT`) | **318,736** |
+| `split` | 2,756 (1,804 at depth 2, 952 at depth 3) |
+| `SAT` | **0** |
+| non-terminal | 0 |
+| `--audit` | `roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0`, **exit 0** |
+
+Solver: cadical 3.0.1 `c60730422e758ef1cebe7aeddf2dda31c996bf04` (`--lrat
+--binary=false`), checker: cake_lpr (`cake_lpr_arm8.S` sha256
+`95b64883…`, the published hash), base formula sha256 `28421fb6…` =
+`export_sched_cnf` output; every record carries `cnf_sha256` (hashed
+before solving) and `lrat_sha256` (hashed before checking).  Total solver
+time 1,076,400 s, median 1.0 s; LRAT median 35 MB, max 9.8 GB (the
+certificates were checked and deleted; about 20 TB in total).
+
+Where it ran: container (Linux/x86-64, 4 cores) to 16,694 verified; a
+laptop in parallel (3 workers, journal merged on `main`); then this
+Mac mini M4 Pro (10 workers, 2026-09-05 20:49 to 2026-09-08 04:10 PDT,
+`done: 303935 cubes in 199212.9s`), which alone covers the whole tree.
+The 139 depth-4 cubes of the `0,1;2,3` family that hit the 1.5 GB LRAT
+cap in the main run (`timeout_maxdepth`) were rerun with
+
+    python3 cube_campaign.py --solver cadical --workers 6 --time 3600 --max-depth 4 \
+        --lrat-split-mb 12000 --check-timeout 14400 \
+        --retry-status timeout_maxdepth,error,cake_fail,check_timeout \
+        --journal campaign/campaign.jsonl --scratch campaign/scratch
+
+and all verified (139/139 in 4,045 s; certificates 1.5 to 9.2 GB, cake_lpr
+up to 257 s).  Observed split rates: depth 2, 7.1% (1,804 of 25,339);
+depth 3, 0.48% (952 of 197,758); depth 4 never split (cap) - the 0/150
+depth-3 probe of 2026-09-05 undercounted because the hard region is
+concentrated in a few families (`0,1;2,3` alone: 61 of the first 128
+depth-3 splits).
+
+Lean side: `Cubes6.canonicalCubes2` and `extendCanon` print the root set
+and every journaled split's children byte-identically
+(`export_cubes6`), and `export_sched_cnf [--stop]` reproduces the
+journaled `cnf_sha256` of open and closed cubes; the faithfulness proof
+that makes the certificates the hypothesis of a Lean theorem is in
+progress (`FAITHFULNESS_PLAN.md`, progress log).
+
 ## Case split (root cubes)
 
 Canonical prefixes use the first-appearance rule (a) ONLY: the men that

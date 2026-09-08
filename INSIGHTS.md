@@ -119,6 +119,11 @@ below for the day that changes.
    refutation certified end-to-end in ~10 min; order-6 hardest-region
    cubes refute in minutes; campaign estimated 100-1000 core-hours).
    Left: cube driver + Lemma sym in Lean + encoding faithfulness.
+   **Update 2026-09-08:** the cube campaign is complete and audited
+   (318,736 certificates, 0 SAT, exit 0; `f6/CAMPAIGN.md`); the Lean
+   faithfulness proof is under way, with the cube-list identity, the
+   decode layer, the frame bound and the crux (read-off semantics of
+   PM/PW) done - see the progress log in `f6/FAITHFULNESS_PLAN.md`.
 2. Paper polish: expand both drafts to venue length; decide venues
    (f5 -> ITP 2027, CFP ~Jan-Mar 2027; f6 -> combinatorics journal or
    SAT/CP).

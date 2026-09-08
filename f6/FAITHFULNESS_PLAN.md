@@ -24,6 +24,51 @@ facts precisely; the stopped-cube variable-range bug is fixed (§3.5);
 `minFirst` invariance lemmas are added and used where revision 1 quietly
 discharged legality on un-rotated steps (§4.2, L3.17).
 
+## Progress log
+
+- **2026-09-08 (step 0, 0', 9-def, 12; §11.1 resolved).** `SmpF5/Cubes6.lean`
+  (definitions only: `Cube`, `firstOcc`/`usedBefore`/`newMen`/`canonAtB`,
+  `WFStepB`/`legalPrefixB`/`canonNextB`, `extendCanon`, `canonicalCubes2`,
+  `refineCubes`, `cubeId`, `stopUnits`/`cubeCNFc`) and the printer
+  `ExportCubes6.lean` (`export_cubes6`). **Cube-list identity holds by
+  construction and was checked:** `canonicalCubes2` prints the driver's
+  `root_cubes(2)` ids **byte-identical, same order (25,493)**, and
+  `extendCanon` prints `split_children` of every journaled split parent
+  of the campaign **byte-identical (2,756 parents, 295,999 children)**.
+  `export_sched_cnf --stop` (via `cubeCNFc`) prints the closed cubes:
+  sha256 of `stop`, `0,1;stop`, `0,1,2;stop` and of the open
+  `0,5,4,2,1,3;0,2,5,1,3,4` all equal the journaled `cnf_sha256`
+  (`3de5bab1…`, `bbb84011…`, `c5a479da…`, `f2ea077c…`). Risk 1 retired.
+- **2026-09-08 (positive control, §8).** The dihedral 48-schedule in
+  rule-(a) canonical form,
+  `0,1;2,3;4,5;1,2;0,5;3,4;0,1;2,3;4,5;1,2;0,5;3,4;0,1;2,3;4,5` (15
+  transpositions, full budget; `apply_step`-legal), pinned as a 15-unit
+  `--prefix` (no `--stop`: a 15-step cube has no frame to stop in, cf. the
+  `sVar L 15 0` alias): `export_sched_cnf --k=48` is **SAT** (cadical,
+  < 1 s); the model decodes (`sched_sat.decode`) to exactly the pinned
+  schedule with 48 distinct selected matchings, and `readoff_counts`
+  recounts the read-off at 48. The same prefix at `--k=49` is UNSAT. So
+  the formula is not vacuously unsatisfiable and the selector block does
+  count what it should on the extremal instance.
+
+- **2026-09-08 03:00 (files 1–6 of §8 done, zero sorries).** `Decode6.lean`
+  (L4.1–L4.3: layout `⟨6,15,409,720⟩` by kernel evaluation, pair tables,
+  twelve decode lemmas), `DestutterPrefix6.lean` (§5.1, restated around
+  first-occurrence positions: `mem_destutter_ne_iff`,
+  `idxOf_destutter_lt_iff`, `mem_take_iff_idxOf_lt`, `idxOf_reverse_lt_iff`,
+  `idxOf_filter_range_lt`), `Shapes6.lean` (L4.5–L4.13, L4.15–L4.17:
+  `rotateTo`/`minFirst`, `applyStep_rotate`, `Legal_map_minFirst`,
+  `mem_combos`, `mem_permsOf`, `permsOf_nodup`,
+  `minFirst_mem_cyclicShapes`, `permsN6_perm_permutations`), `Frames6.lean`
+  (§4.4: `frame`/`colM`/`vis`/`stepIdx`/`befB`/`befWB`, `τV`, `tau6`,
+  L4.19–L4.27, `evalLit_pos6/neg6`), `ReadoffSem6.lean` (**L5.13 `PM_sem`,
+  L5.15 `PW_sem` proved**, via `befB_iff`/`befWB_iff`/`rowOrder_lt_iff`),
+  `SchedLen6.lean` (L2.1–L2.6: `movesOf`, `strajM_length`, `moves_le_30`,
+  `Legal_length_le_15`). `lake build` passes with all files imported.
+  Remaining: Cubes6 proofs (L3.17–L3.21, L5.10–L5.12), RelabelSched6 +
+  FirstApp6 (§3), Faithfulness6 (§6 families + §7 assembly), Bridge6.
+
+
 ## 0. Target theorem and what already exists
 
 ```lean

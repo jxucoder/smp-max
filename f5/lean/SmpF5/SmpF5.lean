@@ -15,3 +15,10 @@ import SmpF5.ChainSched6
 import SmpF5.ValidityBridge6
 import SmpF5.WRelabel6
 import SmpF5.SchedCNF6
+import SmpF5.Cubes6
+import SmpF5.Decode6
+import SmpF5.DestutterPrefix6
+import SmpF5.Shapes6
+import SmpF5.Frames6
+import SmpF5.ReadoffSem6
+import SmpF5.SchedLen6
