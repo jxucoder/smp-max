@@ -44,6 +44,15 @@ External tool: [drat-trim](https://github.com/marijnheule/drat-trim)
 - f(6): was open with best lower bound 48 (dihedral Latin instance,
   [A351413](https://oeis.org/A351413)), conjectured exact
   ([A357271](https://oeis.org/A357271)) — **resolved here: f(6)=48**.
+- f(7): open. [A357271](https://oeis.org/A357271) tabulates Thurber's
+  2002 composition bounds (a(7)=71), but its linked
+  [Ong et al. 2024 file](https://oeis.org/A357271/a357271_1.txt)
+  (Ong, Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024) improves every ODD
+  order by hill climbing: lb(7)=81, lb(9)=365, lb(11)=1690,
+  lb(13)=7123, lb(15)=27059. Even orders are unimproved, so f(6)=48
+  remains the best lower bound at 6 and this repo's result stands.
+  **Improved here: f(7) >= 85** (`f7/`, checked 2026-09-06 against the
+  OEIS entry as last edited May 2025).
 - General bounds: 2.28^n <= f(n) (Thurber 2002), f(n) <= 3.55^n
   (Palmer-Pálvölgyi), first exponential bound Karlin-Oveis Gharan-Weber
   STOC 2018.
@@ -156,6 +165,8 @@ enumeration itself.
    enumeration — architectures + pilot plan in `f6/REPLAY_DESIGN.md`.
 3. The general-n conjecture (all-size-2 schedules; full budget at even
    orders) — stated as Conjecture 1 in `f6/paper/f6.pdf`.
-4. f(7) feasibility (schedule tree ~1e14-1e15, budget 42, lower bound
-   71 — genuinely uncertain since Eilers conjectured exactness only at
-   even orders).
+4. f(7): lower bounds are the live opportunity — see `f7/`, which
+   already improves the best known from 81 to 85. The upper bound is
+   not: the certified cube route is 3-4 orders of magnitude out of
+   reach at order 7 (`f7/README.md`), and the schedule tree is
+   ~1e14-1e15 at budget 42.
