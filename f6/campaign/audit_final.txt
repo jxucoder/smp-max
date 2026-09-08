@@ -1,0 +1,8 @@
+root cubes at depth 2 (rule (a) only): open=25339 short(stop)=154 total=25493
+   header: solver=cadical path=/Users/jiaruixu/work_space/smp-max/cadical-src/build/cadical version='Version 3.0.1 c60730422e758ef1cebe7aeddf2dda31c996bf04'
+audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0
+== campaign.jsonl: 321492 cubes  {'verified': 318736, 'split': 2756}
+   solve_s: median=1.0 max=10023.8 mean=3.3 sum=1076400.4
+   verified 318736 {'cadical': 318736}: DRAT median=0.0MB max=0.0MB  LRAT median=35.0MB max=9789.2MB  cake_lpr median=3.0s max=10970.3s
+audit: OK
+exit=0
