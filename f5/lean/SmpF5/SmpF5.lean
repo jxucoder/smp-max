@@ -24,3 +24,10 @@ import SmpF5.ReadoffSem6
 import SmpF5.SchedLen6
 import SmpF5.RelabelSched6
 import SmpF5.SplitList6
+import SmpF5.PrefixLegal6
+import SmpF5.FamState6
+import SmpF5.FamGates6
+import SmpF5.FamTrans6
+import SmpF5.FamSelect6
+import SmpF5.Units6
+import SmpF5.Lower6
