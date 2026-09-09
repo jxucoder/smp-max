@@ -29,6 +29,15 @@ import SmpMax
 #print axioms permsN6_perm_permutations
 #print axioms Legal_map_minFirst
 #print axioms SchedCNF6.dec_pwVar3
+#print axioms firstApp_relabel
+#print axioms Legal_relabel
+#print axioms sc_le_readoffS_relabelSched
+#print axioms exists_canonical_schedule
+#print axioms fits_final
+#print axioms cube_faithful6
+#print axioms dihedral6_count
+#print axioms f6_upper_of_unsat
+#print axioms f6_eq_48_of_unsat
 LEAN
 lake env lean "$SMP_CHECK_DIR/axioms.lean" | tee "$SMP_CHECK_DIR/axioms.txt"
 python3 - "$SMP_CHECK_DIR/axioms.txt" <<'PY'
@@ -36,7 +45,7 @@ import re,sys
 text=open(sys.argv[1]).read()
 matches=re.findall(r"depends on axioms: \[([^]]*)\]",text)
 expected={'propext','Classical.choice','Quot.sound'}
-if len(matches)!=17 or any(set(s.split(', '))!=expected for s in matches):
+if len(matches)!=26 or any(set(s.split(', '))!=expected for s in matches):
     sys.exit('Unexpected axiom dependency or missing theorem output')
 PY
 lake env lean checks/FiveWitness.lean | tee "$SMP_CHECK_DIR/witness.txt"

@@ -22,3 +22,16 @@ import SmpMax.Six.CyclicShapes
 import SmpMax.Six.FrameAssignment
 import SmpMax.Six.ReadOffSemantics
 import SmpMax.Six.ScheduleLength
+import SmpMax.Six.ScheduleRelabeling
+import SmpMax.Six.CampaignSplits
+import SmpMax.Six.PrefixLegality
+import SmpMax.Six.StateClauses
+import SmpMax.Six.GateClauses
+import SmpMax.Six.TransitionClauses
+import SmpMax.Six.SelectionClauses
+import SmpMax.Six.CubeUnits
+import SmpMax.Six.LowerBound
+import SmpMax.Six.FirstAppearance
+import SmpMax.Six.EncodingFaithfulness
+import SmpMax.Six.CubeCoverage
+import SmpMax.Six.ExactMaximum

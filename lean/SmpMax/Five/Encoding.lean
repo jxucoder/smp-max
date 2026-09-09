@@ -4,7 +4,7 @@ import SmpMax.Five.Definitions
 # The cube CNFs, defined in Lean (single source of truth)
 
 For cube `row` (a candidate rank row for man 1), `cubeCNF row` is
-used by the upper-bound argument; the faithfulness direction proved is:
+satisfiable iff ... — the faithfulness direction we prove is:
 any well-formed instance with man 0 = idRow, man 1's rank row = `row`,
 and ≥ 17 stable matchings yields a satisfying assignment.
 
@@ -19,7 +19,7 @@ Encoding ("selector" style, chosen for formalizability):
   a selected matching admits no blocking pair.
 
 The DIMACS files consumed by kissat / drat-trim / cake_lpr are printed
-from these very definitions by `export_cnf` (ExportFiveCnf.lean).
+from these very definitions by `export_cnf` (`ExportCnf.lean`).
 -/
 
 def perms120 : List (List Nat) := idRow.permutations
@@ -94,6 +94,9 @@ def numVars : Nat := 2140
 
 /-! ## Satisfiability semantics -/
 
+/-- Note: a literal `0` would be read as the negation of variable 0; no
+clause of these formulas contains `0`, since every variable id is ≥ 1 by
+construction (`prefVar` starts at 1, `yVar` at 101). -/
 def evalLit (τ : Nat → Bool) (l : Int) : Bool :=
   if 0 < l then τ l.toNat else !(τ (-l).toNat)
 

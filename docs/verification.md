@@ -1,158 +1,163 @@
-# Verifying the results
+# Verification guide
 
-All commands below start at the repository root unless stated otherwise.
-These checks establish different parts of the [evidence chain](results.md).
+Run the commands below from the repository root. The checks progress from
+saved witnesses to formal statements, formula identity, and freshly checked
+SAT certificates. The [evidence ledger](results.md) records the original runs.
 
-| Check | Prerequisites | Cost and expected outcome |
+| Check | Establishes | Typical cost |
 |---|---|---|
-| Saved witnesses | Python 3.9+, standard library | Seconds to a minute depending on hardware; counts 16, 48, 85, 85 |
-| Lean statements and axioms | elan; pinned Lean/Mathlib | Initial cache can use several GB; initial build typically minutes to tens of minutes |
-| Artifact checksums | Python standard library | Reads retained artifacts; all SHA-256 values match |
-| Recorded campaign audit | Python; decompressed journal | Approximately 464 MB journal plus several GB of working memory; complete coverage and recorded verdict fields |
-| Fresh f(5) certificates | Lean exporter, kissat, drat-trim, cake_lpr | Historical estimate: 2–3 hours serial; allow several GB of scratch space |
-| Fresh f(6) certificates | Schedule exporter/driver, CaDiCaL, cake_lpr | A full run is substantial: historical solver time alone was about 299 core-hours, plus checking/I/O; total proof output was about 20 TB streamed through deletion |
+| Witness recount | Lower bounds 16, 48, 85 and 85 | Seconds |
+| Lean build and axioms | Both exact-maximum theorems, conditional on UNSAT | Initial dependency download and build: about 20–30 minutes |
+| Campaign identity and audit | Complete cube coverage and every recorded formula hash | A few minutes after building |
+| Order-5 certificates | Independently checks all 120 upper-bound cubes | About 2–3 hours |
+| Order-6 certificates | Independently checks selected or all upper-bound cubes | Minutes for the 205-cube sample; about 300 core-hours for the full tree |
 
-Historical timings are guides, not guarantees. Journal auditing does not
-recheck the deleted certificates. A fresh certificate run verifies the
-UNSAT evidence, but does not finish the missing order-6 Lean theorem.
+## Prerequisites
 
-## 1. Obtain the repository and tools
+- macOS or Linux, Python 3.9 or later, and Git.
+- [elan](https://github.com/leanprover/elan) for Lean. The toolchain and
+  Mathlib versions are pinned in `lean/`; allow roughly 8 GB for dependencies.
+- Solvers and cake_lpr only for certificate regeneration. See the
+  [pinned toolchain instructions](reference/solver-toolchain.md).
 
-```bash
-git clone https://github.com/jxucoder/smp-max.git
-cd smp-max
-```
+The verification tools use the Python standard library. Alternative
+experiments requiring PySAT use `requirements-experiments.txt`.
+Generated output goes under the ignored `runs/` directory.
 
-Install [elan](https://github.com/leanprover/elan) using its installation
-instructions, then fetch the pinned Mathlib cache:
-
-```bash
-(cd lean && lake exe cache get)
-```
-
-[lean-toolchain](../lean/lean-toolchain) pins Lean 4 v4.33.1;
-[lake-manifest.json](../lean/lake-manifest.json) pins all Lean dependencies.
-Python-only witness and journal checks do not require Lean or PySAT.
-PySAT is needed only for the [direct-encoding experiments](../experiments/README.md).
-
-## 2. Check the explicit witnesses
+## 1. Check witnesses and saved files
 
 ```bash
 python3 tools/verify_witnesses.py
+python3 tools/check_artifacts.py
+python3 tools/check_docs.py
 ```
 
-Expected: four `[OK]` rows and `Verified 4 witnesses.` The program checks
-preference permutations, compares full matching sets, and checks
-rotation-poset downsets. Each saved order-7 schedule is also checked against
-its preference data. Any failure exits nonzero.
+Expected witness counts: **16, 48, 85, 85**. The verifier compares complete
+matching sets from two counters, checks rotation-poset downset counts, and
+reconstructs the order-7 preferences from their schedules. These establish
+lower bounds. Artifact hashes establish file identity, not mathematical validity.
 
-`python3 tools/stable_matchings.py` is a separate sanity check against
-Latin instances with counts 3, 10, 9, and 48. Its order-5 example is not
-the extremal instance.
-
-## 3. Check Lean and inspect the definitions
+## 2. Build and inspect the Lean statements
 
 ```bash
+(cd lean && lake exe cache get)
 bash tools/check_lean.sh
 ```
 
-The script builds the library and all three exporters, checks for `sorry`,
-checks the 17 established theorem axiom sets, checks the standalone
-order-5 witness, runs the differential count check, and checks the
-order-4 LRAT pilot. Success ends with a summary of the passed checks.
+This builds the library and all three exporters, rejects `sorry`, and checks
+26 theorem axiom lists, including `f5_eq_16_of_unsat` and `f6_eq_48_of_unsat`.
+Each uses exactly `propext`, `Classical.choice`, and `Quot.sound`. It also
+checks the standalone order-5 witness (only `propext`), 300 differential
+count cases (zero mismatches), and the order-4 LRAT pilot.
 
-Read the definitions in [Five/Definitions.lean](../lean/SmpMax/Five/Definitions.lean)
-and [Six/ReadOff.lean](../lean/SmpMax/Six/ReadOff.lean): `Inst`, `WF`,
-`isStable`, and `stableCount`, with their order-6 counterparts. These
-must express the intended mathematical problem. The [module map](../lean/README.md)
-links the reduction and encoding statements.
+The statements have the same shape: if all specified Lean-defined CNFs
+are unsatisfiable, the maximum is exactly 16 or 48. For order 5 there are
+120 formulas; for order 6 there are 318,736 leaf formulas. The order-6
+normalization, encoding faithfulness and cube coverage proofs are complete.
+The [Lean guide](../lean/README.md) gives the statements and reading order.
 
-The main theorem `f5_eq_16_of_unsat` depends only on `propext`,
-`Classical.choice`, and `Quot.sound`. Its 120 UNSAT hypotheses are
-discharged outside Lean. The standalone witness depends only on `propext`.
+Read the definitions of instances, well-formedness, stability and counting
+in [Five/Definitions.lean](../lean/SmpMax/Five/Definitions.lean) and
+[Six/ReadOff.lean](../lean/SmpMax/Six/ReadOff.lean) to confirm that the
+formal statements express the intended stable-marriage problem.
 
-## 4. Check retained artifacts and recorded campaign coverage
+Optional kernel replay of every imported module, from the repository root:
 
 ```bash
-python3 tools/check_artifacts.py
+cd lean
+python3 - <<'PY'
+from pathlib import Path
+import subprocess
+modules = [line.split()[1] for line in Path('SmpMax.lean').read_text().splitlines()
+           if line.startswith('import SmpMax.')]
+for module in [*modules, 'SmpMax']:
+    subprocess.run(['lake', 'env', 'leanchecker', module], check=True)
+print(f'{len(modules) + 1} modules replayed successfully')
+PY
+```
+
+## 3. Audit the campaign and check every formula
+
+```bash
 mkdir -p runs/f6
 gzip -dc results/f6/campaign-2026-09-08/campaign.jsonl.gz > runs/f6/campaign.jsonl
-python3 -m tools.campaign.cube_campaign --audit --journal runs/f6/campaign.jsonl
+python3 tools/campaign/check_lean_identity.py --journal runs/f6/campaign.jsonl
 ```
 
-The final coverage line must contain:
+The helper invokes the current Lean exporters and compares their output
+with the journal and Python cube definitions. Every mismatch causes failure.
+Expected results:
 
-```text
-roots=25493 nodes=321492 verified=318736 missing=0 bad=0
-```
+- Audit: **321,492** distinct cubes, **318,736** verified, **2,756** split;
+  zero missing or bad records and `audit: OK`.
+- Exactly **25,493** roots and **295,999** children of the recorded splits.
+- `Cubes6.finalCubes`: **318,736** unique IDs, equal to the verified set.
+- All **321,492** recorded formula hashes match; zero missing unit lists.
 
-The audit ends with `audit: OK` and exit 0. A source-hash provenance
-notice may report that the encoder source changed since the historical
-header; the reorganization changed imports/documentation but preserved
-the formula. Formula identity is checked independently. See the
-[layout comparison](layout-verification.md).
+The base CNF hash is
+`28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b`.
+Outputs, complete ID lists and a JSON summary are in `runs/f6/lean-identity/`.
+For the low-level recipe, see the exporters in the [Lean guide](../lean/README.md).
+The original [identity transcript](../results/f6/campaign-2026-09-08/lean_identity.txt)
+uses historical paths; the [migration map](path-migration.md) resolves them.
 
-This audit checks recorded coverage and verdict fields, not LRAT proof
-contents. All completed-run evidence is retained under
-[results/f6/campaign-2026-09-08](../results/f6/campaign-2026-09-08/README.md).
+Source hashes in the journal identify the original scripts. Moving imports
+and changing documentation changes a source hash without changing the
+formula. The audit reports that difference as provenance; formula mismatch
+is a failure. The full identity check above independently checks the formulas.
 
-## 5. Regenerate and check the order-5 certificates
+## 4. Regenerate the order-5 certificates
 
-Build [kissat](https://github.com/arminbiere/kissat),
-[drat-trim](https://github.com/marijnheule/drat-trim), and
-[cake_lpr](https://github.com/tanyongkiam/cake_lpr) from their upstream
-sources. The recorded run used kissat 4.0.4, drat-trim `2e3b2dc`, and
-cake_lpr `a36874a`. Build a checker appropriate for your platform and run
-its self-test. The [campaign reference](reference/campaign.md) records the
-order-6 native-LRAT toolchain separately.
-
-Place kissat on PATH and the other two executables at `dt-src/drat-trim`
-and `cake_lpr-src/cake_lpr`, or pass their paths through the runner's
-`--kissat`, `--drat-trim`, and `--cake-lpr` options.
+Install kissat 4.0.4 on `PATH`, drat-trim (historical commit `2e3b2dc`) at
+`dt-src/drat-trim`, and cake_lpr at `cake_lpr-src/cake_lpr`. The
+[toolchain reference](reference/solver-toolchain.md) covers cake_lpr;
+the other sources are [kissat](https://github.com/arminbiere/kissat) and
+[drat-trim](https://github.com/marijnheule/drat-trim).
 
 ```bash
-python3 tools/verify_five_cubes.py --export-only
 python3 tools/verify_five_cubes.py
 ```
 
-The first command exports the formulas from Lean into `runs/f5/lean-cubes/`.
-The second regenerates them, solves all 120 upper-bound cubes, converts
-DRAT to LRAT, and checks each LRAT. Expected final output:
-`Verified 120/120 cubes in this run. All upper-bound cubes checked.`
+The runner exports the Lean formulas, requires solver exit 20 (UNSAT),
+checks DRAT and LRAT verdicts, and records formula/proof hashes before
+deleting successful proof files. Failures stop the run and retain artifacts.
+Use `--keep-proofs` to archive certificates. A successful full run ends
+with `Verified 120/120 cubes in this run. All upper-bound cubes checked.`
 
-The runner explicitly accepts solver exit 20, requires checker success,
-records formula/proof hashes, and stops on failure with artifacts retained.
-Successful DRAT/LRAT files are removed after recording verification; use
-`--keep-proofs` to retain them. `--cubes 0 1` checks only a subset and is
-insufficient to establish the upper bound.
-
-For comparison, concatenate the 120 upper-bound CNFs in zero-padded cube
-order: their SHA-256 is
-`044d0edbd9762166d925038056b3ef9ed762293d3f7637055e1105d1eca30ec6`.
-The historical `a93f5e58…` hash covers **all 240** CNFs, including the
-positive controls; the old `cubeL*.cnf` glob selected both sets.
-`cubeL16_105.cnf` is the positive control containing the known witness
-and should be SAT (solver exit 10).
-
-## 6. Regenerate order-6 formulas or certificates
+To inspect formulas without solving:
 
 ```bash
-mkdir -p runs/f6
-lean/.lake/build/bin/export_sched_cnf runs/f6/base.cnf
-lean/.lake/build/bin/export_sched_cnf runs/f6/example.cnf '--prefix=0,1;2,3'
-lean/.lake/build/bin/export_sched_cnf runs/f6/stopped.cnf '--prefix=0,1' --stop
+python3 tools/verify_five_cubes.py --export-only
 ```
 
-The base must have 84,882 variables and 2,709,212 clauses. Its SHA-256
-is recorded in the [campaign summary](../results/f6/campaign-2026-09-08/summary.json).
-Shell-quote cube prefixes because semicolons have shell meaning.
+Files go to `runs/f5/lean-cubes/`: 120 production CNFs, 120 positive
+controls and `perms120.txt`. Concatenated in filename order, the production
+CNFs hash to `044d0edbd9762166d925038056b3ef9ed762293d3f7637055e1105d1eca30ec6`;
+all 240 hash to `a93f5e58cd23976b303e26f5dd2fcd4ab66f91797b0b02bd2bfba13887c6a2ef`.
+The positive control `cubeL16_105.cnf` must be SAT.
 
-Follow the [campaign reference](reference/campaign.md) to solve/check a
-sample cube or launch a full regeneration. The original LRAT files are
-not available; their journaled hashes identify historical files and a new
-solver run need not reproduce the same proof bytes. The regenerated CNF
-must match the corresponding journaled CNF hash.
+## 5. Regenerate order-6 certificates
 
-`--expect-cnf-dir` rehashes Python-generated cube formulas and optionally
-compares preexisting external files. It does not run Lean automatically.
-The reference explains the required external filenames and coverage limits.
+Follow [solver setup and sample re-solving](reference/solver-toolchain.md).
+It includes a positive control and the exact 205-cube sample recorded in
+the repository. For each re-solved cube, require a valid checker verdict
+and the same CNF hash. A different proof hash can reflect a different solver
+build; it still needs independent acceptance by the checker.
+
+The [campaign reference](reference/campaign.md) covers a complete run.
+Use the verified ID list produced in step 3 to reproduce the existing
+leaf set. A sample does not discharge the full UNSAT hypothesis.
+
+## What remains trusted
+
+The formal side relies on Lean's kernel, the three listed axioms, and the
+human interpretation of the problem definitions. The certificate side
+relies on the DIMACS printers, formula identity, a sound LRAT checker and
+its execution environment. The solvers supply certificates to that checker.
+
+The stored order-6 journal is self-attested: it records the driver's
+transcription of checker verdicts. About 25 TB of certificates were deleted.
+Auditing the journal and recomputing hashes do not re-check those certificates;
+fresh solving and checking are required for independent verification.
+The saved 205-cube second-machine check does not cover the whole tree.
+Order-5 certificates were also not archived and can be regenerated in step 4.

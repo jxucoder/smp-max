@@ -1,0 +1,56 @@
+leanchecker over the Lean development (2026-09-09)
+
+Tool: `leanchecker`, the kernel re-checker shipped with Lean 4.33.1 (successor of the
+lean4checker repository, which now carries a deprecation notice). For each module it loads
+the imported environment from the .olean files and replays every declaration of that module
+through the kernel; it prints nothing and exits 0 when all declarations are accepted.
+
+Command (from f5/lean/SmpF5, after `lake build`):
+  for m in $(grep -oE '^import SmpF5\.\w+' SmpF5.lean | sed 's/import //') SmpF5; do
+    lake env leanchecker $m || echo FAIL $m
+  done
+
+Negative control: `lake env leanchecker SmpF5.DoesNotExist` -> "uncaught exception: Could not
+find any oleans for: SmpF5.DoesNotExist" (the tool was live).
+
+Result: modules=38 failures=0 (37 imported modules + the root), 21:35:44 to 21:40:51 PDT.
+Lean (version 4.33.1, arm64-apple-darwin24.6.0, commit 819816b2e0a3bf405af45ae5c7af2491d8f5bee6, Release)
+
+ok   SmpF5.Faithful (8 s)
+ok   SmpF5.Symmetry (7 s)
+ok   SmpF5.Encoding (7 s)
+ok   SmpF5.Bridge (8 s)
+ok   SmpF5.Faithfulness (8 s)
+ok   SmpF5.Lower (8 s)
+ok   SmpF5.SixBridge (7 s)
+ok   SmpF5.Lattice6 (7 s)
+ok   SmpF5.Chain6 (7 s)
+ok   SmpF5.Sym6 (7 s)
+ok   SmpF5.Sched6 (7 s)
+ok   SmpF5.AbsBridge6 (7 s)
+ok   SmpF5.Cycle6 (6 s)
+ok   SmpF5.ChainSched6 (7 s)
+ok   SmpF5.ValidityBridge6 (7 s)
+ok   SmpF5.WRelabel6 (7 s)
+ok   SmpF5.SchedCNF6 (6 s)
+ok   SmpF5.Cubes6 (7 s)
+ok   SmpF5.Decode6 (9 s)
+ok   SmpF5.DestutterPrefix6 (6 s)
+ok   SmpF5.Shapes6 (7 s)
+ok   SmpF5.Frames6 (7 s)
+ok   SmpF5.ReadoffSem6 (7 s)
+ok   SmpF5.SchedLen6 (7 s)
+ok   SmpF5.RelabelSched6 (7 s)
+ok   SmpF5.SplitList6 (6 s)
+ok   SmpF5.PrefixLegal6 (7 s)
+ok   SmpF5.FamState6 (7 s)
+ok   SmpF5.FamGates6 (7 s)
+ok   SmpF5.FamTrans6 (7 s)
+ok   SmpF5.FamSelect6 (7 s)
+ok   SmpF5.Units6 (7 s)
+ok   SmpF5.Lower6 (7 s)
+ok   SmpF5.FirstApp6 (7 s)
+ok   SmpF5.Faithfulness6 (7 s)
+ok   SmpF5.Coverage6 (7 s)
+ok   SmpF5.Bridge6 (7 s)
+ok   SmpF5 (39 s)

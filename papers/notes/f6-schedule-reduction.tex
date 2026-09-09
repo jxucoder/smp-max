@@ -11,7 +11,7 @@
 
 \title{The schedule reduction for the maximum number of\\ stable matchings of order six}
 \author{Jiarui Xu}
-\date{August 31, 2026 --- working notes}
+\date{August 31, 2026 --- working notes; superseded by the paper in \texttt{f6/paper/}}
 
 \begin{document}
 \maketitle
@@ -22,6 +22,9 @@ $6\times 6$ stable-marriage instance, to a finite enumeration of \emph{swap sche
 The reduction rests on one combinatorial lemma (the bridge lemma) plus routine symmetry
 arguments; the enumeration itself (26.6 billion nodes) yields a maximum of $48$,
 matching the dihedral lower bound, whence $f(6)=48$.
+The enumeration described here is corroboration only: the proof of $f(6)=48$ is the
+certified SAT campaign together with the Lean theorem \texttt{f6\_eq\_48\_of\_unsat},
+see \texttt{f6/paper/f6.pdf}.
 \end{abstract}
 
 \section{Preliminaries}
@@ -117,30 +120,52 @@ Hence $\mu$ is $J$-stable.
 \begin{lemma}[Symmetry soundness]\label{lem:sym}
 (i) Exchanging two adjacent steps whose man-sets are disjoint yields a schedule with
 the same trajectories, hence the same read-off instance.
-(ii) Relabelling men and women by a common permutation $\sigma$ maps schedules to
-schedules and read-off instances to instances of equal stable count.
+(ii) Relabelling men and women by a common permutation $\sigma$ maps legal schedules to
+legal schedules and preserves the stable-matching count of the read-off:
+$\mathrm{sc}(R(\sigma\cdot S))=\mathrm{sc}(R(S))$.
 Consequently, an enumeration that (a) requires the new men introduced by each step to
-be exactly the next unused labels (as a set), and (b) rejects a step that is
-lex-smaller than some earlier step from which it is separated only by steps man-disjoint
-from it, still attains the maximum of
+be exactly the next unused labels (as a set), and (b) rejects a step that is smaller, in
+a fixed total order on step shapes, than some earlier step from which it is separated
+only by steps man-disjoint from it,\footnote{Any total order on step shapes is sound.
+\texttt{gen\_enum.c} uses the index order of its size-first shape table; the order-6
+certificate campaign (companion paper) uses rule (a) only.} still attains the maximum of
 $\mathrm{sc}(R(S))$ over all schedules $S$.
 \end{lemma}
 
 \begin{proof}
 (i) Steps with disjoint man-sets touch disjoint women as well (their women are the
 current wives of their men), so each person's trajectory is unchanged by the exchange.
-(ii) Immediate. For the consequence: given any schedule, first apply (ii) with the
+(ii) Legality (budget, per-man cap, no revisit) is a property of the trajectories and is
+invariant under relabelling both sides by $\sigma$. The count equality is not an identity
+of instances --- $R(\sigma\cdot S)\ne\sigma(R(S))$ in general, because the bottom
+completion of Definition~\ref{def:readoff} uses a fixed order --- so it is proved through
+the bridge: in $R(S)$ the identity is man-optimal, the final matching is woman-optimal,
+and every intermediate matching is stable (a pair $(m,w)$ with $m$ having held $w$
+earlier cannot block, since $w$ would have to hold $m$ again later), so each person's
+stable partners in $R(S)$ are exactly their trajectory entries in trajectory order.
+$R(\sigma\cdot S)$ ranks precisely these partners of $\sigma(R(S))$ on top in the same
+order, so the bottom-agnostic bridge (\texttt{count\_le\_of\_orderPreserving}),
+instantiated at the relabelled instance $\sigma(R(S))$ and the relabelled schedule
+$\sigma\cdot S$, gives $\mathrm{sc}(R(S))=\mathrm{sc}(\sigma(R(S)))\le
+\mathrm{sc}(R(\sigma\cdot S))$; applying $\sigma^{-1}$ gives the reverse inequality.
+This re-instantiation is how the Lean development proves the inequality it uses.
+For the consequence: given any schedule, first apply (ii) with the
 greedy $\sigma$ that assigns labels in order of first participation (any assignment
 within a step's new set, which rule (a) permits); the result satisfies (a) at every
 step. Rule (b) only discards a sequence in favour of a commutation-equivalent
-lex-smaller one, available by finitely many exchanges of type (i), which preserve
+smaller one, available by finitely many exchanges of type (i), which preserve
 $R(S)$.
 \end{proof}
 
 \paragraph{Formalization status.} Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are
-formalized in Lean~4 in the accompanying development (nine files from
-\texttt{SixBridge.lean} to \texttt{WRelabel6.lean}, $\sim$4{,}600 lines; no
-\texttt{sorry}, axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}).
+formalized in Lean~4 in the accompanying development (ten files in import order from
+\texttt{SixBridge.lean} to \texttt{WRelabel6.lean}, $4{,}646$ lines; $5{,}230$ lines and
+$243$ theorems including \texttt{SchedCNF6.lean}, which defines the order-6 certificate
+formula; no \texttt{sorry}, axioms
+\texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}). The faithfulness theorem
+that ties the certificate formula to the count is formalized as well (nineteen further files,
+$4{,}761$ lines, $333$ theorems, and a data file of the $2{,}756$ recorded split decisions);
+the end statement \texttt{f6\_eq\_48\_of\_unsat} has the certificates as its only hypothesis.
 The bridge is formalized in a bottom-agnostic form (\texttt{AbsBridge6.lean}): any
 instance that ranks each person's stable partners on top in original order dominates
 the original in stable-matching count, whatever its bottoms. The validity lemma is
@@ -153,9 +178,11 @@ whose trajectories are exactly the stable-partner sequences
 matching to the identity (\texttt{WRelabel6.lean}). The composed statement
 \texttt{validity\_unconditional} reads: for every well-formed instance $I$ there is a
 legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(S))$.
-Lemma~\ref{lem:sym} concerns only the enumeration's internal symmetry reduction; its
-relabelling half is proved at the instance level (\texttt{Sym6.lean}) and the rest is
-validated computationally (canonicalization on/off agreement).
+Of Lemma~\ref{lem:sym}, the relabelling half (ii) is proved at the instance level
+(\texttt{Sym6.lean}); its schedule-level form is needed by the order-6 certificate
+campaign (companion paper), which does not use the commutation half (i). The commutation
+half is validated computationally only (canonicalization on/off agreement) and is used by
+the enumeration alone.
 
 \section{The theorem}
 
@@ -181,6 +208,17 @@ pass removes any reliance on monotonicity of the read-off count under extension.
 Certification of the enumeration (independent reimplementation, and ultimately a
 verified replay in a proof assistant) is the remaining engineering step; the lemmas
 above are elementary given the standard rotation theory of~\cite{gi89}.
+\end{remark}
+
+\begin{remark}[Note added 2026-09-08]
+The enumeration hypothesis of Theorem~\ref{thm:f6} has since been replaced as the evidence
+for the upper bound by a certificate campaign over a formula defined in Lean
+($25{,}493$ first-appearance canonical root cubes, refined by recorded splits into
+$321{,}492$ cubes, all $318{,}736$ leaves refuted with cake\_lpr-checked certificates,
+$0$ satisfiable, journal audited); the enumeration of the remark above stands as
+corroboration. The campaign needs Lemma~\ref{lem:sym}(ii) at the schedule level and not
+(i). See the companion paper and the repository's \texttt{STATUS.md} for what is and is
+not a Lean theorem.
 \end{remark}
 
 \begin{thebibliography}{9}

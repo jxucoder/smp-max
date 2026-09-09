@@ -43,14 +43,16 @@ flowchart TD
   B[Legal schedule dominating its count]
   C[Satisfiable canonical campaign cube]
   D[Every campaign leaf recorded as checked UNSAT]
-  E[Contradiction once the missing implication is proved]
+  E[Contradiction under the UNSAT hypothesis]
   A -->|Lean reduction complete| B
-  B -. normalization, encoding and coverage assembly in progress .-> C
+  B -->|Lean normalization, encoding and coverage| C
   C --> E
   D --> E
 ```
 
-The [evidence ledger](results.md) states the gap precisely. In particular,
+The complete theorem `f6_eq_48_of_unsat` combines this upper bound with
+the kernel-checked witness of 48. Its UNSAT hypothesis is checked externally;
+the [evidence ledger](results.md) describes that boundary. In particular,
 canonical bottom completion is not equivariant under arbitrary relabeling;
 the [proof plan](design/f6-faithfulness.md) uses the order-preserving bridge
 at the relabeled instance rather than assuming read-off commutes with relabeling.

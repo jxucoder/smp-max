@@ -38,7 +38,8 @@ The pinned Lean/Mathlib revisions are in `lean/lean-toolchain` and
 | Campaign coverage or record handling | Audit the saved journal and compare root/split-child sets |
 | Certificate runner | `python3 -m unittest discover -s tests`; these check failure handling with fake subprocesses, not mathematical certificates |
 
-For the remaining formal work, follow [f6-faithfulness.md](docs/design/f6-faithfulness.md).
+The order-6 proof is complete. Its [design record](docs/design/f6-faithfulness.md)
+explains the construction; current work is listed in the [roadmap](docs/roadmap.md).
 Keep theorem hypotheses visible and preserve the distinction between a
 kernel theorem, an external certificate check, and a validated computation.
 

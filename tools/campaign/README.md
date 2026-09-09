@@ -13,3 +13,8 @@ setup, working directories, audit semantics, resource needs, and records.
 
 New campaign output defaults to ignored `runs/f6/`. Saved evidence is
 under [results/f6/](../../results/f6/README.md), separate from these tools.
+
+`check_lean_identity.py` compares the complete journal with current Lean
+exports (roots, splits, final leaves and every formula hash).
+`verify_lean_hashes.py` is the underlying base-plus-units hash checker.
+See the [verification guide](../../docs/verification.md).

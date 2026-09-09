@@ -1,0 +1,41 @@
+Independent re-solve and re-check of a random sample of certified cubes (2026-09-09)
+
+Machine: a second Apple-silicon Mac (M4, macOS 25.2, this laptop), not one of the three
+campaign machines' installations: fresh clone, toolchain rebuilt from source today.
+  CaDiCaL  : commit c60730422e758ef1cebe7aeddf2dda31c996bf04 (`cadical --build`: Version 3.0.1 c6073042...),
+             built with Apple clang 21.0.0 (./configure && make)
+  cake_lpr : tanyongkiam/cake_lpr @ a36874a, arm64 build from cake_lpr_arm8.S
+             (sha256 95b64883edc0cb09feedbcb1ebec233e2490f5b458fdda9dc29c212ed916f00c = the published hash)
+             + basis_ffi.c (sha256 8e30d84f...), `cc basis_ffi.c cake_lpr_arm8.S -o cake_lpr -std=c99`;
+             self-test example.cnf/example.lpr: s VERIFIED UNSAT
+  driver   : f6/cube_campaign.py at commit 289e5e5 (main), --solver cadical --force --cubes <205 ids>,
+             fresh journal (recheck_2026-09-09.jsonl); base formula rebuilt by the driver,
+             header base_sha256 = 28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b (= campaign header)
+
+Sample: 205 cubes drawn at random (seed 20260909) from the journal's 318,736 verified records,
+stratified by depth and closedness, restricted to records with solve_s <= 30 s and LRAT <= 300 MB
+plus 5 records with 30 s < solve_s <= 120 s:
+  depth/closed counts: depth 0 closed: 1, depth 1 closed: 3, depth 2 open: 64, depth 2 closed: 8, depth 3 open: 71, depth 3 closed: 8, depth 4 open: 50
+  originally solved on: Mac mini M4 Pro (arm64): 164, Apple M4 Max laptop (arm64): 34, Linux/x86-64 container: 7
+
+Result (compare: campaign journal, last record per cube, vs the new journal):
+  verified here (cadical rc 20, cake_lpr 's VERIFIED UNSAT'): 205 / 205
+  cnf_sha256 equal to the campaign record:                     205 / 205
+  lrat_sha256 equal to the campaign record:                    204 / 205
+    by original machine: Mac mini M4 Pro (arm64): 164 / 164; Apple M4 Max laptop (arm64): 34 / 34; Linux/x86-64 container: 6 / 7
+    the one difference: cube 0,2,5,3,1,4;3,4,5 (depth 2), originally solved on the
+    x86-64 container (LRAT 632,110,614 bytes there, 618,668,566 bytes here);
+    same verdict, different proof trace across architectures/compilers. Same-architecture
+    reproductions (198 / 198 arm64) are byte-identical.
+  wall time: 262.6 s with 6 workers; solver time 503 s (median 1.01 s, max 39.6 s),
+  cake_lpr time 818 s, certificates 16.74 GB (max 1461 MB), deleted after checking.
+
+What this establishes: for these 205 cubes the journal's self-report is confirmed by an
+independent run (the formula the campaign solved is the Lean-printed formula, and it is
+unsatisfiable with a cake_lpr-checked certificate); with the same toolchain on the same
+architecture the campaign's certificate hashes are reproduced byte for byte. It does not
+replace re-solving the remaining 318,531 cubes (about 300 core-hours).
+
+Reproduce: python3 f6/cube_campaign.py --solver cadical --force --workers 6 --time 900 \
+    --journal <new.jsonl> --scratch <dir> --cubes <ids...>     # ids in recheck_2026-09-09.jsonl
+then compare cnf_sha256 / lrat_sha256 per cube with f6/campaign/campaign.jsonl.gz.

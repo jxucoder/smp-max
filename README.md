@@ -8,7 +8,7 @@ SAT certificates, and independently checked computations.
 | Order | Result | Evidence and current limitation |
 |---|---|---|
 | 5 | **f(5) = 16** | Lean theorem with an explicit UNSAT hypothesis, discharged externally by 120 cake_lpr-checked certificates; kernel-checked lower-bound witness. |
-| 6 | **f(6) = 48** | Lean schedule reduction, completed certificate campaign, and explicit lower bound. **The Lean encoding-faithfulness/coverage theorem remains in progress.** |
+| 6 | **f(6) = 48** | Complete Lean theorem `f6_eq_48_of_unsat`, conditional on checked UNSAT certificates for 318,736 leaf cubes; kernel-checked witness of 48. |
 | 7 | **f(7) ≥ 85** | Two explicit witnesses checked by independent matching counts and rotation-poset downsets. The upper bound is open. |
 
 The [evidence ledger](docs/results.md) states exactly what each layer

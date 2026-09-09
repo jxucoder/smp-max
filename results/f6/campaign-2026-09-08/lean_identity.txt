@@ -1,0 +1,47 @@
+Lean-side identity checks of the order-6 campaign (2026-09-08, Apple M4, Lean 4.33.1, commit ae8e83f)
+
+1. Base formula.  export_sched_cnf (SchedCNF6.schedCNFn 6 49) vs sched_sat.build(6, 49):
+   sha256 28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b both; cmp: byte-identical
+   (84,882 vars, 2,709,212 clauses; = journal header base_sha256).
+
+2. Root cubes.  export_cubes6 (Cubes6.canonicalCubes2) vs cube_campaign.root_cubes(2):
+   25,493 ids, byte-identical, same order.
+
+3. Split children.  export_cubes6 --parents=<2,756 journaled split ids> (Cubes6.extendCanon) vs
+   cube_campaign.split_children: 295,999 parent/child lines, byte-identical, same order.
+
+4. Certified cube set.  export_cubes6 --final (Cubes6.finalCubes = refineCubes (refineCubes
+   canonicalCubes2 isSplitDepth2) isSplitDepth3, split ids from SplitList6.lean) vs the journal's
+   'verified' ids (last record per cube): 318,736 ids each, identical as sorted sets.
+   (export_cubes6 --final: 22.5 s.)
+
+5. Every cube formula.  export_cubes6 --units=<all 321,492 ids> prints each cube's unit clauses
+   (SchedCNF6.prefixUnits ++ Cubes6.stopUnits); f6/lean_rehash.py composes
+   'p cnf 84882 (2709212 + #units)' ‖ Lean base body ‖ units and compares with the journaled
+   cnf_sha256 (hashed by the driver before solving):
+   lean_rehash: records with cnf_sha256=321492 matched=321492 mismatched=0 missing_units=0
+   (units export 150 s, rehash 7.5 s.)  Twelve cubes (open and closed, depths 0-4) were also
+   re-exported in full by export_sched_cnf [--prefix=...] [--stop] and matched their journaled hashes.
+
+Commands (from f5/lean/SmpF5 after 'lake build export_sched_cnf export_cubes6'; journal
+decompressed to campaign.jsonl; ids/verified lists extracted with a few lines of Python from the
+journal's last record per cube):
+   .lake/build/bin/export_sched_cnf base.cnf
+   .lake/build/bin/export_cubes6 roots.txt
+   .lake/build/bin/export_cubes6 children.tsv --parents=split_ids.txt
+   .lake/build/bin/export_cubes6 final.txt --final          # sort | cmp with verified ids
+   .lake/build/bin/export_cubes6 units.tsv --units=all_ids.txt
+   python3 ../../../f6/lean_rehash.py base.cnf units.tsv campaign.jsonl   # exit 0 iff all match
+
+6. Theorem (2026-09-08, evening).  f6_eq_48_of_unsat (f5/lean/SmpF5/SmpF5/Bridge6.lean):
+   (∀ c ∈ Cubes6.finalCubes, ¬ Satisfiable (Cubes6.cubeFormula 49 c)) →
+   (∀ I : Inst6, WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I, WF6 I = true ∧ stableCount6 I = 48.
+   #print axioms: [propext, Classical.choice, Quot.sound] (also for f6_upper_of_unsat, cube_faithful6,
+   fits_final, exists_canonical_schedule, firstApp_relabel, Legal_relabel, sc_le_readoffS_relabelSched,
+   dihedral6_count).  lake build: 893 jobs, no errors; grep -rn sorry SmpF5/: nothing.  With items 4 and 5,
+   the hypothesis is exactly "the 318,736 formulas the campaign certified are unsatisfiable".
+
+7. leanchecker (2026-09-09).  Lean 4.33.1's built-in kernel re-checker replayed all 38 modules
+   (37 imported + root) with 0 failures; independent 205-cube re-solve with the pinned toolchain:
+   205 verified, 205/205 cnf_sha256 and 204/205 lrat_sha256 equal to the journal
+   (leanchecker_2026-09-09.txt, recheck_2026-09-09.txt).

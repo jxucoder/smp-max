@@ -1,5 +1,6 @@
 import SmpMax.Six.ScheduleEncoding
 import SmpMax.Six.Schedule
+import SmpMax.Six.CyclicShapes
 
 /-!
 # Campaign cubes (order 6), mirroring `tools/campaign/cube_campaign.py`
@@ -11,7 +12,7 @@ first-appearance rule (a) and the legality checks of `apply_step`:
 per-man cap 5 moves (trajectory length ≤ 6), no revisit on either side,
 30-move budget.  The definitions are computable so that `export_cubes6`
 can print the id lists and they can be compared with the driver's
-(docs/design/f6-faithfulness.md §3.5, §5.3, §11.1).
+(FAITHFULNESS_PLAN.md §3.5, §5.3, §11.1).
 -/
 
 namespace Cubes6
@@ -97,5 +98,25 @@ def stopUnits (n : Nat) (pre : List (List Nat)) (stopped : Bool) : List (List In
 
 def cubeCNFc (n k : Nat) (c : Cube) : List (List Int) :=
   schedCNFn n k ++ prefixUnits n c.steps ++ stopUnits n c.steps c.stopped
+
+/-! ## Side conditions and the fit relation (plan §3.5) -/
+
+/-- Well-formedness the formula needs: every prefix shape is in the shape
+alphabet, at most 15 steps, and a stopped cube stops strictly before frame
+15 (`sVar L 15 0` aliases a `C` variable, plan §0). -/
+def CubeWF (c : Cube) : Prop :=
+  c.steps.length ≤ 15 ∧ (c.stopped = true → c.steps.length < 15) ∧
+  ∀ sh ∈ c.steps, sh ∈ cyclicShapes 6
+
+/-- `c` fits the schedule `S`: the cube's steps are the min-first forms of
+the first `c.steps.length` steps of `S`, and a stopped cube fits only a
+schedule of exactly that length. -/
+def Fits (c : Cube) (S : List (List Nat)) : Prop :=
+  c.steps = (S.take c.steps.length).map minFirst ∧
+  c.steps.length ≤ S.length ∧
+  (c.stopped = true → S.length = c.steps.length)
+
+/-- The formula of a cube at target `k`: the file the campaign solved. -/
+def cubeFormula (k : Nat) (c : Cube) : List (List Int) := cubeCNFc 6 k c
 
 end Cubes6

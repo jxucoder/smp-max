@@ -1,12 +1,13 @@
 """Search size-2 schedules with variable length for an order-n lower bound.
 
-Usage: python3 -m experiments.search.search_swap_schedules N SEED SECONDS
+Usage: python3 -m experiments.search.search_swap_schedules N SEED SECONDS [--full]
 Both order-7 witnesses with 85 matchings use 20 of 21 possible steps.
 See docs/f7.md for deterministic witness verification and search limits."""
 import random, sys, time
 from itertools import permutations, combinations
 
 N = int(sys.argv[1]); SEED = int(sys.argv[2]); SECS = float(sys.argv[3])
+FULL = "--full" in sys.argv[4:]
 RMAX = N * (N - 1) // 2
 PAIRS = [tuple(p) for p in combinations(range(N), 2)]
 
@@ -70,7 +71,7 @@ def score(seq):
 
 def mutate(seq, rng):
     s = list(seq)
-    op = rng.randrange(5)
+    op = rng.randrange(3) if FULL else rng.randrange(5)
     if op == 0 and len(s) > 1:
         i, j = rng.sample(range(len(s)), 2); s[i], s[j] = s[j], s[i]
     elif op == 1 and len(s) > 1:
@@ -89,7 +90,7 @@ def main():
     t_end = time.time() + SECS
     best, best_seq, evals, restarts = 0, None, 0, 0
     while time.time() < t_end:
-        r = rng.randrange(max(3, RMAX - 8), RMAX + 1)
+        r = RMAX if FULL else rng.randrange(max(3, RMAX - 8), RMAX + 1)
         seq = [rng.choice(PAIRS) for _ in range(r)]
         cur = score(seq); stale = 0
         while stale < 4000 and time.time() < t_end:

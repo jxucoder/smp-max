@@ -4,17 +4,28 @@ import Mathlib.Data.List.Nodup
 import Mathlib.Data.List.GetD
 
 /-!
-# Order-5 instances, stability, and cube coverage
+# Problem definitions and covering: f(5) ≤ 16 in Lean
 
-Generalizes `checks/FiveWitness.lean`'s concrete computation to arbitrary well-formed
-5×5 instances, and proves the basic definitions and covering facts. Proof architecture:
+Defines 5×5 stable-marriage instances as rank tables (`Inst`, `WF`),
+stability (`isStable`) and the stable-matching count (`stableCount`),
+and proves the covering step `cube_covering`. These definitions are the
+one human-checked step of the f(5) proof; everything downstream is
+proved from them. Proof architecture, all realized:
 
-  f5_upper
-    ⟵ reduce_man0 (symmetry: WLOG man 0's ranking is the identity)
-    ⟵ cube_covering (man 1's ranking is one of the 120 permutations)
-    ⟵ per-cube faithfulness + cake_lpr-verified UNSAT certificates
-      (the certificate step lives outside Lean's kernel, checked by the
-       formally verified cake_lpr; Lean states the bridge explicitly).
+  f5_eq_16_of_unsat (Lower.lean)
+    ⟵ f5_upper_of_unsat (Bridge.lean)
+      ⟵ reduce_man0' (Symmetry.lean: WLOG man 0's ranking is the identity)
+      ⟵ cube_covering (this file: man 1's ranking is one of the 120
+         permutations)
+      ⟵ cube_faithful (Bridge.lean, proved as `cube_faithful'` in
+         Faithfulness.lean: an instance in cube `row` with ≥ 17 stable
+         matchings satisfies `cubeCNF row`, defined in Encoding.lean)
+    ⟵ witness_count (Lower.lean: an instance with 16 stable matchings)
+
+The only hypothesis left open is `¬ Satisfiable (cubeCNF row)` for each
+of the 120 rows; it is discharged outside the kernel by cake_lpr-checked
+UNSAT certificates for the formulas `export_cnf` prints from these very
+definitions.
 -/
 
 /-- A 5×5 stable-marriage instance as rank tables:
@@ -73,8 +84,9 @@ theorem rankRow_perm {r : List Nat} (h : isRankRow r = true) :
   exact (hsp.perm_of_length_le hlen').symm
 
 /-- **Covering step** (proved): with man 0 fixed, man 1's rank row is one of
-the 120 permutations of 0..4 — i.e. the cubes of `cube_run.py` exhaust all
-cases. `idRow.permutations` is a concrete 120-element list. -/
+the 120 permutations of 0..4 — i.e. the cubes printed by `export_cnf`
+(`ExportCnf.lean`, one per element of `perms120 = idRow.permutations`)
+exhaust all cases. `idRow.permutations` is a concrete 120-element list. -/
 theorem cube_covering (I : Inst) (h : WF I = true) :
     I.mrank.getD 1 [] ∈ idRow.permutations := by
   simp only [WF, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at h
@@ -84,10 +96,3 @@ theorem cube_covering (I : Inst) (h : WF I = true) :
     rw [List.getD_eq_getElem _ _ h1lt]
     exact hrows _ (List.getElem_mem h1lt)
   exact List.mem_permutations.2 (rankRow_perm h1)
-
-/-- **Per-cube bridge** (one statement per cube i ∈ 0..119, schematically):
-if `WF I`, man 0 = idRow, man 1 = cube i's order, and `stableCount I ≥ 17`,
-then the assignment read off `I` satisfies cube i's CNF — whose
-unsatisfiability is certified by cake_lpr. Formal statement to be
-instantiated once the Lean-side CNF builder mirrors `tools/direct_encoding.py`. -/
-theorem faithfulness_placeholder : True := trivial

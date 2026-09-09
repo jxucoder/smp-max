@@ -5,11 +5,11 @@ import SmpMax.Five.EncodingFaithfulness
 /-!
 # Assembly: from 120 UNSAT cubes to f(5) ≤ 16
 
-`cube_faithful` (proved via encoding faithfulness) extracts a satisfying
-assignment of `cubeCNF row` from any well-formed instance in that cube
-with ≥ 17 stable matchings. Everything else is proved:
-`f5_upper_of_unsat` combines it with the symmetry reduction
-(`reduce_man0'`) and the covering lemma (`cube_covering`).
+`cube_faithful` (proved as `cube_faithful'` in `Faithfulness.lean`)
+extracts a satisfying assignment of `cubeCNF row` from any well-formed
+instance in that cube with ≥ 17 stable matchings. `f5_upper_of_unsat`
+combines it with the symmetry reduction (`reduce_man0'`) and the
+covering lemma (`cube_covering`); every step is proved in Lean.
 
 The 120 hypotheses `¬ Satisfiable (cubeCNF row)` are discharged outside
 the kernel: the formulas are printed verbatim from these definitions by
@@ -17,7 +17,7 @@ the kernel: the formulas are printed verbatim from these definitions by
 formally verified checker cake_lpr (see `results/f5/lean-cubes/`).
 -/
 
-/-- **Faithfulness** (proved in `SmpMax/Five/EncodingFaithfulness.lean`): a well-formed
+/-- **Faithfulness** (proved in `Faithfulness.lean`): a well-formed
 instance with man 0 ranking identically, man 1's rank row equal to `row`,
 and at least 17 stable matchings yields a satisfying assignment of
 `cubeCNF row`. -/

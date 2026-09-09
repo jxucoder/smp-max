@@ -9,7 +9,7 @@ explicit per-block offset functions.  `dec6 k v` inverts that numbering
 (the f(5) `tau` pattern: range tests, then `/` and `%`), so that an
 assignment can be defined by cases on the decoded variable.  The twelve
 decode lemmas `dec_*` say that decoding an offset function's value gives
-back its arguments (docs/design/f6-faithfulness.md §4.1, L4.1–L4.3).
+back its arguments (FAITHFULNESS_PLAN.md §4.1, L4.1–L4.3).
 -/
 
 namespace SchedCNF6

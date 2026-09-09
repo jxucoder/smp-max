@@ -1,5 +1,5 @@
 /-!
-The 5x5 stable-marriage instance found by SAT (see ../../tools/direct_encoding.py) has
+The 5x5 stable-marriage instance found by SAT (see ../tools/direct_encoding.py) has
 exactly 16 stable matchings, verified here by Lean's kernel alone
 (`decide`, no imports, no native code).
 

@@ -24,20 +24,28 @@ accompanying repository.}}
 Let $f(n)$ denote the maximum number of stable matchings of a stable-marriage instance with $n$ men
 and $n$ women (Knuth 1976; Gusfield--Irving Open Problem \#1). The known values were
 $f(1),\dots,f(5)=1,2,3,10,16$; the value of $f(6)$ was open, with the lower bound $48$ (a dihedral
-Latin instance) conjectured exact (OEIS A357271). We prove $f(6)=48$. The proof is a reduction of
-the $\sim\!10^{28}$-instance search space to a finite space of \emph{rotation schedules}: sequences
-of cyclic partner exchanges applied from the identity matching. Three elementary lemmas over the
-standard rotation theory show that every instance is dominated, in stable-matching count, by the
-\emph{read-off instance} of its own schedule, and that a first-appearance labeling and a
-commutation normal form lose no schedules. An exhaustive enumeration then evaluates the exact
-stable-matching count of all $26{,}574{,}282{,}886$ schedule nodes --- roughly ten hours on a
-laptop --- attaining maximum $48$. The methodology is validated against ground truth: run at orders
-$3,4,5$ it reproduces $3, 10, 16$, the last being the value the author's companion development
-certifies formally (Lean + verified SAT certificates); an independent implementation and
-canonicalization on/off comparisons (up to a $2.66\times 10^9$-node check) agree throughout.
-The bridge and validity lemmas are machine-checked in Lean~4 (no \texttt{sorry}, standard
-axioms); the symmetry lemma is validated computationally, and a verified replay of the
-enumeration remains future work.
+Latin instance) conjectured exact (OEIS A357271). We establish $f(6)=48$. The proof is a reduction
+of the $\sim\!10^{28}$-instance search space to a finite space of \emph{rotation schedules}:
+sequences of cyclic partner exchanges applied from the identity matching. Three elementary lemmas
+over the standard rotation theory show that every instance is dominated, in stable-matching count,
+by the \emph{read-off instance} of its own schedule, and that a first-appearance labeling loses no
+schedules; the validity and bridge lemmas are machine-checked in Lean~4 (no \texttt{sorry},
+standard axioms). The upper bound is then discharged by SAT certificates over a formula defined in
+Lean, asserting that a legal schedule reads off to at least $49$ stable matchings: the canonical
+schedules are covered by $25{,}493$ root cubes, refined by the solver's splits into $321{,}492$
+cubes, whose $318{,}736$ leaves were all refuted by CaDiCaL with every refutation checked by the
+formally verified LRAT checker cake\_lpr ($0$ satisfiable; the journal is audited). The base
+formula, the cube lists, the certified cube set and every cube formula were re-derived from the
+Lean definitions and match what the solver saw. The Lean theorem that ties the formula to the
+count --- every well-formed instance with at least $49$ stable matchings satisfies some certified
+cube's formula --- is proved as well, so that $f(6)=48$ is a single Lean theorem,
+\texttt{f6\_eq\_48\_of\_unsat}, whose only hypothesis is the unsatisfiability of the certified
+cube formulas (no \texttt{sorry}; axioms \texttt{propext}, \texttt{Classical.choice},
+\texttt{Quot.sound}); the lower bound is a kernel-checked computation.
+An exhaustive enumeration that evaluates the exact stable-matching count of all
+$26{,}574{,}282{,}886$ schedule nodes (maximum $48$, roughly ten hours on a laptop) corroborates the
+result by a method sharing no code with the certificates; run at orders $3,4,5$ it reproduces
+$3,10,16$.
 \end{abstract}
 
 \section{Introduction}
@@ -47,9 +55,9 @@ order over the opposite side; a perfect matching is \emph{stable} if no man and 
 other to their assigned partners. Knuth~\cite{knuth} asked for the behaviour of $f(n)$, the maximum
 number of stable matchings over instances of order $n$; Gusfield and Irving made it Open
 Problem~\#1 of their monograph~\cite{gi89}. Asymptotically $2.28^n\le f(n)\le 3.55^n$
-\cite{thurber,kow,pp}. Exact values have been scarce: $f(4)=10$ and $f(5)=16$ are due to
-Eilers~\cite{oeis} (the latter obtained in 2022 by constraint programming and certified formally in
-the author's companion work~\cite{f5paper}), and
+\cite{thurber,kow,pp}. Exact values have been scarce: $f(4)=10$ is classical (Eilers'
+uniqueness observation) and $f(5)=16$ is due to Eilers~\cite{oeis} (obtained in 2022 by constraint
+programming and certified formally in the author's companion work~\cite{f5paper}), and
 \[
 f(1),\dots,f(5) \;=\; 1,\;2,\;3,\;10,\;16.
 \]
@@ -67,21 +75,30 @@ completed at the bottom. Three lemmas (Section~\ref{sec:reduction}) show:
 (i) every instance's rotations, in elimination order, form a valid schedule;
 (ii) the read-off instance of that schedule has at least as many stable matchings
 (the \emph{bridge lemma}); and
-(iii) a first-appearance labeling rule and a commutation normal form preserve at least one
-representative of every schedule, without affecting read-off counts.
-The schedule space is small enough to exhaust: our enumerator visits $26{,}574{,}282{,}886$ nodes
-and computes the exact stable-matching count of every node's read-off instance, attaining maximum
-$48$ (Section~\ref{sec:enum}). With the dihedral lower bound, $f(6)=48$ follows.
+(iii) a first-appearance labeling rule preserves at least one representative of every schedule
+without affecting read-off counts (a commutation normal form, used by the enumeration only, does
+likewise).
+The schedule space is small enough to certify: the canonical schedules are covered by $25{,}493$
+root cubes of a Lean-defined propositional formula asserting a read-off count of at least $49$;
+refined by the solver's splits into $321{,}492$ cubes, all $318{,}736$ leaves are refuted, each
+with a certificate checked by the verified checker cake\_lpr (Section~\ref{sec:campaign}). With the
+dihedral lower bound, $f(6)=48$ follows. An exhaustive enumeration that visits
+$26{,}574{,}282{,}886$ schedule nodes and computes the exact stable-matching count of every node's
+read-off instance, attaining maximum $48$ (Section~\ref{sec:enum}), corroborates the certificates
+by a method sharing no code with them.
 
-\paragraph{Validation.} Because the result rests on an enumeration, Section~\ref{sec:valid}
-documents the checks: the same machine run at orders $3,4,5$ reproduces $f=3,10,16$ ---
+\paragraph{Validation.} Because the upper bound rests on computation, Section~\ref{sec:campaign}
+records the audit of the certificate journal and the identity checks between the Lean-defined
+formula and cube lists and what the solver saw, and Section~\ref{sec:valid} documents the
+corroborating checks: the enumerator run at orders $3,4,5$ reproduces $f=3,10,16$ ---
 the last value being formally certified (machine-checked in Lean, with SAT refutations verified by
 the formally verified checker cake\_lpr) in the companion work~\cite{f5paper}, so a certified
 theorem serves as test oracle for the present method; an independently written enumerator agrees
 on maxima; disabling the symmetry reductions multiplies the tree by up to $48\times$ (a
 $2.66\times10^9$-node check at order six) and never changes a maximum; and $1.3\times10^9$
 local-search evaluations in two other search spaces also never exceeded $48$.
-Section~\ref{sec:lean} describes the Lean~4 formalization of the reduction.
+Section~\ref{sec:lean} describes the Lean~4 formalization of the reduction and states which links
+of the proof are Lean theorems.
 
 \section{Preliminaries}
 
@@ -151,17 +168,35 @@ $(m,w)$ blocks $\mu$ in $J$ iff it blocks in $I$ --- and it does not.
 
 \begin{lemma}[Symmetry soundness]\label{lem:sym}
 (i) Exchanging two adjacent steps with disjoint man-sets leaves all trajectories, hence $R(S)$,
-unchanged. (ii) Relabelling men and women by a common permutation maps schedules to schedules and
-read-off instances to relabelled instances of equal count. Consequently an enumeration that
+unchanged. (ii) Relabelling men and women by a common permutation $\sigma$ maps legal schedules to
+legal schedules and preserves the stable-matching count of the read-off:
+$\mathrm{sc}(R(\sigma\cdot S))=\mathrm{sc}(R(S))$. Consequently an enumeration that
 (a) requires the new men of each step to be exactly the next unused labels as a set, and
-(b) rejects a step lex-smaller than an earlier step separated from it only by man-disjoint steps,
+(b) rejects a step that is smaller, in a fixed total order on step shapes, than an earlier step
+separated from it only by man-disjoint steps,\footnote{Any total order on step shapes is sound.
+\texttt{gen\_enum.c} uses the index order of its size-first shape table; the certificate campaign
+of Section~\ref{sec:campaign} uses rule (a) only.}
 still attains $\max_S \mathrm{sc}(R(S))$.
 \end{lemma}
 
 \begin{proof}
 (i) Steps with disjoint man-sets touch disjoint women (their women are their men's current wives).
-(ii) Immediate. For the consequence, relabel by first participation (any assignment within a
-step's new set satisfies the set rule), and note rule (b) discards a sequence only in favour of a
+(ii) Legality (budget, per-man cap, no revisit) is a property of the trajectories and is invariant
+under relabelling both sides by $\sigma$. The count equality is \emph{not} an identity of
+instances: $R(\sigma\cdot S)\ne\sigma(R(S))$ in general, because the bottom completion of
+Definition~\ref{def:readoff} uses the fixed ascending order. Instead: in $R(S)$ the identity is
+man-optimal and the final matching woman-optimal, and every intermediate matching is stable (a pair
+$(m,w)$ with $m$ having held $w$ earlier cannot block, since $w$ would have to hold $m$ again
+later), so each person's stable partners in $R(S)$ are exactly their trajectory entries, in
+trajectory order. $R(\sigma\cdot S)$ ranks precisely these partners of $\sigma(R(S))$ on top in the
+same order, so the bottom-agnostic bridge of Section~\ref{sec:lean}
+(\texttt{count\_le\_of\_orderPreserving}), instantiated at the relabelled instance
+$\sigma(R(S))$ and the relabelled schedule $\sigma\cdot S$, gives
+$\mathrm{sc}(R(S))=\mathrm{sc}(\sigma(R(S)))\le\mathrm{sc}(R(\sigma\cdot S))$; applying
+$\sigma^{-1}$ to $\sigma\cdot S$ gives the reverse inequality. This re-instantiation is how the
+Lean development proves the inequality it uses (at the chain schedule of an instance).
+For the consequence, relabel by first participation (any assignment within a step's new set
+satisfies the set rule), and note rule (b) discards a sequence only in favour of a
 commutation-equivalent one with the same read-off instance.
 \end{proof}
 
@@ -219,8 +254,89 @@ attainers, as Lemma~\ref{lem:valid} promises. Note that a maximizer need not use
 steps --- $(01)(02)$, two transpositions, already attains it --- a first glimpse of the
 all-size-2 phenomenon of Section~\ref{sec:outlook}.
 
-\section{The enumeration}\label{sec:enum}
+\section{The certificate campaign}\label{sec:campaign}
 
+The upper bound is discharged by SAT certificates over a formula defined in Lean. The formula
+$\Phi_{49}$ (\texttt{SchedCNF6.schedCNFn 6 49} in \texttt{SchedCNF6.lean}; $84{,}882$ variables,
+$2{,}709{,}212$ clauses) describes a legal schedule of Definition~\ref{def:sched} by a bounded
+sequence of frames (the matching and visit masks after each step), derives the read-off
+comparisons of Definition~\ref{def:readoff} from first visits, and asks for $49$ pairwise distinct
+stable matchings of the read-off instance through selector slots in a fixed order. Satisfiability
+of $\Phi_{49}$ therefore says: some legal schedule reads off to at least $49$ stable matchings.
+
+\paragraph{Cubes.} $\Phi_{49}$ is refuted cube by cube. A cube fixes a step prefix by unit clauses
+(\texttt{SchedCNF6.prefixUnits}); a \emph{closed} cube additionally pins the schedule to that
+prefix (\texttt{Cubes6.stopUnits}). The root cubes are the $25{,}493$ first-appearance canonical
+prefixes of length at most two (\texttt{Cubes6.canonicalCubes2}: the empty prefix closed, the $153$
+length-one prefixes closed, and $25{,}339$ open length-two prefixes), which together cover every
+legal schedule satisfying rule (a) of Lemma~\ref{lem:sym}; rule (b) is not used. A cube whose
+solve exceeded a certificate-size or time watchdog was split into its canonical one-step extensions
+(\texttt{Cubes6.extendCanon}) plus its closed copy: $1{,}804$ roots were split at depth two and
+$952$ of their children at depth three, giving $321{,}492$ distinct cubes in all (by depth
+$0/1/2/3/4$: $1$ / $153$ / $27{,}143$ / $197{,}814$ / $96{,}381$), of which $2{,}910$ are closed.
+The $318{,}736$ leaves were each refuted by CaDiCaL~3.0.1 with LRAT output and each certificate
+checked by the formally verified checker cake\_lpr~\cite{cakelpr}: $0$ satisfiable, $318{,}736$
+\texttt{s VERIFIED UNSAT}. Solver time totalled $1{,}076{,}400$~s (median $1.0$~s per cube); the
+certificates, about $25$~TB in all, were checked and deleted. The work ran on three machines
+with one solver build throughout: a Linux/x86-64 container ($3{,}967$ leaves and $235$ splits,
+checker built from the published x86-64 assembly \texttt{cake\_lpr.S}), an Apple M4~Max laptop
+($12{,}727$ and $628$) and an Apple M4~Pro Mac mini ($302{,}042$ and $1{,}893$, checker built
+from the published arm64 assembly \texttt{cake\_lpr\_arm8.S}).
+
+\paragraph{Journal and audit.} Every run appends a record to a journal (cube id, depth, the
+SHA-256 of the DIMACS file the solver read, the SHA-256 and size of the LRAT file, solver and
+checker exit codes and output, timings). The audit (\texttt{cube\_campaign.py --audit}) rebuilds
+the cube tree from the root generator and the recorded splits and checks that every leaf has a
+consistent verified record: $25{,}493$ roots, $321{,}492$ nodes, $318{,}736$ verified, $0$ missing,
+$0$ bad. The journal is self-attested: a ``verified'' record is the driver's transcription of
+cake\_lpr's verdict, and the certificates no longer exist; independent verification of a verdict
+means re-solving that cube, and the per-cube formula and certificate hashes let such a re-run be
+compared with the journal record by record. The released journal
+(\texttt{f6/campaign/campaign.jsonl.gz}, $40{,}943{,}262$ bytes) has SHA-256
+\texttt{c9026b08045d8e8824c66d213bfa8eeb}\allowbreak\texttt{5336f118c22e030d42040136be7a8e4e}.
+
+\paragraph{Identity with the Lean definitions.} What the solver saw was re-derived from Lean after
+the campaign: the base formula printed by \texttt{export\_sched\_cnf} is byte-identical to the
+driver's (SHA-256 \texttt{28421fb6\ldots}); the $25{,}493$ root cubes and the $295{,}999$ split
+children printed by \texttt{export\_cubes6} are byte-identical to the driver's lists; the
+Lean-defined certified cube set \texttt{Cubes6.finalCubes} (the roots refined by the $1{,}804$ and
+$952$ recorded split ids, \texttt{SplitList6.lean}) equals the set of $318{,}736$ verified ids; and
+all $321{,}492$ journaled formula hashes recompute from the Lean-printed header, base body and unit
+clauses (\texttt{f6/lean\_rehash.py}). As a positive control against vacuity, the formula with the
+dihedral schedule of Section~\ref{sec:extremal} pinned is satisfiable at $48$ slots and refuted at
+$49$.
+
+\begin{theorem}\label{thm:f6}
+$f(6)=48$.
+\end{theorem}
+
+\begin{proof}
+The dihedral Latin instance attains $48$ (direct computation, three independent counters; OEIS
+A351413). For the upper bound let $I$ be any instance. By Lemmas~\ref{lem:valid}
+and~\ref{lem:bridge} (\texttt{validity\_unconditional}) there is a legal schedule $S$ with
+$\mathrm{sc}(I)\le\mathrm{sc}(R(S))$, and by Lemma~\ref{lem:sym}(ii) $S$ may be taken to satisfy
+rule (a). Such an $S$ fits one of the certified cubes, and if $\mathrm{sc}(R(S))\ge 49$ the
+schedule and its read-off would define a satisfying assignment of that cube's formula. Every
+certified cube's formula is unsatisfiable, so $\mathrm{sc}(I)\le 48$.
+\end{proof}
+
+\begin{remark}[What is a Lean theorem]\label{rem:status}
+Every link in this proof is a Lean theorem except the checker verdicts.
+\texttt{validity\_unconditional} (Section~\ref{sec:lean}) is the reduction; the faithfulness
+theorem --- every well-formed order-6 instance with at least $49$ stable matchings yields a
+satisfying assignment of some certified cube's formula, the analogue of \texttt{cube\_faithful}
+in~\cite{f5paper} --- packages the schedule-level relabelling of Lemma~\ref{lem:sym}(ii)
+(\texttt{Legal\_relabel}, \texttt{firstApp\_relabel}, \texttt{sc\_le\_readoffS\_relabelSched}),
+the coverage of canonical schedules by \texttt{finalCubes} (\texttt{fits\_final}), and the
+satisfaction of every clause family by the natural assignment (\texttt{cube\_faithful6}); the
+assembly is \texttt{f6\_eq\_48\_of\_unsat} (Section~\ref{sec:lean}). The identity checks above
+tie the certified formulas to the Lean definitions, and the certificates are checked by
+cake\_lpr; the journal of verdicts is self-attested (Section~\ref{sec:campaign}).
+\end{remark}
+
+\section{The enumeration (corroboration)}\label{sec:enum}
+
+Independently of the certificates, an exhaustive enumeration evaluates every schedule node.
 The enumerator (\texttt{gen\_enum.c}, $\sim$200 lines of C) performs a depth-first search over
 schedules. The steps available at order $6$ are the
 \[
@@ -251,18 +367,11 @@ $26{,}574{,}282{,}886$ nodes, evaluates all of them, and attains
 \max_S\ \mathrm{sc}(R(S)) \;=\; 48 .
 \]
 Because every node is evaluated, no monotonicity assumption about schedule extension is needed:
-for any instance $I$, the node $S(I)$ itself is evaluated (Lemma~\ref{lem:sym}).
-
-\begin{theorem}
-$f(6)=48$.
-\end{theorem}
-
-\begin{proof}
-The dihedral Latin instance attains $48$ (direct computation, three independent counters; OEIS
-A351413). Conversely, for any instance $I$,
-$\mathrm{sc}(I)\le\mathrm{sc}(R(S(I)))\le 48$ by Lemmas~\ref{lem:valid}--\ref{lem:sym} and the
-enumeration.
-\end{proof}
+for any instance $I$, the node $S(I)$ itself is evaluated (Lemma~\ref{lem:sym}). This reproves the
+upper bound of Theorem~\ref{thm:f6} by a route that shares no code with the campaign of
+Section~\ref{sec:campaign}; its trust base is the C program and both halves of
+Lemma~\ref{lem:sym}, neither of which is machine-checked, so we present it as corroboration of the
+certificates rather than as the proof.
 
 
 \section{The extremal instance}\label{sec:extremal}
@@ -320,8 +429,8 @@ SAT reformulation of the schedule space (bounded frames, first-visit-derived rea
 comparisons, selector slots) refutes ``some order-5 schedule has $\mathrm{sc}(R(S))\ge
 17$'' in four minutes, with the refutation checked end-to-end by \textsf{drat-trim} and
 \textsf{cake\_lpr} --- both an independent certificate-backed confirmation at order $5$
-and the pilot for certifying the order-6 bound itself (see \texttt{REPLAY\_DESIGN.md} in
-the repository).
+and the pilot for the order-6 campaign of Section~\ref{sec:campaign} (design notes in
+\texttt{REPLAY\_DESIGN.md} in the repository).
 
 \paragraph{Other search spaces.} Before the enumeration, $9.7\times10^7$ hill-climbing
 evaluations in raw instance space and $1.2\times10^9$ evaluations in swap-schedule space (72
@@ -337,24 +446,43 @@ full-budget, all-size-2 phenomena.
 
 \section{Formalization in Lean 4}\label{sec:lean}
 
-Lemmas~\ref{lem:valid} and~\ref{lem:bridge} are formalized in Lean~4 with Mathlib in
-the accompanying development ($\sim$4{,}600 lines across nine files, from
-\texttt{SixBridge.lean} through \texttt{WRelabel6.lean}, atop the order-5 infrastructure
-of~\cite{f5paper}). The end statement is unconditional: for every well-formed order-6
+Lemmas~\ref{lem:valid} and~\ref{lem:bridge} and the faithfulness theorem are formalized in
+Lean~4 with Mathlib in the accompanying development, atop the order-5 infrastructure
+of~\cite{f5paper}. The reduction layer is eleven files from \texttt{SixBridge.lean} through
+\texttt{SchedCNF6.lean} (the last defines the campaign formula $\Phi_{49}$ as a Lean value):
+$5{,}230$ lines and $243$ theorems. The faithfulness layer is nineteen files ($4{,}761$ lines,
+$333$ theorems) plus a $2{,}808$-line data file, \texttt{SplitList6.lean}, holding the $2{,}756$
+recorded split decisions that define the certified cube set \texttt{finalCubes}. Its end
+statement, \texttt{f6\_eq\_48\_of\_unsat}, reads: if every cube of \texttt{finalCubes} has an
+unsatisfiable formula \texttt{cubeFormula 49 c}, then every well-formed order-6 instance has at
+most $48$ stable matchings and the dihedral instance has exactly $48$
+(\texttt{dihedral6\_count}, a kernel computation over the $720$ permutations). Its proof runs:
+from $\mathrm{sc}(I)\ge 49$ to the chain schedule of the woman-relabelled instance
+(\texttt{validity\_unconditional}'s ingredients), relabelled by first participation
+(\texttt{Legal\_relabel}, \texttt{firstApp\_relabel}; the count is preserved by re-instantiating
+the bridge at the relabelled instance, \texttt{sc\_le\_readoffS\_relabelSched}, since $R$ itself
+is not relabel-equivariant), to a canonical legal schedule with read-off count at least $49$
+(\texttt{exists\_canonical\_schedule}); such a schedule fits a cube of \texttt{finalCubes}
+(\texttt{fits\_final}); and its natural assignment satisfies that cube's formula
+(\texttt{cube\_faithful6}: twelve clause-family lemmas and two unit-clause lemmas), contradicting
+the hypothesis. The end statement is
+unconditional: for every well-formed order-6
 instance $I$ there is a legal schedule $S$ with $\mathrm{sc}(I)\le\mathrm{sc}(R(S))$
 (\texttt{validity\_unconditional}), obtained by composing the validity chain with a
 \emph{bottom-agnostic} form of the bridge (\texttt{count\_le\_of\_orderPreserving}:
 $J$ dominates $I$ whenever $J$ ranks each person's $I$-stable partners on top in
 $I$-order, with no condition on the rest of the lists) and a women-only relabelling that
 normalizes the man-optimal matching to the identity
-(\texttt{stableCount6\_wrelabel6}, \texttt{manOpt\_wrelabel6}). Lemma~\ref{lem:sym}
-is \emph{not} formalized: its relabelling half is proved at the instance level
-(\texttt{Sym6.lean}), its commutation half is validated computationally only, and the
-certification campaign of Section~\ref{sec:outlook} is designed to need neither
-(canonical first-appearance cubes are generated without the commutation rule). Every
-theorem is proved with no \texttt{sorry}, and \texttt{\#print axioms} reports only the
-standard \texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}; continuous
-integration rebuilds the development and re-checks these claims on every commit.
+(\texttt{stableCount6\_wrelabel6}, \texttt{manOpt\_wrelabel6}). Lemma~\ref{lem:sym}(ii) is
+formalized at the schedule level as described above; its commutation half (i) is validated
+computationally only (canonicalization on/off agreement) and
+is used by the enumeration alone. The certificate campaign of Section~\ref{sec:campaign} needs
+the relabelling half (ii) --- its root cubes cover only first-appearance canonical schedules ---
+and not the commutation half (i). Every theorem is proved with no \texttt{sorry}, and
+\texttt{\#print axioms} reports only the standard \texttt{propext}, \texttt{Classical.choice},
+\texttt{Quot.sound}; continuous integration (on pushes to \texttt{main}, pull requests and manual
+dispatch) rebuilds the development from source with the standard Mathlib olean cache and re-checks
+the no-\texttt{sorry} and axiom conditions.
 
 \paragraph{Design.} Instances are pairs of $6\times 6$ rank tables over
 \texttt{List Nat}; a matching is a list, stability is a decidable predicate, and the
@@ -426,24 +554,32 @@ fixed-point-free injective self-map of the moved set --- four short permutation
 lemmas); a multi-cycle step splits into consecutive single-cycle steps with
 identical trajectories.
 
-\paragraph{What remains.} The one unformalized link is the exhaustive enumeration
-itself: a verified replay of the $2.66\times 10^{10}$-node DFS. The per-node
-evaluation is already expressible --- \texttt{sms6} of a read-off instance is
-kernel-computable --- so the remaining work is scale engineering (a certified
-checker consuming an enumeration trace, or a verified reimplementation of the
-search), not new mathematics.
+\paragraph{Trust base.} With the Lean-side identity checks of Section~\ref{sec:campaign}, what
+remains outside the kernel is, item for item, the trust base of~\cite{f5paper}: the kernel and
+its three axioms; the forty-line definitions of instances, stability and the count at the top
+of \texttt{SixBridge.lean}; one LRAT checker; the two printers
+(\texttt{ExportSchedCnf.lean}, \texttt{ExportCubes6.lean}) together with the file identity; and
+the campaign journal, which is self-attested (a \texttt{verified} record is the driver's
+transcription of cake\_lpr's verdict, and the certificates were deleted after checking), so that
+independently verifying a verdict means re-solving that cube from the Lean-printed formula.
+Neither the solvers nor any Python or C program is trusted.
 
 \section{Related work and outlook}\label{sec:outlook}
 
-The computational lineage on $f(n)$ is Eilers' ($f(4)$, $f(5)$, and the extremal-profile counts,
-which we replicated independently in~\cite{f5paper}), building on Thurber~\cite{thurber} and
-Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}. Certified computational values of
-comparable flavour include $R(4,5)=25$, the empty hexagon number, Keller's conjecture and Schur
-number five; our companion paper~\cite{f5paper} follows that tradition for $f(5)$, and
-Section~\ref{sec:lean} carries it into the present reduction; a verified replay of the
-DFS is the remaining step toward end-to-end certification. The next open value, $f(7)$
-(best lower bound $71$, budget $42$), appears to need either a much faster certified evaluator or
-new structural cuts: the schedule tree grows by roughly three orders of magnitude.
+The computational lineage on $f(n)$ is Eilers' ($f(5)$, the uniqueness observation at $f(4)$,
+and the extremal-profile counts, which we replicated independently in~\cite{f5paper}), building on
+Thurber~\cite{thurber} and Knuth~\cite{knuth}; the asymptotic bounds are \cite{kow,pp}. Certified
+computational values of comparable flavour include $R(4,5)=25$, the empty hexagon number, Keller's
+conjecture and Schur number five; our companion paper~\cite{f5paper} follows that tradition for
+$f(5)$, and Sections~\ref{sec:lean} and~\ref{sec:campaign} carry it to the order-6 bound: the
+reduction and the faithfulness theorem are Lean theorems and the certificates are checked by
+cake\_lpr, so that $f(6)=48$ is, like $f(5)=16$, one Lean theorem with checked certificates as
+its only hypothesis (Remark~\ref{rem:status}). The next open
+value, $f(7)$ (budget $42$), had published lower bound $81$ (Ong, Ang, Ho, Eilers, Marks and
+Buzi~\cite{ong24}, improving Thurber's $71$~\cite{thurber}); the accompanying repository raises it
+to $85$ (\texttt{f7/lb85.txt}: two all-transposition schedules of length $20$ found by local
+search). Certifying $f(7)$ appears to need either a much faster certified evaluator or new
+structural cuts: the schedule tree grows by three to four orders of magnitude.
 
 \paragraph{An open problem.} The extremal data of
 Sections~\ref{sec:example} and~\ref{sec:extremal} share a pattern. At orders $3$
@@ -452,9 +588,12 @@ step of size $2$): $(01)(02)$ at order $3$; six transpositions (the full budget
 $12$) at order $4$; eight transpositions ($16$ of the budget $20$) at order $5$;
 fifteen transpositions (the full budget $30$) at order $6$. At the \emph{even}
 orders the extremal schedule exhausts the budget --- every man's trajectory is his
-entire list --- while at the odd orders it provably cannot ($f(5)=16$ was confirmed
-here with slack $4$). This is consistent with Eilers' observation that the natural
-lower-bound constructions look exact only at even orders.
+entire list --- while at the odd orders $3$ and $5$ it does not: at $n=3$ no legal full-budget
+all-transposition schedule exists, and at $n=5$ every legal full-budget all-transposition
+schedule reads off to at most $11<16$ (by enumeration under
+Definitions~\ref{def:sched}--\ref{def:readoff}). Whether the extremal schedule is sub-budget at
+every odd order is part of the observation, not a theorem. This is consistent with Eilers'
+observation that the natural lower-bound constructions look exact only at even orders.
 
 \begin{conjecture}\label{conj:size2}
 For every $n\ge 3$, $f(n)$ is attained by the read-off of an all-size-2 schedule;
@@ -466,8 +605,13 @@ transpositions --- sorting-network-like objects --- a space of roughly
 $(n(n-1)/2)!^{1/2}$ rather than $n!^{2n}$, and structural insight into it could
 sharpen the $2.28^n$--$3.55^n$ asymptotic band.
 
-\paragraph{Artifact.} All code, logs and verification instructions accompany the repository;
-the enumeration is reproducible in $\sim$10 laptop-hours.
+\paragraph{Artifact.} All code, logs and verification instructions accompany the repository in
+its 2026-09-08 state (\texttt{STATUS.md} is the evidence ledger, \texttt{VERIFYING.md} the
+recipe):
+the campaign journal (SHA-256 in Section~\ref{sec:campaign}) with its audit, the Lean exporters and
+the re-hash script that reproduce the identity checks, and the enumeration, reproducible in
+$\sim$10 laptop-hours. Re-solving the certificate campaign costs $1{,}076{,}400$ solver-seconds
+(about $300$ core-hours).
 
 \paragraph{Acknowledgments.} The conjecture and the dihedral instance are due to Dan Eilers, whose
 stewardship of this problem family (OEIS A357269, A357271, A351413 and relatives) made this work
@@ -485,6 +629,10 @@ maximum number of stable matchings, \emph{STOC 2018}.
 \bibitem{oeis} OEIS, sequences A357269, A357271, A351413, A344669, \url{https://oeis.org}.
 \bibitem{f5paper} J. Xu, A machine-checked proof that the maximum number of stable matchings of
 order five is sixteen, companion manuscript, 2026.
+\bibitem{cakelpr} Y. K. Tan, M. J. H. Heule and M. O. Myreen, cake\_lpr: verified propagation
+redundancy checking in CakeML, \emph{TACAS 2021}.
+\bibitem{ong24} Ong, Ang, Ho, Eilers, Marks and Buzi, IFoRE 2024 (poster); instances linked from
+OEIS A357271, \url{https://oeis.org/A357271/a357271_1.txt}.
 \end{thebibliography}
 
 \end{document}

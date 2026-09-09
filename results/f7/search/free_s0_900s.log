@@ -1,0 +1,26 @@
+[n=7 seed 0] best 13 len=8 evals=50
+[n=7 seed 0] best 20 len=8 evals=55
+[n=7 seed 0] best 25 len=8 evals=61
+[n=7 seed 0] best 28 len=9 evals=62
+[n=7 seed 0] best 30 len=10 evals=63
+[n=7 seed 0] best 34 len=10 evals=71
+[n=7 seed 0] best 36 len=11 evals=96
+[n=7 seed 0] best 43 len=12 evals=137
+[n=7 seed 0] best 47 len=13 evals=270
+[n=7 seed 0] best 50 len=14 evals=435
+[n=7 seed 0] best 57 len=15 evals=506
+[n=7 seed 0] best 59 len=15 evals=687
+[n=7 seed 0] best 60 len=15 evals=964
+[n=7 seed 0] best 61 len=16 evals=974
+[n=7 seed 0] best 65 len=17 evals=1131
+[n=7 seed 0] best 66 len=17 evals=2106
+[n=7 seed 0] best 71 len=18 evals=2129
+[n=7 seed 0] best 73 len=19 evals=2529
+[n=7 seed 0] best 74 len=19 evals=34345
+[n=7 seed 0] best 75 len=19 evals=65160
+[n=7 seed 0] best 78 len=18 evals=80738
+[n=7 seed 0] best 79 len=19 evals=153186
+[n=7 seed 0] best 82 len=20 evals=154378
+[n=7 seed 0] best 83 len=20 evals=715752
+[n=7 seed 0] DONE best=83 evals=2176899 restarts=348
+[n=7 seed 0] best_seq=[(0, 6), (1, 3), (2, 5), (2, 4), (0, 1), (4, 6), (0, 2), (0, 6), (3, 5), (1, 3), (2, 5), (0, 1), (5, 6), (3, 4), (3, 5), (2, 4), (0, 4), (4, 6), (1, 3), (2, 5)]

@@ -4,7 +4,7 @@
 The completed order-6 campaign used this frame/selector encoding. Its
 formula definitions are unchanged by the repository reorganization.
 See docs/architecture.md and docs/reference/campaign.md for the proof
-boundary, canonical cubes, and the remaining Lean faithfulness work.
+boundary, canonical cubes, and the completed Lean faithfulness proof.
 
 Usage from the repository root:
   python3 -m tools.schedule_encoding N K OUT.cnf

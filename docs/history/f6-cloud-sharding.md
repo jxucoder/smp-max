@@ -1,7 +1,5 @@
 # Fan-out record (2026-09-05 18:41 UTC)
 
-> Historical record from the original repository. Status, paths, and commands below reflect their recorded dates. For current guidance see [results](../results.md), [verification](../verification.md), and the [path migration map](../path-migration.md).
-
 Campaign split into 8 shards from seed snapshot `0a1d6c3` (13,410
 verified, 687 splits, 14,164 records), branch `claude/review-state-9u8mt5`
 at `f2f72a8`.
@@ -17,10 +15,10 @@ at `f2f72a8`.
 | 6/8 | cloud | `claude/campaign-shard-6-of-8` | `session_01E6HCRMdoHWjwSrY6hw15od` |
 | 7/8 | cloud | `claude/campaign-shard-7-of-8` | `session_01K7XYJs3mfBramL1t8Dfifb` |
 
-Each cloud shard runs `f6/campaign/bootstrap.sh I 8 3` (3 workers) and
+Each cloud shard runs `docs/history/container-scripts/bootstrap.sh.txt I 8 3` (3 workers) and
 an hourly Routine bound to its own session that re-runs it (checkpoint
 only while the driver is up; resume after a container reboot). Its
-journal is `f6/campaign/shards/shard_I_of_8.jsonl.gz` on its branch.
+journal is `results/f6/campaign-2026-09-08/shards/shard_I_of_8.jsonl.gz` on its branch.
 
 ## Progress
 
@@ -29,13 +27,13 @@ journal is `f6/campaign/shards/shard_I_of_8.jsonl.gz` on its branch.
 
 ## Merge and audit (when every shard's log ends with `done:` and its last `to run:` is 0)
 
-    mkdir -p f6/campaign/merge && cd f6/campaign/merge
+    mkdir -p results/f6/campaign-2026-09-08/merge && cd results/f6/campaign-2026-09-08/merge
     for i in 1 2 3 4 5 6 7; do
-      git show origin/claude/campaign-shard-$i-of-8:f6/campaign/shards/shard_${i}_of_8.jsonl.gz > shard_${i}_of_8.jsonl.gz
+      git show origin/claude/campaign-shard-$i-of-8:results/f6/campaign-2026-09-08/shards/shard_${i}_of_8.jsonl.gz > shard_${i}_of_8.jsonl.gz
     done
-    cd ../../.. && python3 f6/merge_journals.py -o f6/campaign/merge/merged.jsonl \
-        f6/campaign/campaign.jsonl f6/campaign/merge/shard_*_of_8.jsonl.gz
-    python3 f6/cube_campaign.py --audit --journal f6/campaign/merge/merged.jsonl   # exit 0 iff complete
+    cd ../../.. && python3 tools/campaign/merge_journals.py -o results/f6/campaign-2026-09-08/merge/merged.jsonl \
+        results/f6/campaign-2026-09-08/campaign.jsonl results/f6/campaign-2026-09-08/merge/shard_*_of_8.jsonl.gz
+    python3 tools/campaign/cube_campaign.py --audit --journal results/f6/campaign-2026-09-08/merge/merged.jsonl   # exit 0 iff complete
 
 Any `bad`/`missing` in the audit names the cubes to re-run (`--cubes ... --force`
 on any journal, then merge again).
@@ -54,12 +52,12 @@ resume point.
 
 Resume on the laptop (same journal, same driver):
 
-    gunzip -c f6/campaign/campaign.jsonl.gz > f6/campaign/campaign.jsonl
+    gunzip -c results/f6/campaign-2026-09-08/campaign.jsonl.gz > results/f6/campaign-2026-09-08/campaign.jsonl
     cd f6 && python3 cube_campaign.py --solver cadical --workers 10 --time 300 \
         --max-depth 4 --shuffle --retry-status error,cake_fail,check_timeout \
         --journal campaign/campaign.jsonl --scratch campaign/scratch
 
 or hand the remaining ~130k cubes to Modal from the laptop (the client
 needs no proxy there): `pip install modal && modal token new && modal run
-f6/modal_campaign.py --sample 50`, then without `--sample`; it appends to
+tools/campaign/run_modal.py --sample 50`, then without `--sample`; it appends to
 the same journal. Either way `cube_campaign.py --audit` is the finish line.

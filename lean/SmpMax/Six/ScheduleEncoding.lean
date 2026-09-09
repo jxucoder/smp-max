@@ -4,13 +4,13 @@ import SmpMax.Five.Encoding
 # The schedule CNF (order 6, target k), defined in Lean
 
 Single source of truth for the f(6) campaign formulas
-(REPLAY_DESIGN.md, Architecture 3).  `schedCNF k` is, clause for clause
+(docs/history/f6-certification-design.md, Architecture 3).  `schedCNF k` is, clause for clause
 and literal for literal, the formula written by
 `tools/schedule_encoding.py :: build(6, k)`; `cubeCNF k prefix` adds the unit
 clauses of `--fix-prefix=` (one unit `S[t][idx(prefix[t]) + 1]` per
 prefix step).  The DIMACS files consumed by kissat / drat-trim /
 cake_lpr are printed from these definitions by `export_sched_cnf`
-(`ExportSixCnf.lean`), and `export_sched_cnf` output is checked
+(`ExportSchedCnf.lean`), and `export_sched_cnf` output is checked
 byte-for-byte against the Python writer.
 
 Every definition below cites the Python code it mirrors.  The structure
@@ -18,14 +18,15 @@ is deliberately one-to-one with the Python (nested `List.range` loops,
 `flatMap` for `for`, `filterMap` for `for ... if`), so that the
 faithfulness proof can follow the encoding literally.
 
-Bounded-model-checking encoding (`tools/schedule_encoding.py` docstring):
+Bounded-model-checking encoding (`sched_sat.py` docstring):
 * `F = n(n-1)/2` frames; frame state = one-hot matching `M[t][m][w]`
   and monotone visited masks `V[t][m][w]`;
 * per frame a one-hot step choice `S[t][j]`: `j = 0` is "stop",
   `j ≥ 1` is the cyclic shape `SH[j-1]` (`cyclicShapes`);
 * first-visit-order auxiliaries `C`, `before`, `neither`, `PM` (men's
-  read-off preference) and `beforeW`, `later`, `only_a`, `neither`,
-  `PW` (women's read-off preference, reversed trajectory);
+  read-off preference) and `beforeW`, `later`, `only_a`, `nv` (the
+  per-(w,a,b) bottom term, a<b, allocated inside the `PW` loop), `PW`
+  (women's read-off preference, reversed trajectory);
 * selector block: `k` slots `Y[t][i]` over the `n!` matchings with a
   ladder `Pf[t][i]` forcing strictly increasing (hence distinct)
   selections; a selected matching admits no blocking pair.
@@ -578,7 +579,7 @@ def schedCNF49 : List (List Int) := schedCNF 49
 
 def numVars6 (k : Nat) : Nat := numVarsn 6 k
 
-/-- `Satisfiable` is defined in `SmpMax.Five.Encoding` (evalCNF over `Nat → Bool`). -/
+/-- `Satisfiable` is `SmpMax.Five.Encoding.Satisfiable` (evalCNF over `Nat → Bool`). -/
 def SchedSat49 : Prop := Satisfiable schedCNF49
 
 end SchedCNF6

@@ -1,7 +1,5 @@
 # Design: certifying the f(6) enumeration (the last unformalized link)
 
-> Historical record from the original repository. Status, paths, and commands below reflect their recorded dates. For current guidance see [results](../results.md), [verification](../verification.md), and the [path migration map](../path-migration.md).
-
 Status (2026-09-01): design done; Architecture 3 pilot DONE and GO
 (order-5 refutation certified end-to-end); order-6 probes DONE and GO
 (hardest-region cubes refute in minutes; see "Order-6 probe results").

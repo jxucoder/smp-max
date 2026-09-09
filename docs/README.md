@@ -11,7 +11,8 @@ Start with the question you want to answer.
 | Where are the formal statements? | [Lean reading order](../lean/README.md) |
 | How do I run or audit a campaign? | [Campaign reference](reference/campaign.md) |
 | How are instances, schedules, and cubes represented? | [Data formats](reference/formats.md) |
-| What work remains? | [Roadmap](roadmap.md) and [active f(6) proof plan](design/f6-faithfulness.md) |
+| What work remains? | [Roadmap](roadmap.md) and [completed f(6) proof design](design/f6-faithfulness.md) |
+| How is publication prepared? | [Publishing](publishing.md) and [OEIS drafts](oeis-draft.md) |
 | Where did an old filename move? | [Path migration map](path-migration.md) |
 | Why were these methods chosen? | [Dated research history](history/README.md) |
 

@@ -1,14 +1,28 @@
 cff-version: 1.2.0
-message: "Please cite this repository when referring to its code, formal development, or computational artifacts."
+message: "If you use this repository, please cite it as below."
 type: software
-title: "smp-max: maximum numbers of stable matchings"
+title: "smp-max: certified maximum numbers of stable matchings (f(5) = 16, f(6) = 48, f(7) >= 85)"
 authors:
   - family-names: Xu
     given-names: Jiarui
+    email: jxucoder@gmail.com
 repository-code: "https://github.com/jxucoder/smp-max"
-abstract: "Lean proofs, SAT encodings, and computational evidence for maximum numbers of stable matchings at orders five, six, and seven."
+version: 1.0.0
+date-released: 2026-09-09
 keywords:
   - stable marriage
   - stable matchings
-  - Lean
+  - Knuth's problem
+  - Lean 4
   - SAT certificates
+  - cake_lpr
+  - OEIS A357269
+  - OEIS A357271
+abstract: >-
+  Machine-checked determination of the maximum number f(n) of stable matchings
+  of an n x n stable-marriage instance for n = 5 and n = 6, and a new lower
+  bound for n = 7. f(5) = 16 and f(6) = 48 are Lean 4 theorems whose only
+  hypothesis is the unsatisfiability of Lean-defined CNF formulas (120 cube
+  formulas at order 5; 318,736 cube formulas at order 6), each refuted by a SAT
+  solver with the refutation checked by the formally verified LRAT checker
+  cake_lpr. f(7) >= 85 is witnessed by two explicit instances.

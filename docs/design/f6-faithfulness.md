@@ -1,22 +1,26 @@
 # Faithfulness plan: Lean proof that the order-6 schedule CNF is faithful
 
-Status: implementation in progress; scientific snapshot 2026-09-08.
-The variable decode, trajectory prefixes, cyclic shapes, frame assignment,
-read-off semantics, and length-bound modules are implemented; campaign
-cube definitions also exist. Remaining work is normalization, coverage,
-clause-family satisfaction, and final theorem assembly. See [results](../results.md)
-and the [Lean module map](../../lean/README.md).
-
-This plan preserves its section and lemma identifiers because source
-comments cite them. The revision history below explains the chosen formula;
-the progress log records the dated state of implementation.
+Status: **ARCHIVED, COMPLETE (2026-09-08, evening).** The theorem this
+plan describes is proved: `f6_eq_48_of_unsat` in
+`lean/SmpMax/Six/ExactMaximum.lean` (zero sorries; axioms `propext`,
+`Classical.choice`, `Quot.sound`); the module map of the finished
+development is `lean/README.md`, and the evidence ledger is
+`docs/results.md`. Below is revision 2 of the plan (2026-09-02, after an
+independent critique of revision 1), kept verbatim as the record of what
+was planned; the progress log records what was built. Section and lemma
+numbers (§0–§11, L3.x–L7.x) are cited by the Lean module docstrings and
+must not be renumbered. Paths in the body predate the 2026-09-09
+restructure: the development then lived in `lean/SmpMax/`, now
+`lean/SmpMax/` (same `lakefile`, Mathlib v4.33.1); the f(5) files
+`Encoding.lean` / `Faithfulness.lean` / `Bridge.lean` / `ExportCnf.lean`
+were the pattern. See `docs/history/README.md`.
 
 **What changed in revision 2.** Revision 1 proposed a fresh closed-form
 variable layout (`Encoding6.lean`, `shapes6` in sublist order, `perms720 :=
 idRow6.permutations`, a new printer). That formula would *not* have been
 certificate-compatible with the formula the campaign actually solves. The
-Lean transcription of `tools/schedule_encoding.py` already exists —
-`SmpMax/Six/ScheduleEncoding.lean` (584 lines) with the exporter `ExportSixCnf.lean`
+Lean transcription of `sched_sat.py` already exists —
+`SmpMax/Six/ScheduleEncoding.lean` (584 lines) with the exporter `ExportSchedCnf.lean`
 (44 lines) — and its DIMACS output is **byte-identical** to the Python
 writer (full n=6, k=49 formula: sha256 `28421fb6…`, 84,882 vars /
 2,709,212 clauses; the `(0,1);(2,3)` cube; the n=5, k=17 pilot). The
@@ -35,7 +39,7 @@ discharged legality on un-rotated steps (§4.2, L3.17).
   (definitions only: `Cube`, `firstOcc`/`usedBefore`/`newMen`/`canonAtB`,
   `WFStepB`/`legalPrefixB`/`canonNextB`, `extendCanon`, `canonicalCubes2`,
   `refineCubes`, `cubeId`, `stopUnits`/`cubeCNFc`) and the printer
-  `ExportSixCubes.lean` (`export_cubes6`). **Cube-list identity holds by
+  `ExportCubes6.lean` (`export_cubes6`). **Cube-list identity holds by
   construction and was checked:** `canonicalCubes2` prints the driver's
   `root_cubes(2)` ids **byte-identical, same order (25,493)**, and
   `extendCanon` prints `split_children` of every journaled split parent
@@ -56,35 +60,63 @@ discharged legality on un-rotated steps (§4.2, L3.17).
   the formula is not vacuously unsatisfiable and the selector block does
   count what it should on the extremal instance.
 
-- **2026-09-08 03:00 (files 1–6 of §8 done, zero sorries).** `SmpMax/Six/VariableDecoding.lean`
+- **2026-09-08 03:00 (files 1–6 of §8 done, zero sorries).** `Decode6.lean`
   (L4.1–L4.3: layout `⟨6,15,409,720⟩` by kernel evaluation, pair tables,
-  twelve decode lemmas), `SmpMax/Six/TrajectoryPrefixes.lean` (§5.1, restated around
+  twelve decode lemmas), `DestutterPrefix6.lean` (§5.1, restated around
   first-occurrence positions: `mem_destutter_ne_iff`,
   `idxOf_destutter_lt_iff`, `mem_take_iff_idxOf_lt`, `idxOf_reverse_lt_iff`,
-  `idxOf_filter_range_lt`), `SmpMax/Six/CyclicShapes.lean` (L4.5–L4.13, L4.15–L4.17:
+  `idxOf_filter_range_lt`), `Shapes6.lean` (L4.5–L4.13, L4.15–L4.17:
   `rotateTo`/`minFirst`, `applyStep_rotate`, `Legal_map_minFirst`,
   `mem_combos`, `mem_permsOf`, `permsOf_nodup`,
-  `minFirst_mem_cyclicShapes`, `permsN6_perm_permutations`), `SmpMax/Six/FrameAssignment.lean`
+  `minFirst_mem_cyclicShapes`, `permsN6_perm_permutations`), `Frames6.lean`
   (§4.4: `frame`/`colM`/`vis`/`stepIdx`/`befB`/`befWB`, `τV`, `tau6`,
-  L4.19–L4.27, `evalLit_pos6/neg6`), `SmpMax/Six/ReadOffSemantics.lean` (**L5.13 `PM_sem`,
+  L4.19–L4.27, `evalLit_pos6/neg6`), `ReadoffSem6.lean` (**L5.13 `PM_sem`,
   L5.15 `PW_sem` proved**, via `befB_iff`/`befWB_iff`/`rowOrder_lt_iff`),
-  `SmpMax/Six/ScheduleLength.lean` (L2.1–L2.6: `movesOf`, `strajM_length`, `moves_le_30`,
+  `SchedLen6.lean` (L2.1–L2.6: `movesOf`, `strajM_length`, `moves_le_30`,
   `Legal_length_le_15`). `lake build` passes with all files imported.
   Remaining: Cubes6 proofs (L3.17–L3.21, L5.10–L5.12), RelabelSched6 +
   FirstApp6 (§3), Faithfulness6 (§6 families + §7 assembly), Bridge6.
 
 
+- **2026-09-08 evening (files 7–12 and the assembly; COMPLETE).** Layer 0
+  first: `CubeWF`, `Fits`, `cubeFormula` added to `Cubes6.lean`,
+  `relabelSched` in `RelabelSched6.lean`, and `SplitList6.lean` generated
+  from the journal (the 1,804 depth-2 and 952 depth-3 split ids;
+  `finalCubes := refineCubes (refineCubes canonicalCubes2 isSplitDepth2)
+  isSplitDepth3`, 318,736 leaves = the journal's `verified` ids;
+  `export_cubes6 --final/--units`, all 321,492 `cnf_sha256` re-hashed from
+  Lean — `campaign/lean_identity.txt`). Then nine files in parallel:
+  `RelabelSched6` (L3.1–L3.7, L3.12–L3.16; 391 lines), `FirstApp6`
+  (`partOrder`, `sigmaOf`, L3.8–L3.11, L4.14, L3.21; 502), `PrefixLegal6`
+  (L5.10–L5.12; 193), `FamState6` (families 1–3; 209), `FamTrans6` (L5.9
+  and family 4; 337), `FamGates6` (families 5–9; 363), `FamSelect6`
+  (families 10–12, L4.18, `idxsOf`; 308), `Units6` (13–14; 110), `Lower6`
+  (`dihedral6_count : stableCount6 dihedral6 = 48`; 77); then `Coverage6`
+  (L3.17–L3.20, `fits_final`), `Faithfulness6` (`schedCNF_sat`,
+  `cube_faithful6`, `exists_canonical_schedule`), `Bridge6`
+  (`f6_upper_of_unsat`, `f6_eq_48_of_unsat`). Deviations from the plan:
+  the twelve families live in four files; `block_sat` is `block_sat6`
+  (name clash with f(5)); the count chain goes through
+  `exists_canonical_schedule` and `f6_upper_of_unsat_of_coverage`. Final
+  statement: `f6_eq_48_of_unsat : (∀ c ∈ finalCubes, ¬ Satisfiable
+  (cubeFormula 49 c)) → (∀ I, WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I,
+  WF6 I = true ∧ stableCount6 I = 48`; `#print axioms` = [propext,
+  Classical.choice, Quot.sound]; `lake build` 893 jobs, no `sorry`.
+  Faithfulness layer: 19 files, 4,761 lines, 333 theorems (+ 2,808 lines
+  of data). Risks 2 and 3 (`firstApp_relabel`, `shapeClauses_sat`) closed
+  without changing any definition.
+
 ## 0. Target theorem and what already exists
 
 ```lean
--- SmpMax/Six/CampaignCubes.lean
+-- Cubes6.lean
 structure Cube where
   steps   : List (List Nat)   -- the cube id's prefix: min-first shapes, each ∈ cyclicShapes 6
   stopped : Bool              -- "…;stop": pin S[steps.length][0]
 deriving Repr, DecidableEq
 
 def cubeFormula (k : Nat) (c : Cube) : List (List Int) :=
-  SchedCNF6.cubeCNFc 6 k c.steps c.stopped
+  Cubes6.cubeCNFc 6 k c    -- as realized in Cubes6.lean (c : Cube)
   -- = schedCNFn 6 k ++ prefixUnits 6 c.steps ++ stopUnits 6 c.steps c.stopped   (§4.1)
 
 theorem campaign_faithful {I : Inst6} (hWF : WF6 I = true)
@@ -96,7 +128,7 @@ theorem campaign_faithful {I : Inst6} (hWF : WF6 I = true)
 the cube `stop`, the 153 cubes `s1;stop`, and the 25,339 open depth-2
 prefixes under first-appearance rule (a) with the legality filter of
 `apply_step` (§3.5); 25,493 in total. `Satisfiable` is
-`Satisfiable` (∃ τ : Nat → Bool, evalCNF τ F = true), the
+`SmpMax.Five.Encoding.Satisfiable` (∃ τ : Nat → Bool, evalCNF τ F = true), the
 same predicate `SchedCNF6.SchedSat49` uses.
 
 **The formula is fixed, not designed.** `SchedCNF6.schedCNFn 6 49` is the
@@ -138,7 +170,7 @@ Design facts that shape the plan (verified while reading):
 * `readoffS` does not commute with `relabel6` (bottom completion). The plan
   never states `readoffS (σ·S) = relabel6 σ (readoffS S)`; the bridge is
   re-instantiated at the relabeled level (§3.4).
-* `tools/schedule_encoding.py` numbers variables by allocation order and `SchedCNF6`
+* `sched_sat.py` numbers variables by allocation order and `SchedCNF6`
   reproduces that order with explicit per-block offset functions
   (`mVar`, `vVar`, `sVar`, `cVar`, `beforeVar`, `neitherVar`, `pmVar`,
   `cWVar`, `beforeWVar`, `pwVar`, `yVar`, `pfVar`). The assignment is a
@@ -154,8 +186,8 @@ Design facts that shape the plan (verified while reading):
   must carry the hypotheses explicitly: `CubeWF` (§3.5) requires every
   prefix shape ∈ `cyclicShapes 6`, `steps.length ≤ 15`, and
   `stopped → steps.length < 15`.
-* Rule (b) (backward commutation), precisely: `tools/campaign/calibrate_cubes.py` compares
-  *tuples lexicographically* (`st < prev`); `experiments/enumeration/enumerate_cycle_schedules.c` compares *step
+* Rule (b) (backward commutation), precisely: `cube_calibrate.py` compares
+  *tuples lexicographically* (`st < prev`); `gen_enum.c` compares *step
   indices* in its own size-first enumeration (all 2-cycles, then 3-cycles,
   …). Under rule (a), rule (b)-lex is **vacuous at depth 2**: a step
   disjoint from step 1 consists of fresh men, so its min-first tuple starts
@@ -163,7 +195,7 @@ Design facts that shape the plan (verified while reading):
   Counted: rule (a) + legality = 25,339 = rule (a)+(b)-lex + legality
   (sets identical). Rule (b)-index is *not* vacuous at depth 2 (a 2-cycle
   on fresh men after a 3-cycle has a smaller size-first index), which is
-  why `experiments/enumeration/enumerate_cycle_schedules.c`'s depth-3 count 1,818,512 differs from the rule-(a)-only
+  why `gen_enum.c`'s depth-3 count 1,818,512 differs from the rule-(a)-only
   1,833,929 and from a rule-(a)+(b)-lex count; all three prunings are
   sound (commuting disjoint adjacent steps preserves the read-off). The
   campaign and this proof use **rule (a) only**; no rule (b) lemma exists
@@ -186,7 +218,7 @@ whose members are `orbit μ ν m0`), each `WFStep`. We do not use
 reuse its ingredients (`hWFJ`, `hneJ`, `hmo`) and prove the inequality at
 `S'` directly (§3.4).
 
-## 2. The frame bound (must be proved) — file `SmpMax/Six/ScheduleLength.lean`
+## 2. The frame bound (must be proved) — file `SchedLen6.lean`
 
 The CNF has F = 15 frames (`(layout 6).F = 15`); the assignment (§4.4)
 needs `S'.length ≤ 15`. Since `(relabelSched σ S).length = S.length`, it
@@ -253,7 +285,7 @@ def relabelSched (σ : List Nat) (S : List (List Nat)) : List (List Nat) :=
 Men and women are relabeled by the *same* σ, matching `relabel6 σ` and
 `mapMu6 σ mu = σ ∘ mu ∘ σ⁻¹`.
 
-### 3.2 Equivariance and legality (file `SmpMax/Six/RelabelSchedule.lean`)
+### 3.2 Equivariance and legality (file `RelabelSched6.lean`)
 
 **L3.1** `mapMu6_idRow6 : σ.Perm idRow6 → mapMu6 σ idRow6 = idRow6` (~15).
 
@@ -296,9 +328,9 @@ theorem Legal_relabel {σ : List Nat} (hp : σ.Perm idRow6) {S : List (List Nat)
 
 **L3.7** `length_relabelSched : (relabelSched σ S).length = S.length` (simp).
 
-### 3.3 First-appearance normalization (file `SmpMax/Six/FirstAppearance.lean`)
+### 3.3 First-appearance normalization (file `FirstApp6.lean`)
 
-Rule (a) (`cube_campaign.apply_step`, `experiments/enumeration/enumerate_cycle_schedules.c`): at each step, the
+Rule (a) (`cube_campaign.apply_step`, `gen_enum.c`): at each step, the
 *set* of men not seen in earlier steps must be exactly the next contiguous
 block of labels `[used, used + k_new)`.
 
@@ -334,7 +366,7 @@ theorem firstApp_relabel {S : List (List Nat)} (hWF : ∀ st ∈ S, WFStep st) (
 ```
 ~130 lines. **Fiddliest lemma of §3.**
 
-### 3.4 The bridge at the relabeled schedule (file `SmpMax/Six/RelabelSchedule.lean`, end)
+### 3.4 The bridge at the relabeled schedule (file `RelabelSched6.lean`, end)
 
 Do not transport counts through `readoffS`. Instantiate
 `count_le_of_orderPreserving` with `I := relabel6 σ J`, `J := readoffS S'`.
@@ -361,7 +393,7 @@ theorem sc_le_readoffS_relabelSched {J : Inst6} (hWF : WF6 J = true) (hne : sms6
 ~20 lines. Count chain used by the main theorem:
 `49 ≤ sc I = sc J` (`stableCount6_wrelabel6`) `= sc (relabel6 σ J)` (`stableCount6_relabel6`) `≤ sc (readoffS S')` (L3.16).
 
-### 3.5 Cubes (file `SmpMax/Six/CampaignCubes.lean`) — mirrors `cube_campaign.py` exactly
+### 3.5 Cubes (file `Cubes6.lean`) — mirrors `cube_campaign.py` exactly
 
 Cubes carry **shapes**, not indices (the cube id `"0,1;2,3"` *is* the
 prefix list); `prefixUnits` takes shapes and does the `idxOf … + 1`
@@ -447,7 +479,7 @@ this is the fix for the `sVar L 15 0` collision). ~40 lines.
 
 ## 4. The encoding and the assignment — on top of `SchedCNF6`
 
-### 4.1 Variable layout = `SchedCNF6` (file exists; decode in new `SmpMax/Six/VariableDecoding.lean`)
+### 4.1 Variable layout = `SchedCNF6` (file exists; decode in new `Decode6.lean`)
 
 Nothing new is defined for ids. With `L := layout 6`
 (**L4.1** `layout6_eq : layout 6 = ⟨6, 15, 409, 720⟩`, by `rfl`/`decide`;
@@ -534,7 +566,7 @@ the Python `build`, so every clause family supplies them for free.
 `evalLit_neg : … (neg v) = !τV (dec6 k v)` for `v ≠ 0` (`pos`/`neg` are
 `SchedCNF6.pos/neg`; all ids ≥ 1). ~20 lines.
 
-### 4.2 Shapes = `cyclicShapes 6`, min-first rotation (file `SmpMax/Six/CyclicShapes.lean`)
+### 4.2 Shapes = `cyclicShapes 6`, min-first rotation (file `Shapes6.lean`)
 
 The step list is `SchedCNF6.cyclicShapes 6` — sizes 2..6, `combos`
 (itertools.combinations order) of men, `permsOf` (itertools.permutations
@@ -592,7 +624,7 @@ via L4.10 both ways), `length_map_minFirst`. ~40 lines.
 length of `firstOcc` of a `Perm`-equivalent flatten, equal by
 `firstOcc_nodup` + `mem_firstOcc` + `Perm.length_eq` via `perm_ext_iff_of_nodup`). ~60 lines.
 
-### 4.3 Matchings = `permsN 6` (file `SmpMax/Six/CyclicShapes.lean`, end)
+### 4.3 Matchings = `permsN 6` (file `Shapes6.lean`, end)
 
 The selector index `i` in `Y[t][i]` refers to `P[i]` with `P =
 list(itertools.permutations(range(6)))` = `SchedCNF6.permsN 6`. This is
@@ -611,7 +643,7 @@ and every `isStable6` fact is evaluated on `(permsN 6).getD i []`:
 **L4.18** `stableCount6_eq_filter_permsN : stableCount6 R = ((permsN 6).filter (isStable6 R)).length`
 (`Perm.filter` + `Perm.length_eq`, unfolding `sms6`). ~10 lines.
 
-### 4.4 Frames, visited masks, the assignment (files `SmpMax/Six/FrameAssignment.lean`, `SmpMax/Six/EncodingFaithfulness.lean`)
+### 4.4 Frames, visited masks, the assignment (files `Frames6.lean`, `Faithfulness6.lean`)
 
 ```lean
 def frame (S : List (List Nat)) (t : Nat) : List Nat :=
@@ -670,7 +702,7 @@ Frame semantics:
 
 ## 5. The crux: derived comparisons = read-off ranks
 
-### 5.1 Prefix-destutter toolkit (file `SmpMax/Six/TrajectoryPrefixes.lean`, generic `α` with `DecidableEq`)
+### 5.1 Prefix-destutter toolkit (file `DestutterPrefix6.lean`, generic `α` with `DecidableEq`)
 
 **L5.1** `destutter'_take_prefix`, **L5.2** `destutter_take_prefix : (l.take k).destutter (· ≠ ·) <+: l.destutter (· ≠ ·)`. ~45 lines.
 **L5.3** `destutter_take_succ` (the destuttered prefix grows by 0 or 1 element at step `k`, by exactly `l[k]` iff `l[k] ≠ l[k-1]`). ~50 lines.
@@ -710,7 +742,7 @@ even without them; they are mirrored anyway so that the identity of the
 Lean list with `cube_campaign.py --count` holds by construction, not by
 an argument about depth.)
 
-### 5.4 The two crux lemmas (file `SmpMax/Six/ReadOffSemantics.lean`)
+### 5.4 The two crux lemmas (file `ReadoffSem6.lean`)
 
 **L5.13** `PM_sem`
 ```lean
@@ -737,7 +769,7 @@ reverse" into "later in `strajW`"; `Later w a b = BefW w b a ∧ Vis 15 a w`. ~1
 Conventions: `L := layout 6` (rewritten to `⟨6, 15, 409, 720⟩` by L4.1 at
 the start of every proof), `k` = number of slots (49 in production, 48 for
 the positive control), `τ := tau6 k S idxs`. Statement pattern (as in
-`SmpMax/Five/EncodingFaithfulness.lean`): `(family L …).all (evalClause τ) = true` under
+`Faithfulness.lean`): `(family L …).all (evalClause τ) = true` under
 `hL : Legal S`, `hlen : S.length ≤ 15`, plus selector hypotheses where
 relevant. Since the families are `flatMap`/`filterMap` over `List.range`,
 each proof opens with `simp only [List.all_flatMap, List.all_append,
@@ -775,7 +807,8 @@ theorem or_sat (hx : evalLit τ x = ys.any (evalLit τ)) :
 13. **`prefixUnits 6 c.steps`** — `prefixUnits_sat (hWFc : CubeWF c) (hf : Fits c S)`: unit `t` is `pos (sVar L t ((cyclicShapes 6).idxOf (c.steps.getD t []) + 1))`; from `Fits`, `c.steps.getD t [] = minFirst (S.getD t [])` and `t < c.steps.length ≤ S.length`, so the id decodes (`dec_sVar`: `t < 15` from `hlen`, `j ≤ 409` from L4.11 + `idxOf_lt_length`) to `.St t (stepIdx S t)`, true by `rfl`. ~30 lines.
 14. **`stopUnits 6 c.steps c.stopped`** (new, §4.1) — `stopUnits_sat (hWFc) (hf)`: if stopped, `t := c.steps.length = S.length < 15` (`CubeWF`), the unit is `sVar L t 0`, `stepIdx S t = 0` since `¬ t < S.length`. ~20 lines.
 
-**Addition to `SmpMax/Six/ScheduleEncoding.lean`** (the only edit to an existing file; ~12 lines):
+**Addition** (realized in `Cubes6.lean`, namespace `Cubes6`, with the
+signature `cubeCNFc (n k : Nat) (c : Cube)`; ~12 lines):
 ```lean
 /-- `cube_campaign.cube_units(...)`: after the prefix units, `S[len(prefix)][0]` iff closed. -/
 def stopUnits (n : Nat) (pre : List (List Nat)) (closed : Bool) : List (List Int) :=
@@ -785,14 +818,14 @@ def cubeCNFc (n k : Nat) (pre : List (List Nat)) (closed : Bool) : List (List In
   schedCNFn n k ++ prefixUnits n pre ++ stopUnits n pre closed
 ```
 `cubeCNFn n k pre = cubeCNFc n k pre false` (rfl). **Addition to
-`ExportSixCnf.lean`** (~6 lines): a `--stop` flag selecting
+`ExportSchedCnf.lean`** (~6 lines): a `--stop` flag selecting
 `cubeCNFc n k pre true`. Byte-identity of `export_sched_cnf --k=49
 --prefix=… [--stop]` with the worker's `c_*.cnf` (header
 `p cnf 84882 (2709212 + #units)`, body, units in the same order) is to be
 checked on `0,1;2,3`, `0,1;stop` and `stop` before the campaign starts
 (§9, §11).
 
-## 7. Assembly (file `SmpMax/Six/EncodingFaithfulness.lean`, end; `SmpMax/Six/UpperBound.lean`)
+## 7. Assembly (file `Faithfulness6.lean`, end; `Bridge6.lean`)
 
 **L7.1** `campaign_faithful` (statement in §0). Proof skeleton (~100 lines):
 ```
@@ -822,7 +855,7 @@ and **L7.3** the `refineCubes` variant for the cube list the campaign
 actually ran (`H : ∀ c ∈ refineCubes (refineCubes canonicalCubes2 split3) split4, …`),
 using L3.18/L3.20. ~40 lines. **L7.4** `f6_eq_48_of_unsat` additionally
 needs the dihedral lower bound `stableCount6 dihedral6 = 48` (a
-`decide`/`stableCount'`-style kernel computation as in `SmpMax/Five/ExactMaximum.lean`; 720 ×
+`decide`/`stableCount'`-style kernel computation as in `Lower.lean`; 720 ×
 36 pair checks; not part of faithfulness proper). ~40 lines.
 
 **Printer**: `export_sched_cnf` (exists) + `--stop`. A second small
@@ -832,24 +865,24 @@ syntax, for the set comparison in §9.
 
 ## 8. Size estimate and dependency order
 
-> **Erratum (recheck 2026-09-03):** L4.14 `canonAtB_map_minFirst` is stated in terms of `canonAtB`/`newMen`/`usedBefore`/`firstOcc` (FirstApp6) and therefore belongs in `SmpMax/Six/FirstAppearance.lean` (right after `canonAtB`; needs only `minFirst_perm` from Shapes6 and the `firstOcc` lemmas L3.8), not in `SmpMax/Six/CyclicShapes.lean`. Adjust the table: Shapes6 = L4.5–L4.13 (≈460 lines), FirstApp6 += L4.14 (≈350 lines).
+> **Erratum (recheck 2026-09-03):** L4.14 `canonAtB_map_minFirst` is stated in terms of `canonAtB`/`newMen`/`usedBefore`/`firstOcc` (FirstApp6) and therefore belongs in `FirstApp6.lean` (right after `canonAtB`; needs only `minFirst_perm` from Shapes6 and the `firstOcc` lemmas L3.8), not in `Shapes6.lean`. Adjust the table: Shapes6 = L4.5–L4.13 (≈460 lines), FirstApp6 += L4.14 (≈350 lines).
 
 | # | file | status | content | lemmas | lines |
 |---|---|---|---|---|---|
-| 0 | `SmpMax/Six/ScheduleEncoding.lean` | **exists** (584) | formula; add `stopUnits`, `cubeCNFc` | 0 | +12 |
-| 0' | `ExportSixCnf.lean` | **exists** (44) | printer; add `--stop` | 0 | +6 |
-| 1 | `SmpMax/Six/CyclicShapes.lean` | new | `mem_combos`, `mem_permsOf`, `permsOf_nodup`, `rotateTo`/`minFirst`, L4.5–L4.14, `permsN 6` lemmas L4.15–L4.18 | 15 | 520 |
-| 2 | `SmpMax/Six/VariableDecoding.lean` | new | `V6`, `upairs`, `pwTable`, `dec6`, L4.1–L4.4 | 18 | 370 |
-| 3 | `SmpMax/Six/TrajectoryPrefixes.lean` | new | L5.1–L5.8 | 8 | 240 |
-| 4 | `SmpMax/Six/ScheduleLength.lean` | new | L2.1–L2.6 (+ `moves_le_30`) | 6 | 240 |
-| 5 | `SmpMax/Six/FrameAssignment.lean` | new | `frame`/`vis`/`stepIdx`, L4.19–L4.27, L5.9–L5.12 | 13 | 340 |
-| 6 | `SmpMax/Six/ReadOffSemantics.lean` | new | L5.13–L5.15 | 3 | 290 |
-| 7 | `SmpMax/Six/RelabelSchedule.lean` | new | L3.1–L3.7, L3.12–L3.16 | 12 | 520 |
-| 8 | `SmpMax/Six/FirstAppearance.lean` | new | `firstOcc`/`partOrder`/`sigmaOf`/`canonAtB`, L3.8–L3.11 | 4 (+3 small) | 290 |
-| 9 | `SmpMax/Six/CampaignCubes.lean` | new | `Cube`, `CubeWF`, `extendCanon`, `canonicalCubes2`, `Fits`, `refineCubes`, L3.17–L3.21 | 5 | 230 |
-| 10 | `SmpMax/Six/EncodingFaithfulness.lean` | new | `τV`/`tau6`, gate lemmas, 12 family lemmas (+5 sub-lemmas), 2 unit lemmas, L7.1 | 22 | 1,120 |
-| 11 | `SmpMax/Six/UpperBound.lean` | new | L7.2–L7.4, lower bound | 3 | 100 |
-| 12 | `ExportSixCubes.lean` | new | cube-id printer (trusted) | 0 | 30 |
+| 0 | `SchedCNF6.lean` | **exists** (584) | formula; add `stopUnits`, `cubeCNFc` | 0 | +12 |
+| 0' | `ExportSchedCnf.lean` | **exists** (44) | printer; add `--stop` | 0 | +6 |
+| 1 | `Shapes6.lean` | new | `mem_combos`, `mem_permsOf`, `permsOf_nodup`, `rotateTo`/`minFirst`, L4.5–L4.14, `permsN 6` lemmas L4.15–L4.18 | 15 | 520 |
+| 2 | `Decode6.lean` | new | `V6`, `upairs`, `pwTable`, `dec6`, L4.1–L4.4 | 18 | 370 |
+| 3 | `DestutterPrefix6.lean` | new | L5.1–L5.8 | 8 | 240 |
+| 4 | `SchedLen6.lean` | new | L2.1–L2.6 (+ `moves_le_30`) | 6 | 240 |
+| 5 | `Frames6.lean` | new | `frame`/`vis`/`stepIdx`, L4.19–L4.27, L5.9–L5.12 | 13 | 340 |
+| 6 | `ReadoffSem6.lean` | new | L5.13–L5.15 | 3 | 290 |
+| 7 | `RelabelSched6.lean` | new | L3.1–L3.7, L3.12–L3.16 | 12 | 520 |
+| 8 | `FirstApp6.lean` | new | `firstOcc`/`partOrder`/`sigmaOf`/`canonAtB`, L3.8–L3.11 | 4 (+3 small) | 290 |
+| 9 | `Cubes6.lean` | new | `Cube`, `CubeWF`, `extendCanon`, `canonicalCubes2`, `Fits`, `refineCubes`, L3.17–L3.21 | 5 | 230 |
+| 10 | `Faithfulness6.lean` | new | `τV`/`tau6`, gate lemmas, 12 family lemmas (+5 sub-lemmas), 2 unit lemmas, L7.1 | 22 | 1,120 |
+| 11 | `Bridge6.lean` | new | L7.2–L7.4, lower bound | 3 | 100 |
+| 12 | `ExportCubes6.lean` | new | cube-id printer (trusted) | 0 | 30 |
 | | **total** | | | **≈ 109** | **≈ 4,300** |
 
 Withdrawn from revision 1: `Encoding6.lean` (closed-form layout, `enc`/`dec`,
@@ -888,13 +921,13 @@ Exactly the f(5) base, item for item (`docs/verification.md` §"What you end up 
 1. Lean 4 kernel (+ optionally `lean4checker`); axioms `propext`,
    `Classical.choice`, `Quot.sound` (`#print axioms f6_upper_of_unsat`).
 2. The ~45 lines of *definitions* that state the problem: `Inst6`, `WF6`,
-   `isStable6`, `sms6`, `stableCount6` (`SmpMax/Six/ReadOff.lean`). Everything else
+   `isStable6`, `sms6`, `stableCount6` (`SixBridge.lean`). Everything else
    (schedules, read-offs, relabels, `SchedCNF6`'s formula, the cube list)
    is proved about, not trusted.
 3. One LRAT checker: `cake_lpr` (verified to machine code). `kissat` and
    `drat-trim` are **not** trusted (they only produce the certificate).
-4. The DIMACS printer `ExportSixCnf.lean` (44 + 6 lines, read it) and the
-   cube-id printer `ExportSixCubes.lean` (30 lines), and the **file identity**
+4. The DIMACS printer `ExportSchedCnf.lean` (44 + 6 lines, read it) and the
+   cube-id printer `ExportCubes6.lean` (30 lines), and the **file identity**
    between what Lean prints and what `cake_lpr` checked. Certificates are
    valid only for the byte-identical `SchedCNF6` formula: a per-cube file
    is `header ‖ body(schedCNFn 6 49) ‖ units(c)`; the identity claim is
@@ -912,7 +945,7 @@ Exactly the f(5) base, item for item (`docs/verification.md` §"What you end up 
    the set of journaled verified ids equals the Lean-printed set (an
    `--audit` against `cubes2.txt`, not against `root_cubes(2)`).
 
-Not trusted: `experiments/enumeration/enumerate_cycle_schedules.c`, `tools/schedule_encoding.py`, `tools/campaign/calibrate_cubes.py`,
+Not trusted: `gen_enum.c`, `sched_sat.py`, `cube_calibrate.py`,
 `cube_campaign.py`'s cube generation, the solver runs, and this plan. The
 hypothesis `∀ c ∈ cubes, ¬ Satisfiable (cubeFormula 49 c)` remains outside
 the kernel, discharged by the certificates, as in `f5_upper_of_unsat`.
@@ -973,8 +1006,8 @@ the kernel, discharged by the certificates, as in `f5_upper_of_unsat`.
    cube ids, or restate the theorem per campaign run? Plan assumes a literal
    list + `refineCubes` (L3.18, L7.3).
 5. Rule (b): the campaign uses rule (a) only, and so does the proof. For
-   the record (§0): rule (b)-lex (`tools/campaign/calibrate_cubes.py`) is vacuous at depth 2
-   under rule (a); rule (b)-index (`experiments/enumeration/enumerate_cycle_schedules.c`, size-first step indices) is
+   the record (§0): rule (b)-lex (`cube_calibrate.py`) is vacuous at depth 2
+   under rule (a); rule (b)-index (`gen_enum.c`, size-first step indices) is
    not, and explains the 1,818,512 vs 1,833,929 depth-3 counts; both prunings
    are sound but neither is formalized, and no cube list in this plan depends
    on either. The witness orbits are min-first before relabeling

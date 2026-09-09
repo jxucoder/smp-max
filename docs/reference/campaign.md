@@ -11,12 +11,10 @@ completed artifact journals should remain immutable.
 ## Toolchain
 
 The production run used CaDiCaL 3.0.1 at
-`c60730422e758ef1cebe7aeddf2dda31c996bf04`, with native textual LRAT
-(`--lrat --binary=false`), followed by cake_lpr. On ARM64 the recorded
-verified assembly hash is recorded in the historical notes only by the
-prefix `95b64883`; consult the pinned upstream checker sources for its full
-assembly checksum when reproducing that build. The Linux/x86-64
-assembly hash is `2f3af32d55083839b3fa0e693afd817679c0b8944bef41def05a8b0ec72b7d4a`.
+`c60730422e758ef1cebe7aeddf2dda31c996bf04`, with native textual LRAT,
+followed by cake_lpr at `a36874a`. The [toolchain guide](solver-toolchain.md)
+gives the full assembly hashes, build commands and self-test for ARM64
+and Linux/x86-64, plus the recorded sample re-solve.
 
 Build [CaDiCaL](https://github.com/arminbiere/cadical) at that commit and
 [cake_lpr](https://github.com/tanyongkiam/cake_lpr) for your platform. The
@@ -83,6 +81,17 @@ compatibility; the examples explicitly select the production CaDiCaL path.
 
 ## Formula identity and Lean exports
 
+The complete identity check rebuilds the base formula, root and split lists,
+final cube set and unit clauses, then compares every journaled formula hash:
+
+```bash
+python3 tools/campaign/check_lean_identity.py --journal runs/f6/campaign.jsonl
+```
+
+Expected: 318,736 final leaves and 321,492 matching formula hashes. This
+checks the formulas; it does not re-check the deleted certificates. See the
+[verification guide](../verification.md) for the complete evidence chain.
+
 The base formula and each cube's CNF hash are separate identities. Export
 root and split-child lists with `export_cubes6`. Its `--parents=FILE`
 argument takes one split-parent cube ID per line and emits tab-separated
@@ -123,3 +132,6 @@ you intend to use that backend; review its current resource pricing and
 the driver's budget flags before launching. The archived container
 checkpoint scripts in [history](../history/container-scripts/README.md)
 describe a retired setup and are not current launch commands.
+
+The [archived 2026-09-09 reference](../history/campaign-reference-2026-09-09.md)
+retains detailed provenance and operational observations from the original run.
