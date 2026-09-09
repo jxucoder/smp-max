@@ -178,7 +178,7 @@ KISSAT = shutil.which("kissat") or "kissat"
 CADICAL = os.path.join(HERE, "..", "cadical-src", "build", "cadical")
 SOLVERS = ("kissat", "cadical")
 SCHED_SAT = os.path.join(HERE, "sched_sat.py")
-LEAN_EXPORT = os.path.join(HERE, "..", "f5", "lean", "SmpF5", ".lake", "build", "bin",
+LEAN_EXPORT = os.path.join(HERE, "..", "lean", "SmpF5", ".lake", "build", "bin",
                            "export_sched_cnf")
 
 STEPS = cyclic_shapes(N)      # 409 shapes, index j -> S[t][j+1]

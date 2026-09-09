@@ -9,7 +9,7 @@ dt-src/
 f5/cubes/
 f5/cubesL/*.cnf
 f5/cubesL/perms120.txt
-f5/lean/SmpF5/.lake/
+lean/SmpF5/.lake/
 f5/paper/f5.log
 f5/paper/*.log
 f5/paper/*.aux
@@ -28,3 +28,9 @@ f6/campaign/campaign.jsonl
 f6/campaign/campaign.base.log
 f6/campaign/campaign.live.log
 f6/campaign/shards/*.jsonl
+f6/exploration/gen_enum_c
+f6/exploration/gen_enum_n*
+f6/genrun/
+f6/genrun_all/
+f6/campaign/campaign.log
+lean/attic/.lake/
