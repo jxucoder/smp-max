@@ -1,0 +1,24 @@
+name: artifact-checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  documentation-and-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation links
+        run: python3 tools/check_docs.py
+      - name: Check retained artifact hashes
+        run: python3 tools/check_artifacts.py
+      - name: Recount saved witnesses
+        run: python3 tools/verify_witnesses.py
+      - name: Check certificate runner failure handling
+        run: python3 -m unittest discover -s tests
+      - name: Audit recorded campaign coverage
+        run: |
+          mkdir -p runs/f6
+          gzip -dc results/f6/campaign-2026-09-08/campaign.jsonl.gz > runs/f6/campaign.jsonl
+          python3 -m tools.campaign.cube_campaign --audit --journal runs/f6/campaign.jsonl

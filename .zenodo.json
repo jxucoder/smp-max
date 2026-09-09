@@ -2,8 +2,20 @@
   "title": "smp-max: certified maximum numbers of stable matchings (f(5) = 16, f(6) = 48, f(7) >= 85)",
   "upload_type": "software",
   "description": "Machine-checked determination of the maximum number f(n) of stable matchings of an n x n stable-marriage instance for n = 5 and n = 6, and a new lower bound for n = 7. f(5) = 16 and f(6) = 48 are Lean 4 theorems (f5_eq_16_of_unsat, f6_eq_48_of_unsat) whose only hypothesis is the unsatisfiability of Lean-defined CNF formulas (120 cube formulas at order 5; 318,736 cube formulas at order 6), each refuted by a SAT solver with the refutation checked by the formally verified LRAT checker cake_lpr. The deposit contains the Lean development, the certificate campaign's audited journal (per-cube formula and certificate hashes), the identity checks between the Lean definitions and the solved formulas, the verification guide, and the paper sources.",
-  "creators": [{"name": "Xu, Jiarui"}],
-  "license": "Apache-2.0",
-  "keywords": ["stable marriage", "stable matchings", "Knuth's problem", "Lean 4", "SAT certificates", "cake_lpr", "OEIS A357269", "OEIS A357271"],
-  "access_right": "open"
+  "creators": [
+    {
+      "name": "Xu, Jiarui"
+    }
+  ],
+  "keywords": [
+    "stable marriage",
+    "stable matchings",
+    "Knuth's problem",
+    "Lean 4",
+    "SAT certificates",
+    "cake_lpr",
+    "OEIS A357269",
+    "OEIS A357271"
+  ],
+  "access_right": "closed"
 }

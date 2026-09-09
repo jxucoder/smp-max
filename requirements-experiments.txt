@@ -1,0 +1,4 @@
+# Optional: direct SAT encoding and profile-enumeration experiments only.
+# Version used to smoke-check the relocated direct-encoding tools.
+# The completed Lean/SAT evidence does not depend on this Python package.
+python-sat==1.9.dev15

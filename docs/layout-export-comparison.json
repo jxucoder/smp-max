@@ -1,0 +1,25 @@
+{
+  "all_before_after_files_byte_identical": true,
+  "compared_files": 250,
+  "five_upper_cubes": 120,
+  "five_positive_controls": 120,
+  "five_upper_sha256": "044d0edbd9762166d925038056b3ef9ed762293d3f7637055e1105d1eca30ec6",
+  "five_all_cnf_sha256": "a93f5e58cd23976b303e26f5dd2fcd4ab66f91797b0b02bd2bfba13887c6a2ef",
+  "six_base_sha256": "28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b",
+  "six_root_cubes": 25493,
+  "six_split_parents": 2756,
+  "six_split_children": 295999,
+  "six_sample_formula_count": 6,
+  "original_baseline": "30ad2c3",
+  "integrated_upstream": "5e8cb3c",
+  "integrated_lean_identity": {
+    "base_sha256": "28421fb68b0f494b99d1918aa64cff248443161dc7a6c220e0c3e895a67df59b",
+    "roots": 25493,
+    "splits": 2756,
+    "split_children": 295999,
+    "final_leaves": 318736,
+    "formula_hashes": 321492,
+    "all_identity_checks_passed": true
+  },
+  "integrated_lean_files_code_preserved": 44
+}
