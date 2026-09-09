@@ -1,0 +1,31 @@
+name: build-papers
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'f5/paper/**'
+      - 'f6/paper/**'
+      - 'f6/theory.tex'
+      - '.github/workflows/build-papers.yml'
+jobs:
+  pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile the three papers (TeX Live, latexmk)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: |
+            f5/paper/f5.tex
+            f6/paper/f6.tex
+            f6/theory.tex
+          work_in_root_file_dir: true
+          latexmk_use_xelatex: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: |
+            f5/paper/f5.pdf
+            f6/paper/f6.pdf
+            f6/theory.pdf
+          if-no-files-found: error
