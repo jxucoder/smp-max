@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "Please cite this repository when referring to its code, formal development, or computational artifacts."
+type: software
+title: "smp-max: maximum numbers of stable matchings"
+authors:
+  - family-names: Xu
+    given-names: Jiarui
+repository-code: "https://github.com/jxucoder/smp-max"
+abstract: "Lean proofs, SAT encodings, and computational evidence for maximum numbers of stable matchings at orders five, six, and seven."
+keywords:
+  - stable marriage
+  - stable matchings
+  - Lean
+  - SAT certificates

@@ -1,0 +1,30 @@
+name = "SmpMax"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["SmpMax"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.33.1"
+
+[[lean_lib]]
+name = "SmpMax"
+
+[[lean_exe]]
+name = "export_cnf"
+root = "ExportFiveCnf"
+
+[[lean_exe]]
+name = "export_sched_cnf"
+root = "ExportSixCnf"
+
+[[lean_exe]]
+name = "export_cubes6"
+root = "ExportSixCubes"
