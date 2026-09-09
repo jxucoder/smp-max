@@ -19,7 +19,7 @@ Encoding ("selector" style, chosen for formalizability):
   a selected matching admits no blocking pair.
 
 The DIMACS files consumed by kissat / drat-trim / cake_lpr are printed
-from these very definitions by `export_cnf` (Main.lean).
+from these very definitions by `export_cnf` (`ExportCnf.lean`).
 -/
 
 def perms120 : List (List Nat) := idRow.permutations
@@ -94,6 +94,9 @@ def numVars : Nat := 2140
 
 /-! ## Satisfiability semantics -/
 
+/-- Note: a literal `0` would be read as the negation of variable 0; no
+clause of these formulas contains `0`, since every variable id is ≥ 1 by
+construction (`prefVar` starts at 1, `yVar` at 101). -/
 def evalLit (τ : Nat → Bool) (l : Int) : Bool :=
   if 0 < l then τ l.toNat else !(τ (-l).toNat)
 

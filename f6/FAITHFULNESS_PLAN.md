@@ -1,7 +1,9 @@
 # Faithfulness plan: Lean proof that the order-6 schedule CNF is faithful
 
-Status: PLAN, revision 2 (2026-09-02, after an independent critique of
-revision 1). No proof code yet. Target file set lives next to the existing
+Status: **COMPLETE (2026-09-08, evening)** — `f6_eq_48_of_unsat` is proved;
+see the last progress-log entry. Below is revision 2 of the plan
+(2026-09-02, after an independent critique of revision 1), kept as the
+record of what was planned; the progress log records what was built. Target file set lives next to the existing
 order-6 development in `f5/lean/SmpF5/SmpF5/` (same `lakefile`, Mathlib
 v4.33.1); the f(5) files `Encoding.lean` / `Faithfulness.lean` /
 `Bridge.lean` / `ExportCnf.lean` are the pattern.
@@ -69,6 +71,34 @@ discharged legality on un-rotated steps (§4.2, L3.17).
   FirstApp6 (§3), Faithfulness6 (§6 families + §7 assembly), Bridge6.
 
 
+- **2026-09-08 evening (files 7–12 and the assembly; COMPLETE).** Layer 0
+  first: `CubeWF`, `Fits`, `cubeFormula` added to `Cubes6.lean`,
+  `relabelSched` in `RelabelSched6.lean`, and `SplitList6.lean` generated
+  from the journal (the 1,804 depth-2 and 952 depth-3 split ids;
+  `finalCubes := refineCubes (refineCubes canonicalCubes2 isSplitDepth2)
+  isSplitDepth3`, 318,736 leaves = the journal's `verified` ids;
+  `export_cubes6 --final/--units`, all 321,492 `cnf_sha256` re-hashed from
+  Lean — `campaign/lean_identity.txt`). Then nine files in parallel:
+  `RelabelSched6` (L3.1–L3.7, L3.12–L3.16; 391 lines), `FirstApp6`
+  (`partOrder`, `sigmaOf`, L3.8–L3.11, L4.14, L3.21; 502), `PrefixLegal6`
+  (L5.10–L5.12; 193), `FamState6` (families 1–3; 209), `FamTrans6` (L5.9
+  and family 4; 337), `FamGates6` (families 5–9; 363), `FamSelect6`
+  (families 10–12, L4.18, `idxsOf`; 308), `Units6` (13–14; 110), `Lower6`
+  (`dihedral6_count : stableCount6 dihedral6 = 48`; 77); then `Coverage6`
+  (L3.17–L3.20, `fits_final`), `Faithfulness6` (`schedCNF_sat`,
+  `cube_faithful6`, `exists_canonical_schedule`), `Bridge6`
+  (`f6_upper_of_unsat`, `f6_eq_48_of_unsat`). Deviations from the plan:
+  the twelve families live in four files; `block_sat` is `block_sat6`
+  (name clash with f(5)); the count chain goes through
+  `exists_canonical_schedule` and `f6_upper_of_unsat_of_coverage`. Final
+  statement: `f6_eq_48_of_unsat : (∀ c ∈ finalCubes, ¬ Satisfiable
+  (cubeFormula 49 c)) → (∀ I, WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I,
+  WF6 I = true ∧ stableCount6 I = 48`; `#print axioms` = [propext,
+  Classical.choice, Quot.sound]; `lake build` 893 jobs, no `sorry`.
+  Faithfulness layer: 19 files, 4,761 lines, 333 theorems (+ 2,808 lines
+  of data). Risks 2 and 3 (`firstApp_relabel`, `shapeClauses_sat`) closed
+  without changing any definition.
+
 ## 0. Target theorem and what already exists
 
 ```lean
@@ -79,7 +109,7 @@ structure Cube where
 deriving Repr, DecidableEq
 
 def cubeFormula (k : Nat) (c : Cube) : List (List Int) :=
-  SchedCNF6.cubeCNFc 6 k c.steps c.stopped
+  Cubes6.cubeCNFc 6 k c    -- as realized in Cubes6.lean (c : Cube)
   -- = schedCNFn 6 k ++ prefixUnits 6 c.steps ++ stopUnits 6 c.steps c.stopped   (§4.1)
 
 theorem campaign_faithful {I : Inst6} (hWF : WF6 I = true)
@@ -770,7 +800,8 @@ theorem or_sat (hx : evalLit τ x = ys.any (evalLit τ)) :
 13. **`prefixUnits 6 c.steps`** — `prefixUnits_sat (hWFc : CubeWF c) (hf : Fits c S)`: unit `t` is `pos (sVar L t ((cyclicShapes 6).idxOf (c.steps.getD t []) + 1))`; from `Fits`, `c.steps.getD t [] = minFirst (S.getD t [])` and `t < c.steps.length ≤ S.length`, so the id decodes (`dec_sVar`: `t < 15` from `hlen`, `j ≤ 409` from L4.11 + `idxOf_lt_length`) to `.St t (stepIdx S t)`, true by `rfl`. ~30 lines.
 14. **`stopUnits 6 c.steps c.stopped`** (new, §4.1) — `stopUnits_sat (hWFc) (hf)`: if stopped, `t := c.steps.length = S.length < 15` (`CubeWF`), the unit is `sVar L t 0`, `stepIdx S t = 0` since `¬ t < S.length`. ~20 lines.
 
-**Addition to `SchedCNF6.lean`** (the only edit to an existing file; ~12 lines):
+**Addition** (realized in `Cubes6.lean`, namespace `Cubes6`, with the
+signature `cubeCNFc (n k : Nat) (c : Cube)`; ~12 lines):
 ```lean
 /-- `cube_campaign.cube_units(...)`: after the prefix units, `S[len(prefix)][0]` iff closed. -/
 def stopUnits (n : Nat) (pre : List (List Nat)) (closed : Bool) : List (List Int) :=

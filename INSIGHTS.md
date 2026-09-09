@@ -15,8 +15,21 @@ below for the day that changes.
    unpublished 2022 MiniZinc run. Paper: `f5/paper/f5.pdf`.
 2. **f(6) = 48, first determination (previously open).** The schedule
    reduction (three elementary lemmas over Gusfield–Irving rotation
-   theory) plus exhaustive evaluation of all 26,574,282,886 schedule
-   read-off instances. Confirms the conjecture in OEIS A357271.
+   theory, formalized in Lean) plus a complete, audited certificate
+   campaign: the Lean-defined formula for "some legal schedule reads
+   off >= 49" refuted over 25,493 root cubes / 321,492 cubes in the
+   split tree, 318,736 cake_lpr-verified certificates, 0 SAT, `--audit`
+   exit 0 (`f6/CAMPAIGN.md`); base formula, cube tree, certified cube
+   set and all 321,492 formula hashes recompute from the Lean
+   definitions (`f6/campaign/lean_identity.txt`). The earlier
+   exhaustive evaluation of all 26,574,282,886 schedule read-off
+   instances (max 48) is corroboration. Since 2026-09-08 (evening) the
+   whole chain is one Lean theorem, `f6_eq_48_of_unsat`
+   (`f5/lean/SmpF5/SmpF5/Bridge6.lean`): if every certified cube's
+   formula is unsatisfiable then f(6) = 48 (zero sorries, axioms
+   propext/Choice/Quot.sound), so the 318,736 certificates are its only
+   hypothesis, exactly as for f(5).
+   Confirms the conjecture in OEIS A357271.
    Paper: `f6/paper/f6.pdf`; theory notes: `f6/theory.pdf`.
 3. **By-products**: independent confirmation of every previously
    unreplicated number in this OEIS corner — f(4)=10 uniqueness,
@@ -67,7 +80,7 @@ below for the day that changes.
   space is an excellent lower-bound engine: ~20 laptop-minutes of
   hill climbing over size-2 schedules took f(7) from the best known 81
   (Ong et al. 2024) to **85** (`f7/`). Searching only full-budget
-  schedules caps at 80 — odd orders live below full budget, exactly as
+  schedules never exceeded 80 in the logged runs (`f7/logs/`, 10 seeds) — odd orders live below full budget, exactly as
   Conjecture 1 predicts, so the schedule *length* must be a search
   variable.
 - **Conjecture 1 gets external support.** The published record
@@ -105,7 +118,11 @@ below for the day that changes.
   ITP-2024 architecture) at the moment it became cheap, on the smallest
   unclaimed problems of a genre maintained by a single researcher. The
   effort went into *choosing*, verifying, and cross-checking — not into
-  any single heroic computation (largest run: ~10 laptop-hours).
+  any single heroic computation. (Largest run, updated 2026-09-08: the
+  order-6 certificate campaign, 1,076,400 s ≈ 299 core-hours of solver
+  time plus cake_lpr checking, median 1.0 s per cube, spread over three
+  machines; the enumeration took about 10 hours on 8 cores; everything
+  else was minutes.)
 
 ## Remaining work (when resumed)
 
@@ -120,10 +137,19 @@ below for the day that changes.
    cubes refute in minutes; campaign estimated 100-1000 core-hours).
    Left: cube driver + Lemma sym in Lean + encoding faithfulness.
    **Update 2026-09-08:** the cube campaign is complete and audited
-   (318,736 certificates, 0 SAT, exit 0; `f6/CAMPAIGN.md`); the Lean
-   faithfulness proof is under way, with the cube-list identity, the
-   decode layer, the frame bound and the crux (read-off semantics of
-   PM/PW) done - see the progress log in `f6/FAITHFULNESS_PLAN.md`.
+   (25,493 roots, 321,492 cubes, 318,736 certificates, 2,756 splits,
+   0 SAT, `--audit` exit 0; `f6/CAMPAIGN.md`), and the Lean identity
+   checks are closed: base formula, root cubes, 295,999 split children,
+   the certified cube set `finalCubes` (318,736 ids) and all 321,492
+   journaled formula hashes recompute from Lean
+   (`f6/campaign/lean_identity.txt`). Lemma sym at schedule level and
+   encoding faithfulness are now one theorem to prove (every
+   well-formed instance with >= 49 stable matchings satisfies some
+   certified cube's formula); its status is in `STATUS.md`.
+   **Update 2026-09-08 (evening):** DONE. The faithfulness theorem is
+   proved: `f6_eq_48_of_unsat` (`Bridge6.lean`), 19 files / 4,761 lines /
+   333 theorems plus the 2,808-line split-list data file, zero sorries,
+   standard axioms. Nothing on the Lean side remains.
 2. Paper polish: expand both drafts to venue length; decide venues
    (f5 -> ITP 2027, CFP ~Jan-Mar 2027; f6 -> combinatorics journal or
    SAT/CP).

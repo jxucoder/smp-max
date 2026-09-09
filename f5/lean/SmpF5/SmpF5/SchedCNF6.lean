@@ -24,8 +24,9 @@ Bounded-model-checking encoding (`sched_sat.py` docstring):
 * per frame a one-hot step choice `S[t][j]`: `j = 0` is "stop",
   `j ≥ 1` is the cyclic shape `SH[j-1]` (`cyclicShapes`);
 * first-visit-order auxiliaries `C`, `before`, `neither`, `PM` (men's
-  read-off preference) and `beforeW`, `later`, `only_a`, `neither`,
-  `PW` (women's read-off preference, reversed trajectory);
+  read-off preference) and `beforeW`, `later`, `only_a`, `nv` (the
+  per-(w,a,b) bottom term, a<b, allocated inside the `PW` loop), `PW`
+  (women's read-off preference, reversed trajectory);
 * selector block: `k` slots `Y[t][i]` over the `n!` matchings with a
   ladder `Pf[t][i]` forcing strictly increasing (hence distinct)
   selections; a selected matching admits no blocking pair.

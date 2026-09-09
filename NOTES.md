@@ -85,7 +85,7 @@ canonical man0=id solutions across 120 cubes, ~5 min on 8 cores;
 `f5/cube_enum.py`, `f5/enum_results.txt`). The quotient 4,227,120/24 =
 176,130 also confirms his reduced-instance count in OEIS A357269.
 
-## f(6) = 48 (2026-08-31 .. 09-01)
+## f(6) = 48 (2026-08-31 .. 09-01; evidence superseded, see the 2026-09-08 entry)
 
 The schedule reduction (see `f6/theory.pdf` and `f6/paper/f6.pdf`):
 every instance is dominated in stable-matching count by the read-off
@@ -105,4 +105,81 @@ chain from man-optimal to woman-optimal realizes every stable pair),
 the trajectory budget theorems (`traj_*`, `wtraj_*`,
 `total_moves_le_30`), and the step cycle-structure lemmas
 (`prevOwner_*`). The only unformalized link is a verified replay of the
-enumeration itself.
+enumeration itself. *(2026-09-08: no longer the plan; the enumeration
+is corroboration and the certificate campaign is the evidence - next
+entry.)*
+
+## f(6) = 48: certificate campaign complete, audited, Lean identity checks closed (2026-09-08)
+
+The order-6 upper bound now rests on the certificate campaign
+(`f6/CAMPAIGN.md`), not on the enumeration above. The Lean-defined
+formula `SchedCNF6` ("some legal schedule reads off >= 49") was refuted
+cube by cube: 25,493 root cubes; 321,492 distinct cubes in the split
+tree (depth 0: 1; depth 1: 153; depth 2: 27,143 = 25,339 open roots +
+1,804 stop-children of the depth-2 splits; depth 3: 197,814; depth 4:
+96,381); 318,736 cake_lpr-verified (1 / 153 / 25,339 / 196,862 / 96,381
+by depth); 2,756 split (1,804 at depth 2, 952 at depth 3); 2,910 closed
+(stop) cubes; 0 SAT. One solver build throughout: CaDiCaL 3.0.1
+c6073042 (`--lrat --binary=false`); solver time 1,076,400 s, median
+1.0 s per cube; certificates summed to about 25 TB and were deleted
+after checking. `python3 f6/cube_campaign.py --audit` exits 0
+(roots=25493 nodes=321492 verified=318736 missing=0 bad=0
+header_problems=0). Provenance (last record per cube): Linux/x86-64
+container 3,967 verified + 235 split (x86-64 cake_lpr build, cake_lpr.S
+sha256 2f3af32d...); Apple M4 Max laptop 12,727 + 628; Mac mini M4 Pro
+302,042 + 1,893 (arm64 build, cake_lpr_arm8.S sha256 95b64883...). The
+released journal (`f6/campaign/campaign.jsonl.gz`, 40,943,262 bytes,
+sha256 c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e)
+is one append lineage laptop -> container -> Mac mini; the parallel
+three-worker laptop snapshot of commit 8256eef never entered it.
+
+Lean identity checks, all passed (`f6/campaign/lean_identity.txt`):
+base formula byte-identical (sha256 28421fb6...); the 25,493 root cubes
+byte-identical; the 295,999 split children byte-identical; the
+Lean-defined certified cube set `finalCubes` (`SplitList6.lean`:
+`refineCubes` of `canonicalCubes2` by the 1,804 + 952 recorded split
+ids) equals the 318,736 verified ids as a set; all 321,492 journaled
+`cnf_sha256` values recompute from the Lean-printed header, body and
+unit clauses (`f6/lean_rehash.py`, exit 0).
+
+Trust statement: the journal is self-attested - a "verified" record is
+the driver's transcription of cake_lpr's verdict, and the certificates
+are gone. Independent verification of a verdict means re-solving that
+cube from the Lean-printed formula; the per-cube `cnf_sha256` /
+`lrat_sha256` let a re-run be compared record by record (about 300
+core-hours for the whole tree). The enumeration (`gen_enum.c`,
+26,574,282,886 schedules, max 48) is corroboration. Still not a Lean
+theorem: faithfulness - every well-formed order-6 instance with >= 49
+stable matchings satisfies some certified cube's formula; see
+`STATUS.md` for its status.
+
+## f(6) = 48 as one Lean theorem (2026-09-08, evening)
+
+The faithfulness proof planned in `f6/FAITHFULNESS_PLAN.md` is complete.
+`f6_eq_48_of_unsat` (`f5/lean/SmpF5/SmpF5/Bridge6.lean`): if every cube
+of `Cubes6.finalCubes` (the 318,736 certified cubes, `SplitList6.lean`)
+has an unsatisfiable `cubeFormula 49`, then every well-formed order-6
+instance has at most 48 stable matchings and the dihedral instance has
+exactly 48 (`dihedral6_count`, kernel `decide` over the 720
+permutations). `#print axioms`: propext, Classical.choice, Quot.sound;
+`lake build` 893 jobs, no errors; no `sorry`. Chain: `49 <= sc I` ->
+`J := wrelabel6 (invMatch (manOpt I)) I` -> `S := chainSched J` ->
+`S' := relabelSched (sigmaOf S) S` (`Legal_relabel`, `firstApp_relabel`)
+-> `49 <= sc I = sc J = sc (relabel6 σ J) <= sc (readoffS S')`
+(`sc_le_readoffS_relabelSched`; the read-off is not relabel-equivariant,
+so the bridge is re-instantiated at the relabeled instance) ->
+`fits_final` (Coverage6: S' fits a cube of `finalCubes`) ->
+`cube_faithful6` (Faithfulness6: `tau6 49 S' (idxsOf (readoffS S'))`
+satisfies the cube's formula via the twelve family lemmas of FamState6 /
+FamTrans6 / FamGates6 / FamSelect6 and the unit lemmas of Units6).
+Files added today: RelabelSched6 (391 lines), FirstApp6 (502),
+PrefixLegal6 (193), FamState6 (209), FamGates6 (363), FamTrans6 (337),
+FamSelect6 (308), Units6 (110), Lower6 (77), Coverage6, Faithfulness6,
+Bridge6, and the data file SplitList6 (2,808). Faithfulness layer total:
+19 files, 4,761 lines, 333 theorems; reduction layer unchanged (5,230 /
+243); whole development 37 imported modules, 15,785 lines, 647 theorems.
+The twelve proof files were written by parallel proof agents in about
+two hours, each checked with `lake env lean` and then with the full
+build; the layer-0 definitions (`CubeWF`, `Fits`, `cubeFormula`,
+`relabelSched`, `finalCubes`) were fixed before any proof was written and
+were not changed afterwards. CI now axiom-checks 1 + 25 theorems.
