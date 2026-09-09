@@ -91,7 +91,7 @@ every verified cube into DIR, compares its sha256 with the journaled
 cnf_sha256, and, if DIR/c_<tag>.cnf already exists (e.g. printed by the
 Lean exporter), compares that file too.  The Lean exporter
 
-    f5/lean/SmpF5/.lake/build/bin/export_sched_cnf OUT --prefix=a,b;c,d
+    lean/SmpF5/.lake/build/bin/export_sched_cnf OUT --prefix=a,b;c,d
 
 prints DIMACS byte-identical to this driver's CNF for open cubes (same
 header, clause order and unit clauses), so a Lean-printed formula can be
@@ -178,7 +178,7 @@ KISSAT = shutil.which("kissat") or "kissat"
 CADICAL = os.path.join(HERE, "..", "cadical-src", "build", "cadical")
 SOLVERS = ("kissat", "cadical")
 SCHED_SAT = os.path.join(HERE, "sched_sat.py")
-LEAN_EXPORT = os.path.join(HERE, "..", "f5", "lean", "SmpF5", ".lake", "build", "bin",
+LEAN_EXPORT = os.path.join(HERE, "..", "lean", "SmpF5", ".lake", "build", "bin",
                            "export_sched_cnf")
 
 STEPS = cyclic_shapes(N)      # 409 shapes, index j -> S[t][j+1]

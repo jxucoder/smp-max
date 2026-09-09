@@ -3,7 +3,24 @@
 Certified refutation of "some legal order-6 schedule S has sc(R(S)) >= 49"
 by cube-and-conquer over canonical schedule prefixes.  Every cube emits
 its own certificate chain, checked by cake_lpr, then deleted (f5-style
-streaming).  See `REPLAY_DESIGN.md` for the architecture and the pilot.
+streaming).  See `../docs/history/f6-REPLAY_DESIGN.md` for the architecture
+and the pilot.  The first part of this file (Result, identity checks,
+re-check) is the reference; "How it was run" is the operational record.
+Numbers: `../STATUS.md`.
+
+Contents
+
+- [Result: campaign complete, `--audit` OK](#result-2026-09-08-campaign-complete---audit-ok)
+  - [Lean-side identity checks](#lean-side-identity-checks-2026-09-08)
+  - [Independent re-check on a second machine](#independent-re-check-on-a-second-machine-2026-09-09)
+- [How it was run (operational record)](#how-it-was-run-operational-record-2026-09-02-to-2026-09-08)
+  - [Case split (root cubes)](#case-split-root-cubes)
+  - [Per-cube pipeline (worker)](#per-cube-pipeline-worker)
+  - [Journal, provenance, resume](#journal-provenance-resume)
+  - [Dry run](#dry-run-2026-09-02), [provenance check](#provenance-check-2026-09-02-campaignprobesfixcheckjsonl), [solver choice](#solver-choice-2026-09-02---solver-cadical-native-lrat) (2026-09-02)
+  - [Full campaign: launch command](#full-campaign-launch-command-launched-2026-09-02-2356-pdt--2026-09-03-utc-with---solver-cadical-see-below)
+  - [Toolchain reproduction on Linux/x86-64](#toolchain-reproduction-on-linuxx86-64-2026-09-05)
+  - [Depth-3 pricing probe](#depth-3-pricing-probe-2026-09-05-campaignprobesdepth3_probejsonl), [sharding across containers](#sharding-across-containers-2026-09-05) (2026-09-05)
 
 ## Result (2026-09-08): campaign complete, `--audit` OK
 
@@ -32,7 +49,7 @@ Solver: cadical 3.0.1 `c60730422e758ef1cebe7aeddf2dda31c996bf04` (`--lrat
 --binary=false`), built from the pinned commit on each machine; every
 record carries the same `solver_version` string.  Checker: cake_lpr in
 two builds - the x86-64 build (`cake_lpr.S`, published sha256
-`2f3af32d…`, hash-checked by `campaign/bootstrap.sh`) on the Linux
+`2f3af32d…`, hash-checked by `campaign/tools/bootstrap.sh`) on the Linux
 container, and arm64 builds (`cake_lpr_arm8.S`, published sha256
 `95b64883…`) on the two Macs.  The driver records only the checker's path
 (in the header), not a hash of the binary or of the assembly it was built
@@ -57,7 +74,7 @@ was 1,076,400 s, about 300 core-hours, plus checking).  The per-cube hashes
 make such a re-run comparable record by record: `cnf_sha256` must match
 (the formula is re-derived from Lean, see "Lean-side identity checks"),
 and `lrat_sha256` is reproduced byte for byte by the same toolchain
-(`campaign/cadical_check.jsonl`, three cubes solved on the laptop, carries
+(`campaign/probes/cadical_check.jsonl`, three cubes solved on the laptop, carries
 the same `lrat_sha256` values as the Mac mini's final records for those
 cubes); across architectures only equal LRAT sizes have been compared
 (2026-09-05 below).
@@ -99,7 +116,7 @@ depth-3 splits).
 ### Lean-side identity checks (2026-09-08)
 
 Recorded in `campaign/lean_identity.txt` (Lean 4.33.1, commit `ae8e83f`;
-commands run from `f5/lean/SmpF5` after `lake build export_sched_cnf
+commands run from `lean/SmpF5` after `lake build export_sched_cnf
 export_cubes6`, with the journal decompressed to `campaign.jsonl` and the
 id lists extracted from its last record per cube):
 
@@ -122,7 +139,7 @@ id lists extracted from its last record per cube):
 5. **Every cube formula.**  `.lake/build/bin/export_cubes6 units.tsv
    --units=all_ids.txt` prints each cube's unit clauses
    (`SchedCNF6.prefixUnits ++ Cubes6.stopUnits`), and `python3
-   ../../../f6/lean_rehash.py base.cnf units.tsv campaign.jsonl` composes
+   ../../f6/lean_rehash.py base.cnf units.tsv campaign.jsonl` composes
    `p cnf 84882 (2709212 + #units)` ‖ Lean base body ‖ units per cube
    and compares with the journaled `cnf_sha256`: `records with
    cnf_sha256=321492 matched=321492 mismatched=0 missing_units=0`, exit
@@ -135,9 +152,9 @@ by hash, the one Lean defines) and the cube-set identity claim (the set
 of cube formulas `finalCubes` ranges over is exactly the set of
 `verified` records).  The faithfulness theorem that makes the certificates the hypothesis of
 a Lean theorem is proved (2026-09-08, evening): `f6_eq_48_of_unsat` in
-`../f5/lean/SmpF5/SmpF5/Bridge6.lean` - if every cube of `finalCubes` has
+`../lean/SmpF5/SmpF5/Bridge6.lean` - if every cube of `finalCubes` has
 an unsatisfiable `cubeFormula 49`, then f(6) = 48 - with zero sorries and
-axioms `propext`, `Classical.choice`, `Quot.sound` (`STATUS.md`).
+axioms `propext`, `Classical.choice`, `Quot.sound` (`../STATUS.md`).
 
 ### Independent re-check on a second machine (2026-09-09)
 
@@ -155,13 +172,23 @@ journal is `campaign/recheck_2026-09-09.jsonl`. This confirms the
 self-report on the sample; the remaining 318,531 cubes are re-solvable
 the same way (about 300 core-hours).
 
-## Case split (root cubes)
+## How it was run (operational record, 2026-09-02 to 2026-09-08)
+
+Everything below is the record of the run, in the order it happened;
+nothing in it is needed to verify the result.  Commands are quoted as
+they were run from `f6/`; the files they wrote now live under
+`campaign/probes/` (pilot journals and logs) and `campaign/tools/`
+(operations scripts), and the driver's stdout `campaign/campaign.log`
+is no longer tracked (the journal is the record).
+
+### Case split (root cubes)
 
 Canonical prefixes use the first-appearance rule (a) ONLY: the men that
 appear for the first time in a step are exactly the next unused labels
 (as a set).  Rule (b) (backward commutation) is not applied - it is off
 the Lean critical path.  Legality checks (per-man cap 5, no revisit on
-either side, 30-move budget) are those of `cube_calibrate.canonical_depth2`.
+either side, 30-move budget) are those of `canonical_depth2` in
+`exploration/cube_calibrate.py`.
 
 | set                                   | count  |
 |---------------------------------------|--------|
@@ -170,16 +197,17 @@ either side, 30-move budget) are those of `cube_calibrate.canonical_depth2`.
 | short cubes: `stop` + `s1;stop`       | 154    |
 | **root cubes**                        | 25,493 |
 
-Note on rule (b).  Rule (b) as implemented in `cube_calibrate.py` rejects
+Note on rule (b).  Rule (b) as implemented in `exploration/cube_calibrate.py` rejects
 a step that is smaller than a man-disjoint predecessor in the
 lexicographic *tuple* order.  At depth 2 this is vacuous under rule (a):
 if s2 is disjoint from s1 it uses only fresh labels, so min(s2) >
 min(s1) = 0 and s2 > s1 as tuples; hence the (a)-only depth-2 set equals
-the (a)+(b)-lex set (checked: identical, 25,339).  `gen_enum.c`
+the (a)+(b)-lex set (checked: identical, 25,339).  `exploration/gen_enum.c`
 implements rule (b) with a different order - the size-first *step-index*
 order of its shape table - so its depth-3 count (1,818,512, the number
-quoted in `REPLAY_DESIGN.md`) is NOT the (a)+(b)-lex count; the
-(a)-only depth-3 count is 1,833,929 (`campaign/depth3_count.log`).  Both
+quoted in `../docs/history/f6-REPLAY_DESIGN.md`) is NOT the (a)+(b)-lex
+count; the (a)-only depth-3 count is 1,833,929
+(`campaign/probes/depth3_count.log`).  Both
 orders give sound prunings (each is a total order on shapes, and the
 commutation argument works for any such order), but they select
 different canonical representatives, so the counts differ.  The campaign
@@ -213,14 +241,15 @@ relabeled instance).  The theorem that turns
 the certificates into the bound - the analogue of f(5)'s `cube_faithful`
 - runs from instance to model: every well-formed order-6 instance with
 >= 49 stable matchings yields a satisfying assignment of `cubeFormula 49
-c` for some `c` in `finalCubes` (`f6_upper_of_unsat`, `PLAN.md` §A),
+c` for some `c` in `finalCubes` (`f6_upper_of_unsat`,
+`../docs/history/PLAN-2026-09-08.md` §A),
 so that UNSAT of all 318,736 certified cubes gives sc <= 48.  It is not
 the converse (that a satisfying assignment yields an instance), which
 would only matter for decoding a SAT hit.  It is proved:
 `f6_upper_of_unsat` / `f6_eq_48_of_unsat` (`Bridge6.lean`, zero
 sorries, standard axioms).  `--audit` checks the journal against the exact root set.
 
-## Per-cube pipeline (worker)
+### Per-cube pipeline (worker)
 
 1. write `base + units` as DIMACS (48.7 MB; base clause body is built once
    in the parent and inherited copy-on-write by forked workers) and record
@@ -254,7 +283,7 @@ sorries, standard axioms).  `--audit` checks the journal against the exact root 
 
 Terminal statuses are exactly `verified`, `SAT`, `split`.
 
-## Journal, provenance, resume
+### Journal, provenance, resume
 
 Append-only JSONL.  The first record is a **header** (`status:
 "header"`) with the base-formula sha256 (the DIMACS text `p cnf V C` +
@@ -296,7 +325,7 @@ the journaled `cnf_sha256`, and, if `DIR/c_<tag>.cnf` already exists
 The Lean exporter (path relative to `f6/`; quote the argument, since `;`
 is a shell separator)
 
-    ../f5/lean/SmpF5/.lake/build/bin/export_sched_cnf OUT '--prefix=0,1;2,3'
+    ../lean/SmpF5/.lake/build/bin/export_sched_cnf OUT '--prefix=0,1;2,3'
 
 prints DIMACS byte-identical to the driver's CNF for open cubes (same
 header, clause order, unit clauses), so a Lean-printed formula can be
@@ -317,7 +346,7 @@ fsync'ed.  A task whose worker stops reporting for
 OS never completes its `AsyncResult`; this bound covers kissat plus both
 checkers at their own limits).
 
-## Dry run (2026-09-02)
+### Dry run (2026-09-02)
 
 24 random canonical depth-2 cubes (seed 0) + the disjoint-transposition
 cube `0,1;2,3`, 8 workers, `--time=90`, `--no-split`:
@@ -325,7 +354,7 @@ cube `0,1;2,3`, 8 workers, `--time=90`, `--no-split`:
     python3 cube_campaign.py --dryrun --workers 8 --time 90 --no-split \
         --journal campaign/dryrun.jsonl --scratch campaign/scratch_dryrun
 
-Results (`campaign/dryrun.jsonl`, `campaign/dryrun.log`; M4 Max, 16 cores;
+Results (`campaign/probes/dryrun.jsonl`, `campaign/probes/dryrun.log`; M4 Max, 16 cores;
 pre-provenance driver - these records carry no `cnf_sha256`, so
 `--audit` on them fails by design):
 
@@ -352,7 +381,8 @@ checking against the 2.7M-clause base costs 30-100x the solve time
 installed, so drat-trim stays in the chain for now.  Budget for the
 depth-2 layer at the dry-run mix: 25,339 x ~130 s = ~900 core-hours
 (about 3 days on 12 workers, before the hard cubes' split trees, which
-add a few hundred core-hours per the calibration in REPLAY_DESIGN.md).
+add a few hundred core-hours per the calibration in
+`../docs/history/f6-REPLAY_DESIGN.md`).
 drat-trim and cake_lpr are single-threaded and memory-light, so use
 12-14 workers on this machine.  **The CaDiCaL `--lrat` lever**: a
 CaDiCaL build with `--lrat` emits LRAT natively (no backward check),
@@ -361,7 +391,7 @@ adding a `--solver` switch to the worker is the cheapest large win if
 the budget matters.  (cake_lpr's verdict is unchanged: it checks the
 LRAT against the journaled CNF regardless of who produced it.)
 
-## Full campaign (launch command; launched 2026-09-02 23:56 PDT = 2026-09-03 UTC, with `--solver cadical`, see below)
+### Full campaign (launch command; launched 2026-09-02 23:56 PDT = 2026-09-03 UTC, with `--solver cadical`, see below)
 
     cd f6          # in a repository checkout; the driver resolves ../cadical-src, ../cake_lpr-src, ../dt-src
     nohup python3 cube_campaign.py --workers 12 --time 600 --max-depth 4 \
@@ -392,7 +422,7 @@ Disk: transient per worker ~50 MB CNF + DRAT + LRAT (LRAT is ~3.5x the
 DRAT; the order-5 pilot saw 0.7 GB DRAT / 4.3 GB LRAT for a 4-minute
 solve, so budget a few GB per worker for the hardest cubes).
 
-## Provenance check (2026-09-02, `campaign/fixcheck.jsonl`)
+### Provenance check (2026-09-02, `campaign/probes/fixcheck.jsonl`)
 
 Three easy cubes (`stop`, `0,1;stop`, `0,5,4,2,1,3;0,2,5,1,3,4`; 3
 workers, `--time 60`) run with the hardened driver, 34 s wall:
@@ -415,7 +445,7 @@ workers, `--time 60`) run with the hardened driver, 34 s wall:
 Not an easy cube: `0,1;0,2` hits a 60 s limit and splits into 140
 children (the `(0,1)` family again, cf. the calibration).
 
-## Solver choice (2026-09-02): `--solver cadical` (native LRAT)
+### Solver choice (2026-09-02): `--solver cadical` (native LRAT)
 
 `cube_campaign.py --solver {kissat,cadical}` (default kissat, path
 unchanged).  The cadical path runs
@@ -464,15 +494,15 @@ text LRAT is ~3.5x kissat's DRAT, but no larger than drat-trim's LRAT
 was.  (3) cadical does not print a `v` model line with `-n`; the driver
 does not pass `-n`, so a SAT cube still records its model.
 
-Driver check (`campaign/cadical_check.jsonl`, `campaign/cadical_check.log`;
+Driver check (`campaign/probes/cadical_check.jsonl`, `campaign/probes/cadical_check.log`;
 3 workers, `--time 120`): `stop`, `0,1;stop`, `0,5,4,2,1,3;0,2,5,1,3,4`
 all `verified` in 5.9 s wall (solve 0.4-0.7 s, LRAT 14.7-39.4 MB,
 cake_lpr 4.8 s each; the third cube's `cnf_sha256` equals the Lean
 exporter's `f2ea077c...`); `--audit` reports `bad=0 header_problems=0`
 (fails only on the 25,490 roots not run).  The kissat path and the audit
-of pre-switch journals (`campaign/fixcheck.jsonl`) are unchanged
+of pre-switch journals (`campaign/probes/fixcheck.jsonl`) are unchanged
 (re-run: 2 cubes verified, `bad=0`).  The hard-cube run is journaled in
-`campaign/cadical_hard.jsonl`.
+`campaign/probes/cadical_hard.jsonl`.
 
 Full campaign with cadical:
 
@@ -480,7 +510,7 @@ Full campaign with cadical:
         --max-depth 4 --shuffle --journal campaign/campaign.jsonl \
         --scratch campaign/scratch > campaign/campaign.log 2>&1 &
 
-## Toolchain reproduction on Linux/x86-64 (2026-09-05)
+### Toolchain reproduction on Linux/x86-64 (2026-09-05)
 
 The campaign was built and driven on an Apple M4 Max.  Rebuilt from
 source in a clean Linux/x86-64 container (Ubuntu 24.04, gcc 13.3, 4
@@ -524,7 +554,7 @@ commit 8256eef was a snapshot that was superseded and whose records never
 entered the final file.  `merge_journals.py` keeps only the first
 header, so a merged file would carry only one machine's tool paths.)
 
-## Depth-3 pricing probe (2026-09-05, `campaign/depth3_probe.jsonl`)
+### Depth-3 pricing probe (2026-09-05, `campaign/probes/depth3_probe.jsonl`)
 
 The depth-2 layer splits at 4.7%, and each split replaces one cube with
 ~110 children, so the campaign's total size is set by the split rate one
@@ -566,7 +596,7 @@ evidence may not exist at all.  The earlier ~460k-node worry is
 unsupported: it assumed the depth-2 split rate recurred at depth 3, and
 0/150 rules that rate out at better than 95% confidence.
 
-## Sharding across containers (2026-09-05)
+### Sharding across containers (2026-09-05)
 
 The laptop is out; the campaign runs in ephemeral Linux containers (4
 cores, ~190-300 nodes/h each at 3 workers).  `cube_campaign.py --shard
@@ -589,7 +619,7 @@ certificate - the audit would demand children nobody ran.  Torn trailing
 lines (a checkpoint taken mid-append) are skipped and counted.  The
 merged file is the audit's input; shard journals keep full history.
 
-`campaign/bootstrap.sh I N [WORKERS] [BRANCH]` takes a fresh container
+`campaign/tools/bootstrap.sh I N [WORKERS] [BRANCH]` takes a fresh container
 from a bare checkout to a running shard and is idempotent (re-run it
 hourly from a Routine): toolchain at the pinned commits with self-tests;
 resume from origin's shard branch if it exists, else create it; seed the
@@ -598,7 +628,8 @@ the base snapshot (complete lines only); push once *before* any work so
 a container without push access aborts immediately; hourly checkpoint
 (gzip under the journal's flock, commit, push with rebase retry), a
 checkpoint on exit, a trap for TERM/INT/HUP; if the driver is already
-running, checkpoint only.  `campaign/supervise.sh` + `driver.cmd` do the
+running, checkpoint only.  `campaign/tools/supervise.sh` +
+`campaign/tools/driver.cmd` do the
 same for this container's unsharded journal (an hourly Routine runs it;
 the container rebooted once and lost every process while the disk
 survived).

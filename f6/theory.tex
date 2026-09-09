@@ -11,7 +11,7 @@
 
 \title{The schedule reduction for the maximum number of\\ stable matchings of order six}
 \author{Jiarui Xu}
-\date{August 31, 2026 --- working notes}
+\date{August 31, 2026 --- working notes; superseded by the paper in \texttt{f6/paper/}}
 
 \begin{document}
 \maketitle
@@ -22,6 +22,9 @@ $6\times 6$ stable-marriage instance, to a finite enumeration of \emph{swap sche
 The reduction rests on one combinatorial lemma (the bridge lemma) plus routine symmetry
 arguments; the enumeration itself (26.6 billion nodes) yields a maximum of $48$,
 matching the dihedral lower bound, whence $f(6)=48$.
+The enumeration described here is corroboration only: the proof of $f(6)=48$ is the
+certified SAT campaign together with the Lean theorem \texttt{f6\_eq\_48\_of\_unsat},
+see \texttt{f6/paper/f6.pdf}.
 \end{abstract}
 
 \section{Preliminaries}

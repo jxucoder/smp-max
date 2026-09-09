@@ -9,140 +9,131 @@ Irving 1989, Open Problem 1). This repository contains
   the formally verified checker cake_lpr;
 - the first **machine-checked proof of f(6) = 48**, previously open
   (conjectured in OEIS [A357271](https://oeis.org/A357271)) — one Lean 4
-  theorem, `f6_eq_48_of_unsat`, whose only hypothesis is discharged by
-  318,736 SAT certificates checked by cake_lpr, over a formula and a cube
-  set defined in Lean; the verdicts come from a campaign journal that is
-  self-attested (see below);
+  theorem whose only hypothesis is discharged by 318,736 SAT certificates
+  checked by cake_lpr, over a formula and a cube set defined in Lean; the
+  verdicts come from a campaign journal that is self-attested (below);
 - a new **lower bound f(7) ≥ 85**, improving the best published bound
   of 81, with instances checked three independent ways.
+
+## The theorems
+
+```lean
+-- lean/SmpF5/SmpF5/Lower.lean
+theorem f5_eq_16_of_unsat
+    (H : ∀ row ∈ perms120, ¬ Satisfiable (cubeCNF row)) :
+    (∀ I : Inst, WF I = true → stableCount I ≤ 16) ∧
+    (∃ I : Inst, WF I = true ∧ stableCount I = 16)
+
+-- lean/SmpF5/SmpF5/Bridge6.lean
+theorem f6_eq_48_of_unsat
+    (H : ∀ c ∈ finalCubes, ¬ Satisfiable (cubeFormula 49 c)) :
+    (∀ I : Inst6, WF6 I = true → stableCount6 I ≤ 48) ∧
+    (∃ I : Inst6, WF6 I = true ∧ stableCount6 I = 48)
+```
+
+In each theorem the only hypothesis is the unsatisfiability of N
+Lean-defined formulas (N = 120 for f(5), N = 318,736 for f(6)), each
+refuted with a cake_lpr-checked certificate. Both depend on exactly the
+axioms `propext`, `Classical.choice`, `Quot.sound`; zero sorries
+(37 imported modules, `lake build` 893 jobs). What you must read: the
+definitions `Inst6`, `WF6`, `isStable6`, `stableCount6` at the top of
+`lean/SmpF5/SmpF5/SixBridge.lean` (40 lines; the order-5 analogues head
+`Faithful.lean`). That is the one human step.
 
 ## Results
 
 | n | f(n) | what this repository establishes | where |
 |---|---|---|---|
 | 1–4 | 1, 2, 3, 10 | classical; f(4) = 10 re-proved as a sanity check of the tooling | `f5/` |
-| 5 | **16** | machine-checked, end to end: Lean theorem `f5_eq_16_of_unsat` (zero sorries, standard axioms) + 120 Lean-printed cube formulas, each refuted and each certificate accepted by cake_lpr | `f5/`, `VERIFYING.md` |
-| 6 | **48** | machine-checked, end to end: Lean theorem `f6_eq_48_of_unsat` (zero sorries, standard axioms) + the 318,736 cube formulas of the certified cube set, each printed from the Lean definitions (identity re-checked for every cube) and each refuted with a cake_lpr-accepted certificate; the dihedral witness is a kernel computation | `f6/`, `f6/CAMPAIGN.md`, `VERIFYING.md` |
+| 5 | **16** | machine-checked, end to end: `f5_eq_16_of_unsat` + 120 Lean-printed cube formulas, each refuted and each certificate accepted by cake_lpr | `lean/`, `f5/`, `VERIFYING.md` |
+| 6 | **48** | machine-checked, end to end: `f6_eq_48_of_unsat` + the 318,736 cube formulas of the certified cube set, each printed from the Lean definitions (identity re-checked for every cube) and each refuted with a cake_lpr-accepted certificate; the dihedral witness is a kernel computation | `lean/`, `f6/`, `f6/CAMPAIGN.md`, `VERIFYING.md` |
 | 7 | **≥ 85** | new lower bound (previous: 81, Ong et al. 2024); two length-20 transposition schedules, verified by brute force, by an independent recount, and via the rotation poset | `f7/` |
 
 ## What exactly is machine-checked
 
-(`STATUS.md` is the maintained evidence ledger: each claim, the kind of
-evidence behind it, the cross-checks, and the ordered list of what
-remains.)
+`STATUS.md` is the evidence ledger: each claim, the kind of evidence
+behind it, the cross-checks, the campaign numbers, and what remains.
 
-**f(5) = 16.** The trust base is the Lean 4 kernel, the axioms
-`propext`, `Classical.choice`, `Quot.sound`, about forty lines of
-definitions stating what a 5 × 5 instance and a stable matching are,
-one LRAT checker (we used cake_lpr, verified down to machine code; any
-checker can be substituted), and a 30-line DIMACS printer. The solver
-runs are not trusted: their output is what the checker checks. Anyone
-can regenerate the 120 formulas from the Lean definitions and re-check
-them in two to three hours; `VERIFYING.md` is the recipe.
+**f(5) = 16.** The trust base is the Lean 4 kernel, the three axioms,
+about forty lines of definitions stating what a 5 × 5 instance and a
+stable matching are, one LRAT checker (we used cake_lpr, verified down to
+machine code; any checker can be substituted), and a 20-line DIMACS
+printer. The solver runs are not trusted: their output is what the
+checker checks. Anyone can regenerate the 120 formulas from the Lean
+definitions and re-check them in two to three hours; `VERIFYING.md` is
+the recipe.
 
-**f(6) = 48.** The same shape as f(5), one order up. The trust base is
-the Lean 4 kernel, the three axioms, about forty lines of definitions
-stating what an order-6 instance and a stable matching are (`Inst6`,
-`WF6`, `isStable6`, `stableCount6` at the top of `SixBridge.lean`), one
-LRAT checker, the two printers `ExportSchedCnf.lean` and
-`ExportCubes6.lean`, and the campaign journal. The theorem
-`f6_eq_48_of_unsat` (`Bridge6.lean`) says: if every cube of
-`Cubes6.finalCubes` has an unsatisfiable formula `cubeFormula 49 c`, then
-every well-formed order-6 instance has at most 48 stable matchings and
-the dihedral instance has exactly 48. Inside the kernel it composes
-
-1. the *reduction*: every well-formed order-6 instance is dominated by the
-   read-off instance of some legal schedule (`validity_unconditional`;
-   11 files, 5,230 lines, 243 theorems), which shrinks the search space
-   from about 10^28 instances to about 2.7 × 10^10 schedules;
-2. the *faithfulness* layer (19 files, 4,761 lines, 333 theorems): any
-   such schedule can be relabeled to first-appearance canonical form
-   without lowering the count, every canonical schedule fits one of the
-   certified cubes, and the schedule's natural assignment satisfies that
-   cube's formula whenever the read-off has at least 49 stable matchings;
-3. the kernel-checked witness `dihedral6_count`.
-
-Outside the kernel: the formula `SchedCNF6.schedCNF49` (84,882 variables,
-2,709,212 clauses) was refuted over 25,493 root cubes, adaptively split to
-321,492 cubes whose 318,736 leaves were all refuted by CaDiCaL with every
-certificate accepted by cake_lpr (0 satisfiable; `cube_campaign.py
---audit` exit 0). The certified cube set is a Lean definition
-(`finalCubes`, built from the 2,756 recorded split decisions) that prints
-exactly the journal's verified ids, and all 321,492 cube formulas the
-solver saw recompute byte for byte from the Lean definitions
-(`f6/campaign/lean_identity.txt`). The certificates (about 25 TB) were
-deleted after checking; each journal record keeps the SHA-256 of its
-formula and of its certificate. The journal is self-attested — a
-`verified` record is the driver's transcription of cake_lpr's verdict —
-so independently verifying a verdict means re-solving that cube from the
-Lean-printed formula (about 300 core-hours for the whole tree; the hashes
-make a re-run comparable record by record). An exhaustive direct
-enumeration of all 26,574,282,886 schedules, run earlier, also gives a
-maximum of 48; it is corroboration, not evidence.
+**f(6) = 48.** The same shape, one order up. The trust base is the Lean
+kernel, the three axioms, the definitions at the top of `SixBridge.lean`,
+one LRAT checker, the two printers `ExportSchedCnf.lean` and
+`ExportCubes6.lean`, and the campaign journal
+(`f6/campaign/campaign.jsonl.gz`); the witness `dihedral6_count` is a
+kernel computation. The journal is self-attested: a `verified` record is
+the driver's transcription of cake_lpr's verdict, the certificates were
+deleted after checking, and each record keeps the SHA-256 of its formula
+and certificate, so independently verifying a verdict means re-solving
+that cube from the Lean-printed formula. Numbers, the Lean identity
+checks, the re-solve sample and the `leanchecker` run: `STATUS.md`.
 
 **f(7) ≥ 85.** A computation, not a proof object: two explicit instances
 in `f7/lb85.txt`, each counted at 85 by three structurally different
-programs. The upper bound is open; `f7/README.md` explains why the
-certified route used at order 6 is three to four orders of magnitude out
-of reach at order 7, and where lower bounds can still be improved.
+programs; why order 7 is out of reach for the certified route: `f7/README.md`.
 
-## Verifying it yourself
+## Verify in 30 minutes
 
-`VERIFYING.md` gives the step-by-step recipe. In short:
+Kernel-check every theorem and confirm there are no holes:
 
 ```bash
-cd f5/lean/SmpF5 && lake exe cache get && lake build     # kernel-checks every theorem (f5 and f6 layers)
-grep -rn sorry SmpF5/                                     # must print nothing
+cd lean/SmpF5 && lake exe cache get && lake build   # Lean 4.33.1 + Mathlib; ends with no errors
+grep -rn sorry SmpF5/                               # must print nothing
 ```
 
-then `#print axioms f5_eq_16_of_unsat` and `#print axioms
-f6_eq_48_of_unsat` (expect the three standard axioms for both),
-regenerate and refute the 120 f(5) cubes with any DRAT/LRAT-producing
-solver and any checker you trust, and for f(6):
+Print the axiom base of both theorems (expected output shown):
 
 ```bash
-gunzip -k f6/campaign/campaign.jsonl.gz
-python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl   # exit 0 iff every root cube is certified
-cd f5/lean/SmpF5 && lake build export_sched_cnf export_cubes6
-.lake/build/bin/export_cubes6 final.txt --final       # the certified cube set: compare with the journal's verified ids
-.lake/build/bin/export_sched_cnf base.cnf              # then export_cubes6 units.tsv --units=all_ids.txt and
-python3 ../../../f6/lean_rehash.py base.cnf units.tsv ../../../f6/campaign/campaign.jsonl   # every cube formula's hash
+cd lean/SmpF5
+printf 'import SmpF5\n#print axioms f5_eq_16_of_unsat\n#print axioms f6_eq_48_of_unsat\n' > /tmp/ax.lean
+lake env lean /tmp/ax.lean
+# 'f5_eq_16_of_unsat' depends on axioms: [propext, Classical.choice, Quot.sound]
+# 'f6_eq_48_of_unsat' depends on axioms: [propext, Classical.choice, Quot.sound]
 ```
 
-(`VERIFYING.md` spells out the id extraction.) Any single cube can be
-printed in full — an open cube `0,1;2,3` as `export_sched_cnf OUT
---prefix='0,1;2,3'`, a closed cube `0,1;stop` as `--prefix='0,1' --stop`,
-the root `stop` as `--stop` alone — re-solved, and re-checked; its SHA-256
-must match the journal. The lower bounds are
-checkable in seconds: `python3 smp.py` (validates the counter on the
-OEIS extremal instances) and the instances in `f5/paper/f5.tex`,
-`f6/README.md`, `f7/lb85.txt`.
+Audit the f(6) journal and print the certified cube set from Lean:
+
+```bash
+[ -f f6/campaign/campaign.jsonl ] || gunzip -k f6/campaign/campaign.jsonl.gz
+python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl
+# audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0   (exit 0)
+cd lean/SmpF5 && lake build export_cubes6
+.lake/build/bin/export_cubes6 final.txt --final     # Cubes6.finalCubes: 318,736 ids, equal as a set
+                                                    # to the journal's `verified` ids
+```
+
+Everything else (the id extraction for that comparison, re-hashing every
+cube formula, building the pinned solver and checker, re-solving a cube
+sample, the positive control, the full f(5) recipe): `VERIFYING.md`.
 
 ## Repository layout
 
 | path | contents |
 |---|---|
-| `smp.py` | brute-force stable-matching counter, validated on the OEIS A351413 extremal instances |
-| `encode.py` | the direct SAT encoding of "some n × n instance has ≥ k stable matchings" used for f(4) and f(5) |
-| `f5/` | f(5) = 16: `lean/SmpF5/` (the Lean development — it also hosts the order-6 files), cube runs and checker logs (`cubesL/`), paper (`paper/f5.pdf`) |
-| `f6/` | f(6) = 48: `sched_sat.py` (the schedule CNF), `cube_campaign.py` (driver, audit), `lean_rehash.py` (re-hash every cube formula from Lean-printed pieces), `campaign/` (final journal, audit outputs, `lean_identity.txt`, live dashboard), `gen_enum.c` (the direct enumeration), `FAITHFULNESS_PLAN.md` (the proof plan and its progress log), papers (`paper/f6.pdf`, `theory.pdf`), design notes |
-| `f7/` | f(7) ≥ 85: `sched_hunt.py`, `lb85.txt`, `README.md` |
-| `STATUS.md` | evidence ledger: what is established, by what kind of evidence, and what is next |
-| `PLAN.md` | the 2026-09-08 finish plan and its status |
-| `PUBLISHING.md` | release state and the publication steps that need the owner's accounts; `f6/OEIS_DRAFT.md` has the OEIS texts |
-| `LICENSE`, `CITATION.cff`, `.zenodo.json` | Apache-2.0; citation and deposit metadata |
-| `VERIFYING.md` | third-party verification guide |
-| `INSIGHTS.md` | retrospective, open questions, publication checklist |
-| `NOTES.md` | the chronological lab notebook |
+| `lean/` | the Lean development: `SmpF5/` (package `SmpF5`, both orders; `lean/SmpF5/SmpF5/*.lean`, exporters `ExportCnf`, `ExportSchedCnf`, `ExportCubes6`), `Witness.lean` + `gen_witness.py` (standalone f(5) witness), `attic/` (unimported pilots, not built) |
+| `f5/` | f(5) = 16: direct-encoding runs, `cube_run.py`, `cube_enum.py` (A344669 counts, `enum_results.txt`), cube runs and checker logs (`cubesL/`), paper (`paper/f5.pdf`) |
+| `f6/` | f(6) = 48: `sched_sat.py` (the schedule CNF), `cube_campaign.py` (driver, audit), `lean_rehash.py`, `rotation_poset.py`, `merge_journals.py`, `CAMPAIGN.md` (campaign reference), papers (`paper/f6.pdf`, `theory.pdf`) |
+| `f6/campaign/` | evidence: `campaign.jsonl.gz` (the journal), `audit_final.txt`, `audit_mainrun.txt`, `lean_identity.txt`, `recheck_2026-09-09.{txt,jsonl}`, `leanchecker_2026-09-09.txt`; `tools/` (driver ops scripts, dashboard); `probes/` (dry run, provenance and depth-3 pilots) |
+| `f6/exploration/` | corroboration and exploration, not on the evidence path: `gen_enum.c` (direct enumeration; `cc -O2 -o gen_enum_c f6/exploration/gen_enum.c`), enumeration logs (`*.tar.gz`), hill-climb and structure searches, the abandoned direct-encoding CNFs |
+| `f7/` | f(7) ≥ 85: `lb85.txt`, `sched_hunt.py`, `logs/`, `README.md` |
+| `docs/` | `INSIGHTS.md` (retrospective); `history/` (dated plans, the lab notebook, design notes and the fan-out record, kept verbatim) |
+| `smp.py`, `encode.py` | brute-force stable-matching counter (validated on the OEIS A351413 extremal instances); the direct SAT encoding used for f(4) and f(5) |
+| `STATUS.md`, `VERIFYING.md` | evidence ledger; third-party verification guide |
+| `PUBLISHING.md`, `OEIS_DRAFT.md` | release state and the steps needing the owner's accounts; the OEIS comment texts |
+| `LICENSE`, `CITATION.cff`, `.zenodo.json`, `.github/workflows/` | Apache-2.0; citation and deposit metadata; CI (`lean-verify`: build, no-sorry grep, axiom checks on 1 + 25 theorems; `build-papers`) |
 
-Toolchain: Lean 4 `v4.33.1` with Mathlib (`lake exe cache get`), Python 3,
-and, for regenerating certificates, CaDiCaL at commit `c6073042`
-(`cadical-src/`), cake_lpr from
-[tanyongkiam/cake_lpr](https://github.com/tanyongkiam/cake_lpr)
-(`cake_lpr-src/`), kissat 4.0.4 and
-[drat-trim](https://github.com/marijnheule/drat-trim) (`dt-src/`, f(5)
-only). The three source directories are gitignored; `f6/CAMPAIGN.md`
-records the exact commits and hashes used.
+Toolchain: Lean 4 `v4.33.1` with Mathlib (about 8 GB in `.lake`), Python 3
+(standard library); for regenerating certificates, CaDiCaL `c6073042` and
+[cake_lpr](https://github.com/tanyongkiam/cake_lpr) in the gitignored
+`cadical-src/`, `cake_lpr-src/` (kissat 4.0.4 + drat-trim in `dt-src/`,
+f(5) only). Commits, assembly hashes, build lines: `VERIFYING.md`.
 
 ## Background and prior work
 
@@ -157,8 +148,8 @@ records the exact commits and hashes used.
   [Ong et al. 2024 file](https://oeis.org/A357271/a357271_1.txt) (Ong,
   Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024) improves every odd order by
   hill climbing (81, 365, 1690, 7123, 27059 at orders 7, 9, 11, 13, 15).
-  Improved here to 85 at order 7 (checked 2026-09-06 against the entry
-  as last edited May 2025).
+  Improved here to 85 at order 7 (checked 2026-09-08 against the entry
+  as last edited 2025-05-26; literature check in `f7/README.md`).
 - General bounds: 2.28^n ≤ f(n) (Thurber 2002), f(n) ≤ 3.55^n
   (Palmer–Pálvölgyi); the first exponential upper bound is Karlin,
   Oveis Gharan and Weber, STOC 2018.
@@ -167,25 +158,29 @@ records the exact commits and hashes used.
 
 ## Status and roadmap
 
-Not yet on arXiv, and OEIS has not been notified. The publication checklist is in `INSIGHTS.md`; the dated
-roadmap is in `STATUS.md`. The Lean faithfulness proof for the order-6
-formula was completed on 2026-09-08 (`PLAN.md`), so f(6) = 48 is a
-single theorem with the certificates as its only hypothesis. Planned:
+The mathematics is finished: f(6) = 48 has been a single Lean theorem
+with the certificates as its only hypothesis since 2026-09-08. Not yet on
+arXiv; OEIS has not been notified.
 
-1. Archive the f(6) journal and the f(5) results with a DOI (Zenodo via
-   the GitHub release; needs the owner's Zenodo login, `PUBLISHING.md`);
-   submit both papers to arXiv; update OEIS A357269/A357271/A344669
-   (`f6/OEIS_DRAFT.md`). License, citation metadata, the rebuilt PDFs,
-   the independent re-solve sample and the `leanchecker` run are done
-   (`STATUS.md`, "Independent checks").
-3. The general-n conjecture (extremal instances come from all-size-2
-   schedules, at full budget for even n) — Conjecture 1 in
-   `f6/paper/f6.pdf`.
-4. Lower bounds at odd orders 9 to 15 with the schedule search of `f7/`.
+Next, in the order of `STATUS.md` "What is next": (1) publish the evidence
+(Zenodo DOI, arXiv for both papers, OEIS A357269 / A357271 / A344669; the
+account steps are in `PUBLISHING.md`, the texts in `OEIS_DRAFT.md`); (2) a
+third-party re-check; (3) lower bounds at odd orders 9 to 15 with the
+schedule search of `f7/`; (4) Conjecture 1 of `f6/paper/f6.pdf`.
 
-## Citing and license
+## Cite
 
-Apache License 2.0 (`LICENSE`). Citation metadata is in `CITATION.cff`
-(GitHub's "Cite this repository" reads it); the Zenodo deposit metadata is
-`.zenodo.json`. `PUBLISHING.md` records what has been published where and
-the steps that still need the owner's accounts (DOI, arXiv, OEIS).
+```bibtex
+@software{xu2026smpmax,
+  author  = {Xu, Jiarui},
+  title   = {smp-max: certified maximum numbers of stable matchings
+             (f(5) = 16, f(6) = 48, f(7) >= 85)},
+  year    = {2026},
+  url     = {https://github.com/jxucoder/smp-max},
+  version = {1.0.0},
+  note    = {arXiv ids to follow}
+}
+```
+
+Apache License 2.0 (`LICENSE`); `CITATION.cff` carries the same metadata
+for GitHub's "Cite this repository", `.zenodo.json` the deposit metadata.
