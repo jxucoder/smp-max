@@ -39,26 +39,6 @@ Remaining (needs the owner's accounts, in this order):
       (step 4)
 - [ ] (Optional) note to Dan Eilers (step 5)
 
-## Done in the repository
-
-- `LICENSE`: Apache License 2.0 (the license of the Lean ecosystem this
-  builds on; change it if you prefer another, nothing else depends on it).
-- `CITATION.cff` and `.zenodo.json`: citation metadata (author, title,
-  keywords, license) read by GitHub's "Cite this repository" box and by
-  Zenodo's GitHub integration.
-- `.github/workflows/build-papers.yml`: compiles `f5/paper/f5.tex`,
-  `f6/paper/f6.tex` and `f6/theory.tex` with TeX Live on every push that
-  touches them and on manual dispatch; the PDFs are uploaded as the
-  `papers` artifact and committed to the repository from that artifact.
-- `OEIS_DRAFT.md`: the exact comment and link texts for A357269,
-  A357271 and A344669.
-- Independent re-checks (see `STATUS.md`, "Independent checks"): a random
-  sample of certified cubes re-solved and re-checked on a second machine
-  with the pinned CaDiCaL and the hash-checked arm64 cake_lpr, hashes
-  compared record by record; Lean's `leanchecker` run over every module.
-- Draft release `v1.0.0` on GitHub with the evidence files and the three
-  PDFs attached (list above); the repository is still private.
-
 ## Needs the owner's accounts (in this order)
 
 1. **Zenodo DOI.** Log in to <https://zenodo.org/account/settings/github/>,
@@ -80,8 +60,9 @@ Remaining (needs the owner's accounts, in this order):
      ancillary files: none needed, the repository is the artifact.
    - `f5/paper/f5.tex` → primary `cs.LO`, cross-list `math.CO`.
    Use the abstracts from the `.tex` files verbatim. After the ids are
-   assigned, fill them into `OEIS_DRAFT.md`, the `preferred-citation`
-   of `CITATION.cff`, and `README.md` ("Background and prior work").
+   assigned, fill them into `OEIS_DRAFT.md`, add a `preferred-citation`
+   block to `CITATION.cff`, and replace the `note` of the BibTeX entry in
+   `README.md` ("Cite"; optionally also "Background and prior work").
 3. **OEIS.** Log in, edit A357269 (add a(6) = 48, the comment and the
    links), A357271 (comment), A344669 (comment) with the texts in
    `OEIS_DRAFT.md`. The editors will ask for a reference they can open:

@@ -53,8 +53,8 @@ Link: the repository link above (f7/lb85.txt).
 Comment:
 
 > a(3) = 1092, a(4) = 144 and a(5) = 507254400 independently confirmed by
-> brute force (n = 3) and SAT enumeration (n = 4, 5; 4227120 canonical
-> solutions with man 1's list fixed, times 5! = 120) in the linked
+> brute force (n = 3) and SAT enumeration (n = 4, 5; for n = 5, 4227120
+> canonical solutions with man 1's list fixed, times 5! = 120) in the linked
 > repository (f5/cube_enum.py, f5/enum_results.txt for n = 5;
 > docs/history/NOTES.md for n = 3, 4). - Jiarui Xu, Sep 09 2026
 

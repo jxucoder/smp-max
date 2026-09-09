@@ -45,8 +45,8 @@ print and what the certificate campaigns refuted is documented in
 ## Module map
 
 All modules live in `SmpF5/`; `SmpF5.lean` imports all 37 of them. The
-tables list each layer in import order (a module depends only on modules
-above it and on Mathlib). Every module has a `/-! # ... -/` header
+tables group the modules by layer; a module depends only on modules
+above it and on Mathlib (the exact import order is `SmpF5.lean`). Every module has a `/-! # ... -/` header
 docstring that is more detailed than the line here; the faithfulness
 files cite the section and lemma numbers of the archived plan
 `docs/history/f6-FAITHFULNESS_PLAN.md`.
@@ -119,7 +119,7 @@ cube of `finalCubes` has a satisfiable formula". Chain in `Bridge6`:
 `[propext, Classical.choice, Quot.sound]` for each; `VERIFYING.md`
 ("The 25 theorems CI checks") explains what each one says. By file:
 `bridge` (SixBridge); `chain_complete`, `traj_mem_iff`, `wtraj_nodup`,
-`total_moves_le_30` (Lattice6, Chain6); `count_le_of_orderPreserving`
+`total_moves_le_30` (Chain6, on the lattice toolkit of Lattice6); `count_le_of_orderPreserving`
 (AbsBridge6); `sc_le_readoffS_chainSched` (ValidityBridge6);
 `manOpt_wrelabel6`, `validity_unconditional` (WRelabel6); `PM_sem`,
 `PW_sem` (ReadoffSem6); `Legal_length_le_15` (SchedLen6);
@@ -172,8 +172,8 @@ lake env lean ../Witness.lean
 # 'witness_has_16_stable_matchings' depends on axioms: [propext]
 ```
 
-The full CI axiom list (the 25 order-6 theorems) is the `Axiom check (f6
-reduction layer)` step of `.github/workflows/lean-verify.yml`; paste its
+The full CI axiom list (the 25 order-6 theorems) is the `Axiom check (f6:
+the 25 theorems)` step of `.github/workflows/lean-verify.yml`; paste its
 `printf` line to reproduce it.
 
 Kernel replay with Lean's built-in `leanchecker` (every declaration of

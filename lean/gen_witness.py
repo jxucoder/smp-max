@@ -3,7 +3,7 @@ stable matchings concretely and proving the 16-matching witness by kernel
 computation. Rank tables are derived from the SAT-found instance and
 cross-checked against smp.py before emission."""
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))  # repo root: smp.py
 from smp import count_stable, ranks
 
 mpref = [(1, 2, 0, 4, 3), (4, 0, 3, 1, 2), (3, 4, 0, 2, 1), (2, 1, 3, 4, 0), (0, 4, 1, 2, 3)]
@@ -16,7 +16,7 @@ def tbl(t):
     return "[" + ", ".join("[" + ", ".join(map(str, row)) + "]" for row in t) + "]"
 
 lean = f"""/-!
-The 5x5 stable-marriage instance found by SAT (see ../../encode.py) has
+The 5x5 stable-marriage instance found by SAT (see ../encode.py) has
 exactly 16 stable matchings, verified here by Lean's kernel alone
 (`decide`, no imports, no native code).
 

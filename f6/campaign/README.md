@@ -9,9 +9,9 @@ Numbers: `../../STATUS.md`; details: `../CAMPAIGN.md`. The dated transcripts are
 | `campaign.jsonl.gz` | the journal, sha256 `c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`: gzipped append-only JSONL, one header (base-formula sha256, tool paths) then one or more records per cube; **the last record per cube wins**. Every `verified` record carries `cnf_sha256` (hashed before solving) and `lrat_sha256` (hashed before checking); it is the driver's transcription of cake_lpr's verdict, the certificate itself was deleted |
 | `audit_final.txt` | transcript of `cube_campaign.py --audit` on the final journal: every root covered, no bad records, `audit: OK`, exit 0 |
 | `audit_mainrun.txt` | the audit before the final rerun of the depth-4 cubes that had hit the LRAT cap: `FAILED`, those cubes listed as `timeout_maxdepth`; superseded by `audit_final.txt`, kept to show what the rerun closed |
-| `lean_identity.txt` | 2026-09-08 transcript: base formula, root cubes, split children, `finalCubes` and every journaled formula hash re-derived from the Lean definitions |
+| `lean_identity.txt` | 2026-09-08 transcript: base formula, root cubes, split children, `finalCubes` and every journaled formula hash re-derived from the Lean definitions (its command block names the pre-move location `f5/lean/SmpF5`, now `lean/SmpF5`) |
 | `recheck_2026-09-09.txt`, `recheck_2026-09-09.jsonl` | independent re-solve of a random sample of certified cubes on a second machine with the toolchain rebuilt from source: commands, hashes and times, and the fresh journal it produced |
-| `leanchecker_2026-09-09.txt` | Lean's `leanchecker` replayed every module of the development through the kernel: all clean |
+| `leanchecker_2026-09-09.txt` | Lean's `leanchecker` replayed every module of the development through the kernel: all clean (command block names the pre-move location `f5/lean/SmpF5`) |
 
 ## tools/ (operations)
 

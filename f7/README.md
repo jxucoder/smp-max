@@ -30,7 +30,7 @@ Preference lists were checked to be genuine permutations on both sides.
 **Reproduce.** `sched_hunt.py` is `../f6/exploration/struct_hunt.py`
 generalized to any n, with one change that turns out to be the whole
 point: **the schedule length is a search variable**, not fixed at the
-full budget of n(n-1)/2 transpositions.
+full budget of n(n-1)/2 transpositions. From the clone root:
 
     python3 f7/sched_hunt.py 7 <seed> <seconds>          # free length
     python3 f7/sched_hunt.py 7 <seed> <seconds> --full   # full budget (21 steps)

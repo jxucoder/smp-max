@@ -34,3 +34,7 @@ f6/genrun/
 f6/genrun_all/
 f6/campaign/campaign.log
 lean/attic/.lake/
+lean/SmpF5/cubes/
+lean/SmpF5/perms120.txt
+f6/campaign/keep/
+f6/campaign/recheck_new.jsonl

@@ -64,7 +64,7 @@ definitions. All Lean files are under `lean/SmpF5/SmpF5/` unless noted.
   `(∀ c ∈ Cubes6.finalCubes, ¬Satisfiable (Cubes6.cubeFormula 49 c)) → (∀ I : Inst6, WF6 I = true → stableCount6 I ≤ 48) ∧ ∃ I, WF6 I = true ∧ stableCount6 I = 48`.
   Zero sorries; axioms `propext`, `Classical.choice`, `Quot.sound`. Inside
   the kernel it composes the reduction (`validity_unconditional` and the
-  rest of the 11-file reduction layer, 5,230 lines, 243 theorems), the
+  rest of the 11-file reduction layer, 5,231 lines, 243 theorems), the
   faithfulness layer (`exists_canonical_schedule`, `fits_final`,
   `cube_faithful6`; 19 files, 4,761 lines, 333 theorems, plus the
   2,808-line data file `SplitList6.lean` holding the 2,756 recorded split
@@ -145,9 +145,11 @@ definitions. All Lean files are under `lean/SmpF5/SmpF5/` unless noted.
 - **Hypothesis.** —
 - **Certificates.** —
 - **Identity checks.** —
-- **Corroboration.** Independent SAT enumeration (`f5/cube_enum.py`; the
-  n = 5 per-cube counts in `f5/enum_results.txt`, the n = 3 and n = 4
-  confirmations recorded in `docs/history/NOTES.md`), confirming Eilers'
+- **Corroboration.** Independent recount: brute force over all 46,656
+  profiles for n = 3, SAT enumeration for n = 4 and n = 5
+  (`f5/cube_enum.py`; the n = 5 per-cube counts in `f5/enum_results.txt`,
+  the n = 3 and n = 4 confirmations recorded in `docs/history/NOTES.md`),
+  confirming Eilers'
   unreplicated counts. The OEIS comment text is in `OEIS_DRAFT.md`.
 - **What remains outside the kernel.** Everything: a validated
   computation agreeing with one prior computation.
@@ -234,7 +236,8 @@ This is the project's one roadmap; other documents link here.
 
 1. **Publish the evidence** (`PUBLISHING.md`). Done: LICENSE
    (Apache-2.0), `CITATION.cff`, `.zenodo.json`, the PDFs rebuilt from the
-   current sources, a GitHub release. Needs the owner's accounts: the
+   current sources, a draft GitHub release `v1.0.0` (not yet published;
+   `PUBLISHING.md`). Needs the owner's accounts: the
    Zenodo DOI (enable the GitHub integration, then the release is
    archived; the journal's sha256 is
    `c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`),
@@ -262,13 +265,13 @@ This is the project's one roadmap; other documents link here.
 | total solver time | 1,076,400 s (median 1.0 s per cube) |
 | certificate sizes | median 35 MB, max 9.8 GB; about 25 TB checked and deleted |
 | base formula | `SchedCNF6.schedCNF49`: 84,882 variables, 2,709,212 clauses, sha256 `28421fb6…`; Lean print byte-identical to `f6/sched_sat.py` |
-| provenance (last record per cube) | Linux/x86-64 container 3,967 verified + 235 split (x86-64 cake_lpr, `cake_lpr.S` sha256 `2f3af32d55083839b3fa0e693afd817679c0b8944bef41def05a8b0ec72b7d4a`); Apple M4 Max 12,727 + 628; Mac mini M4 Pro 302,042 + 1,893 (arm64, `cake_lpr_arm8.S` sha256 `95b64883ebc0cb09feedbcb1ebec233e2490f5b458fdda9dc29c212ed916f00c`) |
+| provenance (last record per cube) | Linux/x86-64 container 3,967 verified + 235 split (x86-64 cake_lpr, `cake_lpr.S` sha256 `2f3af32d55083839b3fa0e693afd817679c0b8944bef41def05a8b0ec72b7d4a`); Apple M4 Max 12,727 + 628; Mac mini M4 Pro 302,042 + 1,893 (arm64, `cake_lpr_arm8.S` sha256 `95b64883edc0cb09feedbcb1ebec233e2490f5b458fdda9dc29c212ed916f00c`) |
 | toolchain | CaDiCaL 3.0.1, commit `c60730422e758ef1cebe7aeddf2dda31c996bf04` (`--lrat --binary=false`), one build per machine; cake_lpr from tanyongkiam/cake_lpr @ `a36874a` in the two builds above (self-test: `cake_lpr example.cnf example.lpr` → `s VERIFIED UNSAT`); kissat 4.0.4 + drat-trim for f(5) only |
 | journal | `f6/campaign/campaign.jsonl.gz`, 40,943,262 bytes, sha256 `c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`; 321,701 records, last record per cube wins |
 | Lean identity checks | base formula, 25,493 roots, 295,999 split children: byte-identical; `finalCubes` = verified set; 321,492 / 321,492 formula hashes recomputed (`f6/campaign/lean_identity.txt`) |
-| Lean, order-6 reduction layer | 11 files, 5,230 lines, 243 theorems, zero sorries |
+| Lean, order-6 reduction layer | 11 files, 5,231 lines (5,230 when the papers were written; one docstring line since), 243 theorems, zero sorries |
 | Lean, order-6 faithfulness layer | 19 files, 4,761 lines, 333 theorems, zero sorries; plus `SplitList6.lean`, 2,808 lines of data |
-| Lean, whole development | 37 imported modules, 15,785 lines, 647 theorems; `lake build` 893 jobs; `grep -rn sorry lean/SmpF5/SmpF5/` empty; Lean 4.33.1 + Mathlib |
+| Lean, whole development | 37 imported modules, 13,937 lines, 646 theorems (order-5 core: 6 files, 1,137 lines, 70 theorems; reduction 11 / 5,231 / 243; faithfulness 19 / 4,761 / 333; `SplitList6.lean` 2,808 lines of data; counted with `grep -cE '^theorem|^lemma'`); `lake build` 893 jobs; `grep -rn sorry lean/SmpF5/SmpF5/` empty; Lean 4.33.1 + Mathlib |
 | CI | `lean-verify` on pushes to `main`, pull requests and dispatch: build, no-sorry grep, axiom checks on 1 + 25 theorems (`.github/workflows/lean-verify.yml`); `build-papers` compiles the three papers |
 | independent re-solve sample (2026-09-09) | 205 cubes, second machine, pinned toolchain rebuilt from source: 205 verified, 205 / 205 formula hashes equal, 204 / 205 certificate hashes equal (198 / 198 same-architecture) |
 | `leanchecker` (2026-09-09) | 38 / 38 modules replayed through the kernel, 0 failures (Lean 4.33.1, arm64) |

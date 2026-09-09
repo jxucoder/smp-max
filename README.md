@@ -57,7 +57,7 @@ behind it, the cross-checks, the campaign numbers, and what remains.
 **f(5) = 16.** The trust base is the Lean 4 kernel, the three axioms,
 about forty lines of definitions stating what a 5 × 5 instance and a
 stable matching are, one LRAT checker (we used cake_lpr, verified down to
-machine code; any checker can be substituted), and a 30-line DIMACS
+machine code; any checker can be substituted), and a 20-line DIMACS
 printer. The solver runs are not trusted: their output is what the
 checker checks. Anyone can regenerate the 120 formulas from the Lean
 definitions and re-check them in two to three hours; `VERIFYING.md` is
@@ -101,7 +101,7 @@ lake env lean /tmp/ax.lean
 Audit the f(6) journal and print the certified cube set from Lean:
 
 ```bash
-gunzip -k f6/campaign/campaign.jsonl.gz
+[ -f f6/campaign/campaign.jsonl ] || gunzip -k f6/campaign/campaign.jsonl.gz
 python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl
 # audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0   (exit 0)
 cd lean/SmpF5 && lake build export_cubes6
@@ -148,8 +148,8 @@ f(5) only). Commits, assembly hashes, build lines: `VERIFYING.md`.
   [Ong et al. 2024 file](https://oeis.org/A357271/a357271_1.txt) (Ong,
   Ang, Ho, Eilers, Marks, Buzi, IFoRE 2024) improves every odd order by
   hill climbing (81, 365, 1690, 7123, 27059 at orders 7, 9, 11, 13, 15).
-  Improved here to 85 at order 7 (checked 2026-09-06 against the entry
-  as last edited May 2025).
+  Improved here to 85 at order 7 (checked 2026-09-08 against the entry
+  as last edited 2025-05-26; literature check in `f7/README.md`).
 - General bounds: 2.28^n ≤ f(n) (Thurber 2002), f(n) ≤ 3.55^n
   (Palmer–Pálvölgyi); the first exponential upper bound is Karlin,
   Oveis Gharan and Weber, STOC 2018.

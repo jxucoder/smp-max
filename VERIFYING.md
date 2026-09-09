@@ -102,7 +102,7 @@ Convention: every command block below starts at the clone root
 | 1 | `cd lean/SmpF5 && lake exe cache get && lake build` | build ends without errors (893 jobs) | ~20 |
 | 2 | `cd lean/SmpF5 && grep -rn sorry SmpF5/` | no output (exit 1) | <1 |
 | 3 | `#print axioms f6_eq_48_of_unsat` and `f5_eq_16_of_unsat` (block below) | both `[propext, Classical.choice, Quot.sound]` | 1 |
-| 4 | `gunzip -k f6/campaign/campaign.jsonl.gz && python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl` | `audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0`, `audit: OK`, exit 0 | <1 |
+| 4 | `[ -f f6/campaign/campaign.jsonl ] \|\| gunzip -k f6/campaign/campaign.jsonl.gz; python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl` | `audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0`, `audit: OK`, exit 0 | <1 |
 | 5 | `export_cubes6 final.txt --final`, sorted, vs the journal's verified ids (block below) | `cmp` silent; `wc -l` 318736 | 1 |
 | 6 | `export_cubes6 units.tsv --units=all_ids.txt` then `f6/lean_rehash.py` (block below) | `lean_rehash: records with cnf_sha256=321492 matched=321492 mismatched=0 missing_units=0`, exit 0 | ~3 |
 
@@ -123,7 +123,7 @@ lake env lean ax6main.lean       # 'f6_eq_48_of_unsat' depends on axioms: [prope
 cd ../..
 
 # 4: journal audit
-gunzip -k f6/campaign/campaign.jsonl.gz
+[ -f f6/campaign/campaign.jsonl ] || gunzip -k f6/campaign/campaign.jsonl.gz
 python3 f6/cube_campaign.py --audit --journal f6/campaign/campaign.jsonl
 # expect: audit: roots=25493 nodes=321492 verified=318736 missing=0 bad=0 header_problems=0
 #         audit: OK   and exit status 0
@@ -259,7 +259,9 @@ The commands are those of fast-path steps 4 to 6, plus the root-cube and
 split-children exports. All of them run from `lean/SmpF5`; the Python
 snippet reads the decompressed journal by its repository path and writes
 the three id files into the current directory. (Recorded run:
-`f6/campaign/lean_identity.txt`.)
+`f6/campaign/lean_identity.txt`; its command block names the
+pre-2026-09-08 location `f5/lean/SmpF5`, now `lean/SmpF5`, so its relative
+`../../../f6/...` paths are today's `../../f6/...`.)
 
 ```bash
 gunzip -k f6/campaign/campaign.jsonl.gz          # skip if already done
@@ -442,7 +444,8 @@ of 48.
 Lean 4.33.1 ships `leanchecker`, which loads the `.olean` files and
 replays every declaration of a module through the kernel; it prints
 nothing and exits 0 when all are accepted. Recorded run:
-`f6/campaign/leanchecker_2026-09-09.txt` (38 / 38 modules clean).
+`f6/campaign/leanchecker_2026-09-09.txt` (38 / 38 modules clean; it too
+names the pre-move location `f5/lean/SmpF5`).
 
 ```bash
 cd lean/SmpF5
@@ -509,7 +512,8 @@ mkdir -p cubes && cd cubes
 ```
 
 This writes 240 DIMACS files **from the Lean definitions** into
-`lean/SmpF5/cubes/`: the 120 production cubes `cubeL000.cnf` ..
+`lean/SmpF5/cubes/` (gitignored), plus `perms120.txt` (the 120 rows in
+export order): the 120 production cubes `cubeL000.cnf` ..
 `cubeL119.cnf` and 120 positive controls `cubeL16_000.cnf` ..
 `cubeL16_119.cnf` (the same cubes at 16 slots; see the cross-checks
 below). For reference, our export hashes to
@@ -594,7 +598,7 @@ order-5 ones); `readoffS`, `Legal` in `Sched6.lean`. All files are under
 - `bridge` (SixBridge.lean): for well-formed order-6 `I`,
   `stableCount6 I <= stableCount6 (readoff I)` — the bridge lemma;
 - `chain_complete`, `traj_mem_iff`, `wtraj_nodup`, `total_moves_le_30`
-  (Lattice6.lean, Chain6.lean): the validity layer — an explicit maximal
+  (Chain6.lean, on the lattice toolkit of Lattice6.lean): the validity layer — an explicit maximal
   chain from the man-optimal to the woman-optimal stable matching whose
   trajectories are exactly the stable partners in preference order,
   without repetition, within the total budget of 30 moves (the closing
