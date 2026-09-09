@@ -139,6 +139,22 @@ a Lean theorem is proved (2026-09-08, evening): `f6_eq_48_of_unsat` in
 an unsatisfiable `cubeFormula 49`, then f(6) = 48 - with zero sorries and
 axioms `propext`, `Classical.choice`, `Quot.sound` (`STATUS.md`).
 
+### Independent re-check on a second machine (2026-09-09)
+
+A random sample of 205 verified cubes (stratified by depth and
+closedness) was re-solved on another Apple-silicon Mac from a fresh clone,
+with CaDiCaL rebuilt at the pinned commit and cake_lpr built from the
+hash-checked `cake_lpr_arm8.S` (`95b64883…`), through this driver with
+`--force --cubes` into a fresh journal: 205 / 205 verified, 205 / 205
+`cnf_sha256` equal to the campaign records, 204 / 205 `lrat_sha256` equal
+(all 198 records that originated on the two arm64 Macs are byte-identical;
+one of the 7 container-origin records has a different proof trace of the
+same formula with the same verdict, an architecture/compiler effect).
+Commands, hashes and times: `campaign/recheck_2026-09-09.txt`; the new
+journal is `campaign/recheck_2026-09-09.jsonl`. This confirms the
+self-report on the sample; the remaining 318,531 cubes are re-solvable
+the same way (about 300 core-hours).
+
 ## Case split (root cubes)
 
 Canonical prefixes use the first-appearance rule (a) ONLY: the men that

@@ -12,7 +12,8 @@ costs about 300 core-hours.
 ## What you end up trusting (and nothing else)
 
 1. **Lean 4's kernel** (small, independently re-implementable; you can
-   additionally run `lean4checker`).
+   additionally replay every module through the kernel with Lean's
+   `leanchecker`, see the f(6) section).
 2. **Three standard axioms**: `propext`, `Classical.choice`, `Quot.sound`
    (`Witness.lean` needs only `propext`).
 3. **~40 lines of definitions** (`Inst`, `WF`, `isStable`, `stableCount`
@@ -384,11 +385,15 @@ discharged by the checker verdicts recorded in the self-attested journal,
 as described above, exactly as f(5)'s hypothesis is discharged by the log
 of the 120 cake_lpr runs.
 
-## Known gaps (state of 2026-09-08, evening)
+## Known gaps (state of 2026-09-09)
 
 - f(5): LRAT certificates are not archived (regenerable in ~2 h; a
   Zenodo archive with DOI is planned so verifiers can skip solving and
   only re-check). f(6): the certificates (about 25 TB) were not kept;
   see the trust statement above.
-- `lean4checker` has not been run on the build (an optional extra check
-  of the kernel's verdict); no license or `CITATION.cff` yet.
+- `leanchecker` (Lean's built-in kernel re-checker) was run over every
+  module on 2026-09-09: 38 / 38 modules clean, 0 failures
+  (`f6/campaign/leanchecker_2026-09-09.txt`). To repeat:
+  `cd f5/lean/SmpF5 && for m in $(grep -oE '^import SmpF5\.\w+' SmpF5.lean | sed 's/import //'); do lake env leanchecker $m || echo FAIL $m; done`
+  (silent exit 0 per module means every declaration replayed through the
+  kernel; about 8 s per module).

@@ -164,10 +164,18 @@ below for the day that changes.
 
 ## Publication checklist (for the day the owner says go)
 
-- [ ] Repo -> public, tag release, LICENSE
-- [ ] Regenerate LRAT certificates; Zenodo deposit with DOI
+- [x] LICENSE (Apache-2.0), CITATION.cff, .zenodo.json (2026-09-09)
+- [x] Papers rebuilt from the updated sources in CI (`build-papers`)
+- [x] Independent checks: 205-cube re-solve with the pinned toolchain on a
+      second machine, hashes compared record by record; `leanchecker` over
+      every module (`STATUS.md`, "Independent checks")
+- [ ] Repo -> public, tag release (see `PUBLISHING.md`)
+- [ ] Zenodo deposit with DOI (owner enables the GitHub integration, then
+      the release is archived; regenerating the 25 TB of LRAT certificates
+      is not planned — the journal's per-cube hashes are the record)
 - [ ] arXiv: both papers (companion cross-references), same day
 - [ ] OEIS: A357269 add a(6)=48; comment on A357271/A344669 with links
+      (texts ready in `f6/OEIS_DRAFT.md`)
 - [ ] Venue submissions; artifact evaluation via VERIFYING.md + CI
 - [ ] (Optional) note to Dan Eilers — owner previously decided name
       credit only, no email; revisit at publication time

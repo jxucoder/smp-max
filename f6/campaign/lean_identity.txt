@@ -40,3 +40,8 @@ journal's last record per cube):
    fits_final, exists_canonical_schedule, firstApp_relabel, Legal_relabel, sc_le_readoffS_relabelSched,
    dihedral6_count).  lake build: 893 jobs, no errors; grep -rn sorry SmpF5/: nothing.  With items 4 and 5,
    the hypothesis is exactly "the 318,736 formulas the campaign certified are unsatisfiable".
+
+7. leanchecker (2026-09-09).  Lean 4.33.1's built-in kernel re-checker replayed all 38 modules
+   (37 imported + root) with 0 failures; independent 205-cube re-solve with the pinned toolchain:
+   205 verified, 205/205 cnf_sha256 and 204/205 lrat_sha256 equal to the journal
+   (leanchecker_2026-09-09.txt, recheck_2026-09-09.txt).
