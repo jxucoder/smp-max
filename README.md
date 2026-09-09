@@ -129,6 +129,8 @@ OEIS extremal instances) and the instances in `f5/paper/f5.tex`,
 | `f7/` | f(7) ≥ 85: `sched_hunt.py`, `lb85.txt`, `README.md` |
 | `STATUS.md` | evidence ledger: what is established, by what kind of evidence, and what is next |
 | `PLAN.md` | the 2026-09-08 finish plan and its status |
+| `PUBLISHING.md` | release state and the publication steps that need the owner's accounts; `f6/OEIS_DRAFT.md` has the OEIS texts |
+| `LICENSE`, `CITATION.cff`, `.zenodo.json` | Apache-2.0; citation and deposit metadata |
 | `VERIFYING.md` | third-party verification guide |
 | `INSIGHTS.md` | retrospective, open questions, publication checklist |
 | `NOTES.md` | the chronological lab notebook |
@@ -165,17 +167,17 @@ records the exact commits and hashes used.
 
 ## Status and roadmap
 
-Not yet published: neither paper is on arXiv and OEIS has not been
-notified. The publication checklist is in `INSIGHTS.md`; the dated
+Not yet on arXiv, and OEIS has not been notified. The publication checklist is in `INSIGHTS.md`; the dated
 roadmap is in `STATUS.md`. The Lean faithfulness proof for the order-6
 formula was completed on 2026-09-08 (`PLAN.md`), so f(6) = 48 is a
 single theorem with the certificates as its only hypothesis. Planned:
 
-1. Archive the f(5) certificates and the f(6) journal (Zenodo DOI, GitHub
-   release); add a license and a `CITATION.cff`; make the repository
-   public; submit both papers.
-2. An independent re-check: a third party re-solving a sample of cubes
-   from the Lean-printed formulas, and a `lean4checker` run.
+1. Archive the f(6) journal and the f(5) results with a DOI (Zenodo via
+   the GitHub release; needs the owner's Zenodo login, `PUBLISHING.md`);
+   submit both papers to arXiv; update OEIS A357269/A357271/A344669
+   (`f6/OEIS_DRAFT.md`). License, citation metadata, the rebuilt PDFs,
+   the independent re-solve sample and the `leanchecker` run are done
+   (`STATUS.md`, "Independent checks").
 3. The general-n conjecture (extremal instances come from all-size-2
    schedules, at full budget for even n) — Conjecture 1 in
    `f6/paper/f6.pdf`.
@@ -183,5 +185,7 @@ single theorem with the certificates as its only hypothesis. Planned:
 
 ## Citing and license
 
-A `CITATION.cff` and a license file will be added before the repository
-is made public. Until then, please contact the author before citing.
+Apache License 2.0 (`LICENSE`). Citation metadata is in `CITATION.cff`
+(GitHub's "Cite this repository" reads it); the Zenodo deposit metadata is
+`.zenodo.json`. `PUBLISHING.md` records what has been published where and
+the steps that still need the owner's accounts (DOI, arXiv, OEIS).

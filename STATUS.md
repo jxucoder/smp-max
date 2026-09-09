@@ -1,6 +1,6 @@
 # Status: what is established, by what evidence, and what is next
 
-Last updated 2026-09-08 (evening). This is the evidence ledger of the
+Last updated 2026-09-09. This is the evidence ledger of the
 project: for each claim, the kind of evidence behind it, the cross-checks
 that guard against systematic error, and the ordered list of what remains.
 It is meant to be updated whenever a row changes.
@@ -91,23 +91,47 @@ driver's transcription of cake_lpr's verdict, the certificates (about
 consistency. Independently verifying a verdict means re-solving that cube
 from the Lean-printed formula (the per-cube `cnf_sha256` and
 `lrat_sha256` make a re-run comparable record by record); the whole tree
-is about 300 core-hours of solver time. `lean4checker` has not been run
-on the build (optional). Not trusted: solvers, Python scripts,
-`gen_enum.c`, the plan documents.
+is about 300 core-hours of solver time; a 205-cube sample has been
+re-solved independently (below). Lean's `leanchecker` has been run over
+every module (below). Not trusted: solvers, Python scripts, `gen_enum.c`,
+the plan documents.
+
+## Independent checks (2026-09-09)
+
+1. **Re-solve of a random cube sample with the pinned toolchain, on a
+   second machine.** 205 verified cubes (stratified by depth and
+   closedness; 164 originally solved on the Mac mini, 34 on the M4 Max
+   laptop, 7 on the x86-64 container) were re-solved on another Mac from a
+   fresh clone, with CaDiCaL rebuilt at commit `c6073042` and cake_lpr
+   built from the hash-checked `cake_lpr_arm8.S` (`95b64883…`): 205 / 205
+   verified (`s VERIFIED UNSAT`), 205 / 205 `cnf_sha256` equal to the
+   journal, 204 / 205 `lrat_sha256` equal (all 198 arm64-origin records
+   byte-identical; one of the 7 container-origin records has a different
+   proof trace of the same formula, same verdict, an architecture/compiler
+   effect). `f6/campaign/recheck_2026-09-09.txt` and the new journal
+   `recheck_2026-09-09.jsonl` record commands, hashes and times (263 s wall
+   for the sample). This confirms the journal's self-report on the sample;
+   it does not replace re-solving the other 318,531 cubes.
+2. **`leanchecker` over the development.** Lean 4.33.1's built-in `leanchecker` replayed every
+   declaration of all 37 imported modules and the root module through the
+   kernel on 2026-09-09: 38 / 38 clean (silent exit 0), about 8 s per
+   module; a nonexistent module name errors, so the tool was live
+   (`f6/campaign/leanchecker_2026-09-09.txt`).
 
 ## What is next, in order
 
-1. **Publish the evidence.** LICENSE and `CITATION.cff` (the owner's
-   choice); archive the f(5) certificates and the f(6) journal with a DOI
-   (Zenodo, GitHub release; the journal's sha256 is
-   `c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`);
-   make the repository public; submit both papers (`INSIGHTS.md`,
-   publication checklist); OEIS A357269 a(6) = 48 and comments on
-   A357271 / A344669.
-2. **Independent re-check.** A third party re-solving a random sample of
-   cubes from the Lean-printed formulas and comparing `cnf_sha256` (and,
-   with the same toolchain, `lrat_sha256`); a `lean4checker` run on the
-   build.
+1. **Publish the evidence** (`PUBLISHING.md`). Done: LICENSE
+   (Apache-2.0), `CITATION.cff`, `.zenodo.json`, the PDFs rebuilt from the
+   current sources, a GitHub release. Needs the owner's accounts: the
+   Zenodo DOI (enable the GitHub integration, then the release is
+   archived; the journal's sha256 is
+   `c9026b08045d8e8824c66d213bfa8eeb5336f118c22e030d42040136be7a8e4e`),
+   arXiv for both papers, OEIS A357269 a(6) = 48 and the comments on
+   A357271 / A344669 (`f6/OEIS_DRAFT.md`).
+2. **A third-party re-check** by someone other than the author: the
+   sample re-solve above is reproducible from the Lean-printed formulas
+   (`f6/campaign/recheck_2026-09-09.txt`); the whole tree is about 300
+   core-hours.
 3. **Lower bounds at odd orders 9 to 15** with the schedule search of
    `f7/` (needs an O(n^2) rotation extractor to count through the
    rotation poset); the published bounds there look as soft as 81 did.
@@ -131,4 +155,6 @@ on the build (optional). Not trusted: solvers, Python scripts,
 | Lean, order-6 reduction layer | 11 files, 5,230 lines, 243 theorems, zero sorries |
 | Lean, order-6 faithfulness layer | 19 files, 4,761 lines, 333 theorems, zero sorries; plus `SplitList6.lean`, 2,808 lines of data |
 | Lean, whole development | 37 imported modules, 15,785 lines, 647 theorems; `lake build` 893 jobs |
-| CI | `lean-verify` on pushes to `main`, pull requests and dispatch: build, no-sorry grep, axiom checks on 1 + 25 theorems (`.github/workflows/lean-verify.yml`) |
+| CI | `lean-verify` on pushes to `main`, pull requests and dispatch: build, no-sorry grep, axiom checks on 1 + 25 theorems (`.github/workflows/lean-verify.yml`); `build-papers` compiles the three papers |
+| independent re-solve sample (2026-09-09) | 205 cubes, second machine, pinned toolchain rebuilt from source: 205 verified, 205 / 205 formula hashes equal, 204 / 205 certificate hashes equal (198 / 198 same-architecture) |
+| `leanchecker` (2026-09-09) | 38 / 38 modules replayed through the kernel, 0 failures (Lean 4.33.1, arm64) |

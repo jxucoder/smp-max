@@ -13,9 +13,11 @@
   verified ids; provenance and both checker builds recorded; the
   self-attested nature of the journal stated in CAMPAIGN.md, VERIFYING.md,
   STATUS.md, README.md (`f6/campaign/lean_identity.txt`).
-- **C done** except LICENSE and CITATION.cff (owner's choice) and the
-  PDFs of the papers (sources updated, not rebuilt). f(7) claims are
-  backed by `f7/logs/` (34 runs, 2026-09-08).
+- **C done**, including (2026-09-09) LICENSE (Apache-2.0), CITATION.cff,
+  .zenodo.json, and the three PDFs rebuilt from the updated sources by the
+  `build-papers` workflow. f(7) claims are backed by `f7/logs/` (34 runs,
+  2026-09-08). Publication steps that need the owner's accounts are listed
+  in `PUBLISHING.md`.
 - **D done; E resolved** (risks 2 and 3 closed; the lower bound's
   `decide` ran without reformulation problems; no layer-0 definition
   changed).
