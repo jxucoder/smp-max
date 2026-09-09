@@ -2,10 +2,10 @@
 """Modal driver for the order-6 cube campaign: same worker, same records,
 same journal, same audit - only the CPUs are elsewhere.
 
-    modal run f6/modal_campaign.py                       # everything left in the journal
-    modal run f6/modal_campaign.py --sample 50           # 50 random pending cubes (pilot)
-    modal run f6/modal_campaign.py --cubes "0,1;2,3 stop"
-    python3 f6/modal_campaign.py --local 3               # 3 cubes in-process, no Modal (toolchain test)
+    modal run f6/exploration/modal_campaign.py                       # everything left in the journal
+    modal run f6/exploration/modal_campaign.py --sample 50           # 50 random pending cubes (pilot)
+    modal run f6/exploration/modal_campaign.py --cubes "0,1;2,3 stop"
+    python3 f6/exploration/modal_campaign.py --local 3               # 3 cubes in-process, no Modal (toolchain test)
 
 Each remote call runs cube_campaign.run_cube(cid) unchanged inside a
 container that has CaDiCaL at the journal header's pinned commit and
@@ -322,6 +322,6 @@ if modal is not None:
 if __name__ == "__main__":
     a = parse_args(sys.argv[1:])
     if not a.local:
-        sys.exit("run with `modal run f6/modal_campaign.py ...`, or `--local N` for an in-process test")
+        sys.exit("run with `modal run f6/exploration/modal_campaign.py ...`, or `--local N` for an in-process test")
     a.sample = a.local
     drive(a, local_runner, local_info())

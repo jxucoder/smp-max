@@ -4,7 +4,7 @@
 # Routine): if this shard's driver is already running it takes one
 # checkpoint and exits 0; after a container restart it resumes.
 #
-#     f6/campaign/bootstrap.sh I N [WORKERS] [BRANCH]
+#     f6/campaign/tools/bootstrap.sh I N [WORKERS] [BRANCH]
 #
 # 1. builds CaDiCaL at the journal header's pinned commit and cake_lpr from
 #    its hash-checked verified assembly, self-tests both;
@@ -24,7 +24,7 @@ set -euo pipefail
 I=${1:?usage: bootstrap.sh I N [WORKERS] [BRANCH]}; N=${2:?}
 WORKERS=${3:-3}
 BRANCH=${4:-claude/campaign-shard-$I-of-$N}
-ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)   # tools/ -> campaign/ -> f6/ -> repo root
 CADICAL_COMMIT=c60730422e758ef1cebe7aeddf2dda31c996bf04
 CAKE_S_SHA=2f3af32d55083839b3fa0e693afd817679c0b8944bef41def05a8b0ec72b7d4a
 cd "$ROOT"

@@ -91,7 +91,7 @@ every verified cube into DIR, compares its sha256 with the journaled
 cnf_sha256, and, if DIR/c_<tag>.cnf already exists (e.g. printed by the
 Lean exporter), compares that file too.  The Lean exporter
 
-    f5/lean/SmpF5/.lake/build/bin/export_sched_cnf OUT --prefix=a,b;c,d
+    lean/SmpF5/.lake/build/bin/export_sched_cnf OUT --prefix=a,b;c,d
 
 prints DIMACS byte-identical to this driver's CNF for open cubes (same
 header, clause order and unit clauses), so a Lean-printed formula can be

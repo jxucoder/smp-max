@@ -1,12 +1,19 @@
 # Faithfulness plan: Lean proof that the order-6 schedule CNF is faithful
 
-Status: **COMPLETE (2026-09-08, evening)** — `f6_eq_48_of_unsat` is proved;
-see the last progress-log entry. Below is revision 2 of the plan
-(2026-09-02, after an independent critique of revision 1), kept as the
-record of what was planned; the progress log records what was built. Target file set lives next to the existing
-order-6 development in `f5/lean/SmpF5/SmpF5/` (same `lakefile`, Mathlib
-v4.33.1); the f(5) files `Encoding.lean` / `Faithfulness.lean` /
-`Bridge.lean` / `ExportCnf.lean` are the pattern.
+Status: **ARCHIVED, COMPLETE (2026-09-08, evening).** The theorem this
+plan describes is proved: `f6_eq_48_of_unsat` in
+`lean/SmpF5/SmpF5/Bridge6.lean` (zero sorries; axioms `propext`,
+`Classical.choice`, `Quot.sound`); the module map of the finished
+development is `lean/SmpF5/README.md`, and the evidence ledger is
+`STATUS.md`. Below is revision 2 of the plan (2026-09-02, after an
+independent critique of revision 1), kept verbatim as the record of what
+was planned; the progress log records what was built. Section and lemma
+numbers (§0–§11, L3.x–L7.x) are cited by the Lean module docstrings and
+must not be renumbered. Paths in the body predate the 2026-09-09
+restructure: the development then lived in `f5/lean/SmpF5/SmpF5/`, now
+`lean/SmpF5/SmpF5/` (same `lakefile`, Mathlib v4.33.1); the f(5) files
+`Encoding.lean` / `Faithfulness.lean` / `Bridge.lean` / `ExportCnf.lean`
+were the pattern. See `docs/history/README.md`.
 
 **What changed in revision 2.** Revision 1 proposed a fresh closed-form
 variable layout (`Encoding6.lean`, `shapes6` in sublist order, `perms720 :=
