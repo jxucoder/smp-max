@@ -30,7 +30,7 @@ jobs:
           printf 'import SmpF5.Lower\n#print axioms f5_eq_16_of_unsat\n' > /tmp/ax.lean
           lake env lean /tmp/ax.lean | tee /tmp/ax.out
           grep -q "depends on axioms: \[propext, Classical.choice, Quot.sound\]" /tmp/ax.out
-      - name: Axiom check (f6: the 25 theorems)
+      - name: "Axiom check (f6: the 25 theorems)"
         working-directory: lean/SmpF5
         run: |
           printf 'import SmpF5\n#print axioms bridge\n#print axioms chain_complete\n#print axioms traj_mem_iff\n#print axioms wtraj_nodup\n#print axioms total_moves_le_30\n#print axioms count_le_of_orderPreserving\n#print axioms sc_le_readoffS_chainSched\n#print axioms manOpt_wrelabel6\n#print axioms validity_unconditional\n#print axioms PM_sem\n#print axioms PW_sem\n#print axioms Legal_length_le_15\n#print axioms minFirst_mem_cyclicShapes\n#print axioms permsN6_perm_permutations\n#print axioms Legal_map_minFirst\n#print axioms SchedCNF6.dec_pwVar3\n#print axioms firstApp_relabel\n#print axioms Legal_relabel\n#print axioms sc_le_readoffS_relabelSched\n#print axioms exists_canonical_schedule\n#print axioms fits_final\n#print axioms cube_faithful6\n#print axioms dihedral6_count\n#print axioms f6_upper_of_unsat\n#print axioms f6_eq_48_of_unsat\n' > /tmp/ax6.lean
